@@ -2,7 +2,149 @@
 
 ## Overview
 
-This document describes the API endpoints and data structures for the Multi-Role User Authentication system.
+This document describes the API endpoints and data structures for the Multi-Role User Authentication system with Laravel Sanctum integration. The system now supports both session-based authentication (for the React SPA) and token-based authentication (for API access).
+
+## Authentication Methods
+
+### 1. Session-Based Authentication (SPA)
+- Used by the React frontend via Inertia.js
+- Utilizes Laravel's built-in session management
+- CSRF protection enabled
+- Automatic cookie handling
+
+### 2. Token-Based Authentication (API)
+- Uses Laravel Sanctum personal access tokens
+- Bearer token authentication
+- Suitable for mobile apps, external integrations
+- Respects existing role and permission system
+
+## API Endpoints
+
+### Authentication Endpoints
+
+#### Get CSRF Cookie (SPA Authentication)
+```http
+GET /sanctum/csrf-cookie
+```
+**Description:** Initialize CSRF protection for SPA authentication
+**Response:** 204 No Content (sets CSRF cookie)
+
+#### API Health Check
+```http
+GET /api/health
+```
+**Description:** Public endpoint to check API status
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-08-03T20:29:26.282714Z",
+  "version": "1.0.0"
+}
+```
+
+### User Information
+
+#### Get Current User (API)
+```http
+GET /api/user
+Authorization: Bearer {token}
+```
+**Description:** Get authenticated user information with roles and permissions
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "email_verified_at": "2024-01-01T00:00:00.000000Z",
+  "created_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-01-01T00:00:00.000000Z",
+  "roles": ["Admin"],
+  "permissions": ["view dashboard", "create posts", "edit posts"],
+  "is_admin": true,
+  "is_content_creator": true
+}
+```
+
+### Token Management
+
+#### Create API Token
+```http
+POST /api/tokens
+Authorization: Bearer {token} OR Session Authentication
+Content-Type: application/json
+
+{
+  "name": "My API Token",
+  "abilities": ["*"]
+}
+```
+**Response:**
+```json
+{
+  "token": "1|plainTextTokenString",
+  "name": "My API Token",
+  "abilities": ["*"]
+}
+```
+
+#### List User Tokens
+```http
+GET /api/tokens
+Authorization: Bearer {token} OR Session Authentication
+```
+**Response:**
+```json
+{
+  "tokens": [
+    {
+      "id": 1,
+      "name": "My API Token",
+      "abilities": ["*"],
+      "last_used_at": "2024-01-01T12:00:00.000000Z",
+      "expires_at": null,
+      "created_at": "2024-01-01T10:00:00.000000Z"
+    }
+  ]
+}
+```
+
+#### Revoke Token
+```http
+DELETE /api/tokens/{id}
+Authorization: Bearer {token} OR Session Authentication
+```
+**Response:**
+```json
+{
+  "message": "Token revoked successfully"
+}
+```
+
+### Role-Based API Endpoints
+
+#### Admin Endpoints
+```http
+GET /api/admin/users          # List all users (Admin+ only)
+GET /api/admin/roles          # List all roles (Admin+ only)  
+GET /api/admin/permissions    # List all permissions (Admin+ only)
+```
+
+#### Content Management
+```http
+GET /api/content/posts        # Content posts (Editor+ only)
+```
+
+#### Author Endpoints
+```http
+GET /api/author/my-posts      # Author's posts (Author+ only)
+```
+
+#### Permission-Based
+```http
+GET /api/user-management      # Requires 'manage users' permission
+```
 
 ## User Data Structure
 
@@ -235,4 +377,4 @@ public function test_user_can_access_admin_panel()
 ## Related Documentation
 - [Authentication Overview](README.md)
 - [Troubleshooting Guide](troubleshooting.md)
-- [Testing Guide](../testing/authentication-tests.md) 
+- [Testing Guide](../testing/authentication-tests.md)

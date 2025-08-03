@@ -11,6 +11,10 @@ Route::middleware(['auth', 'verified', 'permission:view dashboard'])->group(func
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+    
+    Route::get('api-demo', function () {
+        return Inertia::render('api-demo');
+    })->name('api-demo');
 });
 
 require __DIR__.'/settings.php';
