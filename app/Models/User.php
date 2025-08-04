@@ -62,6 +62,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'provider',
+        'provider_id',
+        'avatar',
+        'email_verified_at',
     ];
 
     /**
@@ -93,5 +97,66 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Find a user by their social provider and provider ID.
+     *
+     * @param string $provider The OAuth provider name (google, github, facebook, etc.)
+     * @param string $providerId The unique ID from the OAuth provider
+     * @return User|null
+     */
+    public static function findForSocialLogin(string $provider, string $providerId): ?User
+    {
+        return static::where('provider', $provider)
+                    ->where('provider_id', $providerId)
+                    ->first();
+    }
+
+    /**
+     * Create a new user from social provider data.
+     *
+     * @param string $provider The OAuth provider name
+     * @param array $userData The user data from the OAuth provider
+     * @return User
+     */
+    public static function createFromSocialProvider(string $provider, array $userData): User
+    {
+        return static::create([
+            'name' => $userData['name'] ?? $userData['nickname'] ?? 'Unknown',
+            'email' => $userData['email'],
+            'provider' => $provider,
+            'provider_id' => $userData['id'],
+            'avatar' => $userData['avatar'] ?? null,
+            'password' => null, // Social users don't have passwords
+            'email_verified_at' => now(), // Social logins are considered verified
+        ]);
+    }
+
+    /**
+     * Check if this user was created via social login.
+     *
+     * @return bool
+     */
+    public function isSocialUser(): bool
+    {
+        return !is_null($this->provider) && !is_null($this->provider_id);
+    }
+
+    /**
+     * Get the user's avatar URL, preferring the social avatar if available.
+     *
+     * @param int $size The size of the avatar (for Gravatar fallback)
+     * @return string
+     */
+    public function getAvatarUrl(int $size = 80): string
+    {
+        if ($this->avatar) {
+            return $this->avatar;
+        }
+
+        // Fallback to Gravatar
+        $hash = md5(strtolower(trim($this->email)));
+        return "https://www.gravatar.com/avatar/{$hash}?s={$size}&d=identicon";
     }
 }
