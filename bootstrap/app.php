@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Route;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
@@ -67,6 +68,11 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,        // Handle theme/appearance preferences
             HandleInertiaRequests::class,   // Share auth data with React frontend
             AddLinkHeadersForPreloadedAssets::class, // Optimize asset loading
+        ]);
+
+        // Register API middleware stack with Sanctum authentication
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
         // Register role and permission middleware aliases for the Multi-Role User Authentication system

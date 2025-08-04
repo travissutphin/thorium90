@@ -6,17 +6,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
  * User Model
  * 
- * This is the core user model that integrates with the Multi-Role User Authentication system.
- * It extends Laravel's Authenticatable class and uses the HasRoles trait from the Spatie
- * Laravel Permission package to enable role-based access control (RBAC).
+ * This is the core user model that integrates with the Multi-Role User Authentication system
+ * and Laravel Sanctum API authentication. It extends Laravel's Authenticatable class and uses
+ * both the HasRoles trait from Spatie Laravel Permission and HasApiTokens from Laravel Sanctum.
  * 
  * Key Features:
  * - Role and permission management via Spatie Laravel Permission
+ * - API token authentication via Laravel Sanctum
  * - Factory support for testing
  * - Email verification support (optional)
  * - Password hashing and remember token functionality
@@ -32,13 +34,20 @@ use Spatie\Permission\Traits\HasRoles;
  * - removeRole($role): Remove a role from the user
  * - syncRoles($roles): Replace all user roles with the specified ones
  * 
+ * Available Methods (from HasApiTokens trait):
+ * - createToken($name, $abilities = ['*']): Create a new personal access token
+ * - tokens(): Get all personal access tokens for the user
+ * - currentAccessToken(): Get the current access token being used
+ * - withAccessToken($accessToken): Set the current access token
+ * 
  * @see https://spatie.be/docs/laravel-permission
+ * @see https://laravel.com/docs/sanctum
  * @see https://laravel.com/docs/authentication
  */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
