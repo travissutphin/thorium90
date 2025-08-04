@@ -41,4 +41,65 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Create a user with social login provider data.
+     */
+    public function socialUser(string $provider = 'google'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'provider' => $provider,
+            'provider_id' => fake()->unique()->numerify('##########'),
+            'avatar' => fake()->imageUrl(200, 200, 'people'),
+            'email_verified_at' => now(), // Social users are considered verified
+        ]);
+    }
+
+    /**
+     * Create a Google social login user.
+     */
+    public function google(): static
+    {
+        return $this->socialUser('google');
+    }
+
+    /**
+     * Create a GitHub social login user.
+     */
+    public function github(): static
+    {
+        return $this->socialUser('github');
+    }
+
+    /**
+     * Create a Facebook social login user.
+     */
+    public function facebook(): static
+    {
+        return $this->socialUser('facebook');
+    }
+
+    /**
+     * Create a LinkedIn social login user.
+     */
+    public function linkedin(): static
+    {
+        return $this->socialUser('linkedin');
+    }
+
+    /**
+     * Create a Twitter/X social login user.
+     */
+    public function twitter(): static
+    {
+        return $this->socialUser('twitter');
+    }
+
+    /**
+     * Create a GitLab social login user.
+     */
+    public function gitlab(): static
+    {
+        return $this->socialUser('gitlab');
+    }
 }
