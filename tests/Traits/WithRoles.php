@@ -3,28 +3,27 @@
 namespace Tests\Traits;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 /**
  * WithRoles Trait
  * 
- * This trait provides comprehensive testing utilities for the Multi-Role User Authentication system.
- * It centralizes the creation of roles, permissions, and test users with specific roles,
- * making tests more maintainable and consistent.
+ * This trait provides helper methods for setting up roles and permissions in tests.
+ * It's essential for the Multi-Role User Authentication system tests to work properly.
  * 
  * Key Features:
- * - Creates a complete set of roles and permissions for testing
+ * - Creates all required roles and permissions for testing
  * - Provides helper methods to create users with specific roles
- * - Includes assertion methods for role and permission validation
- * - Ensures consistent test data across all authentication tests
+ * - Handles permission cache clearing for test isolation
+ * - Follows the exact role hierarchy defined in the documentation
  * 
  * Usage:
  * ```php
  * class MyTest extends TestCase
  * {
  *     use RefreshDatabase, WithRoles;
- *     
+ * 
  *     protected function setUp(): void
  *     {
  *         parent::setUp();
@@ -32,46 +31,37 @@ use Spatie\Permission\Models\Permission;
  *     }
  * }
  * ```
- * 
- * @see https://spatie.be/docs/laravel-permission
- * @see https://laravel.com/docs/testing
  */
 trait WithRoles
 {
     /**
-     * Create all roles and permissions for testing.
-     * 
-     * This method sets up the complete role hierarchy and permission structure
-     * that matches the production environment. It should be called in the setUp()
-     * method of any test that needs to work with roles and permissions.
-     * 
-     * Role Hierarchy:
-     * - Super Admin: All permissions
-     * - Admin: Most permissions (except super admin specific ones)
-     * - Editor: Content management permissions
-     * - Author: Limited content creation permissions
-     * - Subscriber: Basic dashboard access only
-     * 
-     * Permission Categories:
-     * - User Management: view, create, edit, delete users, manage roles
-     * - Content Management: view, create, edit, delete, publish posts
-     * - Media Management: upload, manage, delete media
-     * - Comment Management: view, moderate, delete comments
-     * - System Management: manage settings, roles, permissions
+     * Set up roles and permissions for testing.
+     * This is a convenience method that calls createRolesAndPermissions().
      */
-    protected function createRolesAndPermissions()
+    protected function setupRoles(): void
     {
-        // Create all available permissions
+        $this->createRolesAndPermissions();
+    }
+
+    /**
+     * Create all roles and permissions required for the authentication system.
+     * This method should be called in the setUp() method of test classes.
+     */
+    protected function createRolesAndPermissions(): void
+    {
+        // Reset cached roles and permissions to ensure clean test state
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Create all permissions first
         $permissions = [
-            // User Management Permissions
-            'view dashboard',
+            // User Management
             'view users',
             'create users',
             'edit users',
             'delete users',
             'manage user roles',
             
-            // Content Management Permissions
+            // Content Management
             'view posts',
             'create posts',
             'edit posts',
@@ -80,36 +70,56 @@ trait WithRoles
             'edit own posts',
             'delete own posts',
             
-            // System Management Permissions
+            // System Administration
+            'view dashboard',
             'manage settings',
             'manage roles',
             'manage permissions',
             
-            // Media Management Permissions
+            // Media Management
             'upload media',
             'manage media',
             'delete media',
             
-            // Comment Management Permissions
+            // Comment Management
             'view comments',
             'moderate comments',
             'delete comments',
         ];
 
-        // Create each permission in the database
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission, 'guard_name' => 'web']);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create roles and assign appropriate permissions
-        
-        // Super Admin: Has all permissions
-        $superAdmin = Role::create(['name' => 'Super Admin', 'guard_name' => 'web']);
-        $superAdmin->givePermissionTo(Permission::all());
+        // Create roles and assign permissions according to hierarchy
+        $this->createSuperAdminRole();
+        $this->createAdminRole();
+        $this->createEditorRole();
+        $this->createAuthorRole();
+        $this->createSubscriberRole();
+    }
 
-        // Admin: Has most permissions but not super admin specific ones
-        $admin = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
-        $admin->givePermissionTo([
+    /**
+     * Create the Super Admin role with all permissions.
+     * Super Admins have complete system access.
+     */
+    protected function createSuperAdminRole(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Super Admin']);
+        
+        // Super Admin gets all permissions
+        $role->syncPermissions(Permission::all());
+    }
+
+    /**
+     * Create the Admin role with high-level administrative permissions.
+     * Admins can manage users and content but not system-level settings.
+     */
+    protected function createAdminRole(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Admin']);
+        
+        $permissions = [
             'view dashboard',
             'view users',
             'create users',
@@ -121,18 +131,27 @@ trait WithRoles
             'edit posts',
             'delete posts',
             'publish posts',
-            'manage settings',
             'upload media',
             'manage media',
             'delete media',
             'view comments',
             'moderate comments',
             'delete comments',
-        ]);
+            'manage settings',
+        ];
+        
+        $role->syncPermissions($permissions);
+    }
 
-        // Editor: Content management focused permissions
-        $editor = Role::create(['name' => 'Editor', 'guard_name' => 'web']);
-        $editor->givePermissionTo([
+    /**
+     * Create the Editor role with content management permissions.
+     * Editors can manage all content but cannot manage users.
+     */
+    protected function createEditorRole(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Editor']);
+        
+        $permissions = [
             'view dashboard',
             'view posts',
             'create posts',
@@ -143,142 +162,185 @@ trait WithRoles
             'manage media',
             'view comments',
             'moderate comments',
-        ]);
+            'delete comments',
+        ];
+        
+        $role->syncPermissions($permissions);
+    }
 
-        // Author: Limited content creation permissions
-        $author = Role::create(['name' => 'Author', 'guard_name' => 'web']);
-        $author->givePermissionTo([
+    /**
+     * Create the Author role with limited content creation permissions.
+     * Authors can create and manage their own content.
+     */
+    protected function createAuthorRole(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Author']);
+        
+        $permissions = [
             'view dashboard',
             'view posts',
             'create posts',
             'edit own posts',
             'delete own posts',
             'upload media',
-        ]);
+            'view comments',
+        ];
+        
+        $role->syncPermissions($permissions);
+    }
 
-        // Subscriber: Basic access only
-        $subscriber = Role::create(['name' => 'Subscriber', 'guard_name' => 'web']);
-        $subscriber->givePermissionTo([
+    /**
+     * Create the Subscriber role with basic read-only access.
+     * Subscribers have minimal permissions, mainly dashboard access.
+     */
+    protected function createSubscriberRole(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Subscriber']);
+        
+        $permissions = [
             'view dashboard',
-        ]);
+        ];
+        
+        $role->syncPermissions($permissions);
     }
 
+    // Helper methods for creating users with specific roles in tests
+
     /**
-     * Create a user with a specific role.
-     * 
-     * This is a generic helper method that creates a user and assigns them
-     * the specified role. It's used by the more specific role creation methods.
-     * 
-     * @param string $roleName The name of the role to assign
-     * @return User The created user with the assigned role
+     * Create a user with Super Admin role.
+     *
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createUserWithRole(string $roleName): User
+    protected function createSuperAdmin(array $attributes = []): User
     {
-        $user = User::factory()->create();
-        $user->assignRole($roleName);
-        return $user;
+        $user = User::factory()->create($attributes);
+        $user->assignRole('Super Admin');
+        return $user->fresh(); // Reload to get updated relationships
     }
 
     /**
-     * Create a Super Admin user.
-     * 
-     * Super Admins have access to all system features and permissions.
-     * 
-     * @return User A user with Super Admin role
+     * Create a user with Admin role.
+     *
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createSuperAdmin(): User
+    protected function createAdmin(array $attributes = []): User
     {
-        return $this->createUserWithRole('Super Admin');
+        $user = User::factory()->create($attributes);
+        $user->assignRole('Admin');
+        return $user->fresh();
     }
 
     /**
-     * Create an Admin user.
-     * 
-     * Admins have extensive permissions but not super admin specific ones.
-     * 
-     * @return User A user with Admin role
+     * Create a user with Editor role.
+     *
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createAdmin(): User
+    protected function createEditor(array $attributes = []): User
     {
-        return $this->createUserWithRole('Admin');
+        $user = User::factory()->create($attributes);
+        $user->assignRole('Editor');
+        return $user->fresh();
     }
 
     /**
-     * Create an Editor user.
-     * 
-     * Editors can manage content and moderate comments.
-     * 
-     * @return User A user with Editor role
+     * Create a user with Author role.
+     *
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createEditor(): User
+    protected function createAuthor(array $attributes = []): User
     {
-        return $this->createUserWithRole('Editor');
+        $user = User::factory()->create($attributes);
+        $user->assignRole('Author');
+        return $user->fresh();
     }
 
     /**
-     * Create an Author user.
-     * 
-     * Authors can create content but have limited management capabilities.
-     * 
-     * @return User A user with Author role
+     * Create a user with Subscriber role.
+     *
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createAuthor(): User
+    protected function createSubscriber(array $attributes = []): User
     {
-        return $this->createUserWithRole('Author');
+        $user = User::factory()->create($attributes);
+        $user->assignRole('Subscriber');
+        return $user->fresh();
     }
 
     /**
-     * Create a Subscriber user.
-     * 
-     * Subscribers have basic access to view content only.
-     * 
-     * @return User A user with Subscriber role
+     * Create a user with multiple roles.
+     *
+     * @param array $roles Array of role names
+     * @param array $attributes Additional user attributes
+     * @return User
      */
-    protected function createSubscriber(): User
+    protected function createUserWithRoles(array $roles, array $attributes = []): User
     {
-        return $this->createUserWithRole('Subscriber');
+        $user = User::factory()->create($attributes);
+        $user->assignRole($roles);
+        return $user->fresh();
     }
 
     /**
-     * Assert that a user has a specific role.
-     * 
-     * This assertion method provides clear error messages when role checks fail.
-     * 
-     * @param User $user The user to check
-     * @param string $roleName The role name to verify
-     * @throws \PHPUnit\Framework\AssertionFailedError If the user doesn't have the role
+     * Create a user with specific permissions (bypassing roles).
+     *
+     * @param array $permissions Array of permission names
+     * @param array $attributes Additional user attributes
+     * @return User
+     */
+    protected function createUserWithPermissions(array $permissions, array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        $user->givePermissionTo($permissions);
+        return $user->fresh();
+    }
+
+    /**
+     * Assert that a user has the expected role.
+     *
+     * @param User $user
+     * @param string $roleName
+     * @return void
      */
     protected function assertUserHasRole(User $user, string $roleName): void
     {
-        $this->assertTrue($user->hasRole($roleName), "User should have role: {$roleName}");
+        $this->assertTrue(
+            $user->hasRole($roleName),
+            "User does not have the '{$roleName}' role."
+        );
     }
 
     /**
-     * Assert that a user has a specific permission.
-     * 
-     * This assertion method provides clear error messages when permission checks fail.
-     * 
-     * @param User $user The user to check
-     * @param string $permission The permission name to verify
-     * @throws \PHPUnit\Framework\AssertionFailedError If the user doesn't have the permission
+     * Assert that a user has the expected permission.
+     *
+     * @param User $user
+     * @param string $permissionName
+     * @return void
      */
-    protected function assertUserHasPermission(User $user, string $permission): void
+    protected function assertUserHasPermission(User $user, string $permissionName): void
     {
-        $this->assertTrue($user->hasPermissionTo($permission), "User should have permission: {$permission}");
+        $this->assertTrue(
+            $user->hasPermissionTo($permissionName),
+            "User does not have the '{$permissionName}' permission."
+        );
     }
 
     /**
-     * Assert that a user lacks a specific permission.
-     * 
-     * This assertion method is useful for testing that users don't have
-     * permissions they shouldn't have.
-     * 
-     * @param User $user The user to check
-     * @param string $permission The permission name to verify absence of
-     * @throws \PHPUnit\Framework\AssertionFailedError If the user has the permission
+     * Assert that a user does not have the specified permission.
+     *
+     * @param User $user
+     * @param string $permissionName
+     * @return void
      */
-    protected function assertUserLacksPermission(User $user, string $permission): void
+    protected function assertUserDoesNotHavePermission(User $user, string $permissionName): void
     {
-        $this->assertFalse($user->hasPermissionTo($permission), "User should not have permission: {$permission}");
+        $this->assertFalse(
+            $user->hasPermissionTo($permissionName),
+            "User should not have the '{$permissionName}' permission."
+        );
     }
 }

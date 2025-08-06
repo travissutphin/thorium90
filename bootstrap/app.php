@@ -82,6 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsureUserHasPermission::class, // Check for specific permission(s)
             'role.any' => EnsureUserHasAnyRole::class,    // Check for any of multiple roles
             'permission.any' => EnsureUserHasAnyPermission::class, // Check for any of multiple permissions
+            'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class, // Password confirmation for sensitive operations
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

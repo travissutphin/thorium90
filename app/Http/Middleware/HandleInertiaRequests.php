@@ -69,16 +69,28 @@ class HandleInertiaRequests extends Middleware
             // This is crucial for the permission system to work correctly
             $user->load(['roles.permissions', 'permissions']);
             
+            // Get arrays of role and permission names (ensure they are proper arrays)
+            $roleNames = array_values($user->roles->pluck('name')->toArray());
+            $permissionNames = array_values($user->getAllPermissions()->pluck('name')->toArray());
+            
             // Build the enhanced user object with permission functionality
             $authUser = [
-                // Include all standard user attributes
-                ...$user->toArray(),
+                // Include basic user attributes (excluding relationships to avoid serialization issues)
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                'provider' => $user->provider,
+                'provider_id' => $user->provider_id,
+                'avatar' => $user->avatar,
                 
                 // Array of role names for easy frontend access
-                'role_names' => $user->roles->pluck('name')->toArray(),
+                'role_names' => $roleNames,
                 
                 // Array of all permission names (including inherited from roles)
-                'permission_names' => $user->getAllPermissions()->pluck('name')->toArray(),
+                'permission_names' => $permissionNames,
                 
                 // Computed boolean properties for common permission checks
                 'is_admin' => $user->hasAnyRole(['Super Admin', 'Admin']),
@@ -89,6 +101,10 @@ class HandleInertiaRequests extends Middleware
                 'two_factor_enabled' => !is_null($user->two_factor_secret),
                 'two_factor_confirmed' => !is_null($user->two_factor_confirmed_at),
                 'has_recovery_codes' => !is_null($user->two_factor_recovery_codes),
+                
+                // Note: Permission checking functions are not included in shared data
+                // as they cannot be serialized. Use permission_names array instead
+                // for frontend permission checks.
             ];
         }
 

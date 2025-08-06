@@ -71,7 +71,9 @@ class UIPermissionTest extends TestCase
                 ->has('auth.user.permission_names')      // Array of permission names
                 ->has('auth.user.is_admin')              // Computed admin property
                 ->where('auth.user.is_admin', true)      // Admin should be true for admin users
-                ->where('auth.user.role_names', fn ($roles) => in_array('Admin', $roles)) // Should have Admin role
+                ->where('auth.user.role_names', fn ($roles) => 
+                    is_array($roles) ? in_array('Admin', $roles) : $roles->contains('Admin')
+                ) // Should have Admin role
         );
     }
 
@@ -151,10 +153,10 @@ class UIPermissionTest extends TestCase
     }
 
     /**
-     * Test that permission checking functions are properly exposed to the frontend.
+     * Test that permission data is properly structured for frontend use.
      * 
-     * This test verifies that the helper functions (can, hasRole, hasPermissionTo)
-     * are correctly shared with the React frontend and can be called from there.
+     * This test verifies that the permission and role arrays are correctly
+     * shared with the React frontend for permission checking.
      */
     public function test_user_permission_functions_work()
     {
@@ -167,11 +169,11 @@ class UIPermissionTest extends TestCase
         // Verify the response is successful
         $response->assertOk();
         
-        // Verify that permission checking functions are available
+        // Verify that permission data is available for frontend permission checking
         $response->assertInertia(fn ($page) => 
-            $page->has('auth.user.can')              // Permission checking function
-                ->has('auth.user.hasRole')           // Role checking function
-                ->has('auth.user.hasPermissionTo')   // Direct permission checking function
+            $page->has('auth.user.role_names')           // Array of role names
+                ->has('auth.user.permission_names')      // Array of permission names
+                ->has('auth.user.is_admin')              // Computed admin property
         );
     }
 
@@ -194,13 +196,17 @@ class UIPermissionTest extends TestCase
         $response->assertOk();
         
         // Verify that editor has the correct permissions
-        $response->assertInertia(fn ($page) => 
-            $page->where('auth.user.permission_names', fn ($permissions) => 
-                in_array('view dashboard', $permissions) &&    // Should have dashboard access
-                in_array('create posts', $permissions) &&      // Should be able to create posts
-                in_array('edit posts', $permissions) &&        // Should be able to edit posts
-                !in_array('view users', $permissions)          // Should NOT have user management access
-            )
-        );
+        $response->assertInertia(function ($page) {
+            $page->where('auth.user.permission_names', function ($permissions) {
+                $hasPermission = function($permission) use ($permissions) {
+                    return is_array($permissions) ? in_array($permission, $permissions) : $permissions->contains($permission);
+                };
+                
+                return $hasPermission('view dashboard') &&    // Should have dashboard access
+                       $hasPermission('create posts') &&      // Should be able to create posts
+                       $hasPermission('edit posts') &&        // Should be able to edit posts
+                       !$hasPermission('view users');         // Should NOT have user management access
+            });
+        });
     }
 }

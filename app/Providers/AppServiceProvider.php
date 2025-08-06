@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 
 /**
  * AppServiceProvider
@@ -206,6 +210,19 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('is-content-creator', function (User $user) {
             return $user->hasAnyRole(['Super Admin', 'Admin', 'Editor', 'Author']);
+        });
+
+        // Configure Rate Limiters
+        // These rate limiters provide security by limiting authentication attempts
+        
+        RateLimiter::for('login', function (Request $request) {
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            
+            return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        RateLimiter::for('two-factor', function (Request $request) {
+            return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
         // Configure Laravel Fortify
