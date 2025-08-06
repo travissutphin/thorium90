@@ -84,6 +84,11 @@ class HandleInertiaRequests extends Middleware
                 'is_admin' => $user->hasAnyRole(['Super Admin', 'Admin']),
                 'is_content_manager' => $user->hasAnyRole(['Super Admin', 'Admin', 'Editor']),
                 'is_content_creator' => $user->hasAnyRole(['Super Admin', 'Admin', 'Editor', 'Author']),
+                
+                // Two-Factor Authentication status
+                'two_factor_enabled' => !is_null($user->two_factor_secret),
+                'two_factor_confirmed' => !is_null($user->two_factor_confirmed_at),
+                'has_recovery_codes' => !is_null($user->two_factor_recovery_codes),
             ];
         }
 

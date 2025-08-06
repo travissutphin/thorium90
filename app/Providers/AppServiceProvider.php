@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Fortify;
 use App\Models\User;
 
 /**
@@ -206,5 +207,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('is-content-creator', function (User $user) {
             return $user->hasAnyRole(['Super Admin', 'Admin', 'Editor', 'Author']);
         });
+
+        // Configure Laravel Fortify
+        // Fortify provides headless authentication services (2FA, email verification, password reset)
+        // while maintaining compatibility with our existing role-based authentication system
+        
+        Fortify::createUsersUsing(\App\Actions\Fortify\CreateNewUser::class);
+        Fortify::updateUserProfileInformationUsing(\App\Actions\Fortify\UpdateUserProfileInformation::class);
+        Fortify::updateUserPasswordsUsing(\App\Actions\Fortify\UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(\App\Actions\Fortify\ResetUserPassword::class);
     }
 }
