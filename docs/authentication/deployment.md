@@ -33,6 +33,12 @@ DB_PORT=3306
 DB_DATABASE=your_database
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
+
+# Email Configuration (Resend)
+MAIL_MAILER=resend
+MAIL_FROM_ADDRESS="noreply@yourdomain.com"
+MAIL_FROM_NAME="${APP_NAME}"
+RESEND_API_KEY=your_production_resend_api_key
 ```
 
 #### Optional Environment Variables
