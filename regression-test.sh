@@ -136,6 +136,7 @@ test_authentication() {
     print_section "🔐 TESTING AUTHENTICATION SYSTEM"
     
     run_test "Authentication tests" "php artisan test tests/Feature/Auth/ --stop-on-failure"
+    run_test "Two-Factor Authentication tests" "php artisan test tests/Feature/TwoFactorAuthenticationTest.php --stop-on-failure"
     run_test "User factory works" "php artisan test tests/Unit/ --stop-on-failure"
 }
 

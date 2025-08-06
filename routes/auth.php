@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Auth\TwoFactorAuthenticationController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +42,12 @@ Route::middleware('guest')->group(function () {
 
     Route::get('auth/{provider}/callback', [SocialLoginController::class, 'handleProviderCallback'])
         ->name('social.callback');
+
+    // Two Factor Authentication Challenge Routes
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.login');
+
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
@@ -62,4 +70,28 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // Two Factor Authentication Management Routes
+    Route::prefix('user/two-factor-authentication')->group(function () {
+        Route::get('/', [TwoFactorAuthenticationController::class, 'show'])
+            ->name('two-factor.show');
+
+        Route::post('/', [TwoFactorAuthenticationController::class, 'store'])
+            ->name('two-factor.enable');
+
+        Route::delete('/', [TwoFactorAuthenticationController::class, 'destroy'])
+            ->name('two-factor.disable');
+
+        Route::get('qr-code', [TwoFactorAuthenticationController::class, 'qrCode'])
+            ->name('two-factor.qr-code');
+
+        Route::get('recovery-codes', [TwoFactorAuthenticationController::class, 'recoveryCodes'])
+            ->name('two-factor.recovery-codes');
+
+        Route::post('recovery-codes', [TwoFactorAuthenticationController::class, 'newRecoveryCodes'])
+            ->name('two-factor.new-recovery-codes');
+
+        Route::post('confirm', [TwoFactorAuthenticationController::class, 'confirm'])
+            ->name('two-factor.confirm');
+    });
 });
