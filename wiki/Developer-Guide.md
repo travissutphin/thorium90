@@ -6,26 +6,27 @@ This guide provides comprehensive technical information for developers working w
 
 ### Overview
 
-The system follows a modern full-stack architecture with Laravel backend and React frontend connected via Inertia.js:
+The system follows a modern full-stack architecture with Laravel backend and React frontend connected via Inertia.js. The authentication system is built on multiple specialized components working together:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Frontend│    │  Inertia.js     │    │  Laravel Backend│
-│                 │◄──►│   Adapter       │◄──►│                 │
-│ - Components    │    │ - Data Sharing  │    │ - Controllers   │
-│ - State Mgmt    │    │ - Navigation    │    │ - Middleware    │
-│ - Permission UI │    │ - SPA Features  │    │ - Models        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   Database      │
-                       │                 │
-                       │ - Users         │
-                       │ - Roles         │
-                       │ - Permissions   │
-                       │ - Pivot Tables  │
-                       └─────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Frontend (React + Inertia.js)             │
+├─────────────────────────────────────────────────────────────────┤
+│                     Authentication Middleware Layer              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
+│  │   Fortify    │  │   Sanctum   │  │  Socialite  │            │
+│  │  (Headless)  │  │ (API/SPA)   │  │   (OAuth)   │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘            │
+├─────────────────────────────────────────────────────────────────┤
+│                    Laravel 12 Core Authentication                │
+│              (Sessions, Guards, Providers, Middleware)           │
+├─────────────────────────────────────────────────────────────────┤
+│                  Spatie Laravel Permission                       │
+│              (Roles, Permissions, Authorization)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                         Database Layer                           │
+│        (Users, Roles, Permissions, Tokens, Social Logins)       │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Components
@@ -47,6 +48,37 @@ The system follows a modern full-stack architecture with Laravel backend and Rea
 - **Data Sharing**: User permissions and roles shared with frontend
 - **Navigation**: SPA-like navigation with server-side rendering
 - **State Management**: Synchronized state between frontend and backend
+
+### Authentication Components Overview
+
+The authentication system leverages multiple Laravel packages, each serving a specific purpose:
+
+#### Laravel 12 Core
+- **Purpose**: Foundation for all authentication features
+- **Features**: Sessions, guards, providers, middleware
+- **Usage**: Always active, provides base authentication functionality
+
+#### Laravel Fortify
+- **Purpose**: Headless authentication backend
+- **Features**: Registration, login, 2FA, password reset, email verification
+- **Usage**: All user authentication flows except social login
+
+#### Laravel Sanctum
+- **Purpose**: API authentication and SPA sessions
+- **Features**: Personal access tokens, SPA authentication, CSRF protection
+- **Usage**: API endpoints, mobile apps, React SPA authentication
+
+#### Laravel Socialite
+- **Purpose**: OAuth/social login integration
+- **Features**: Multiple provider support (Google, GitHub, Facebook, etc.)
+- **Usage**: Social login buttons and OAuth flows
+
+#### Spatie Laravel Permission
+- **Purpose**: Role-based access control (RBAC)
+- **Features**: Roles, permissions, middleware, caching
+- **Usage**: All authorization decisions throughout the application
+
+For detailed information about when and how to use each component, see the [Authentication Architecture](Authentication-Architecture.md) guide.
 
 ## 🔐 Authentication System
 
@@ -618,6 +650,8 @@ php artisan test --coverage
 php artisan test --parallel
 ```
 
+For comprehensive testing procedures, regression testing workflow, and CI/CD integration, see the [Testing Strategy](Testing-Strategy.md) guide.
+
 ## 🔧 Configuration
 
 ### Permission Configuration
@@ -878,4 +912,4 @@ Gate::define('edit-post', function (User $user, Post $post) {
 
 ---
 
-**Need more technical details?** Check out our [API Reference](API-Reference) or [Database Schema](Database-Schema) pages. 
+**Need more technical details?** Check out our [API Reference](API-Reference) or [Database Schema](Database-Schema) pages.

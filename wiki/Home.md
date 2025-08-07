@@ -5,7 +5,10 @@ Welcome to the comprehensive documentation for the **Multi-Role User Authenticat
 ## 🚀 Quick Start
 
 - **[Installation Guide](Installation-Guide)** - Get up and running quickly
-- **[User Guide](User-Guide)** - Learn how to use the system
+- **[Authentication System Summary](Authentication-System-Summary)** - High-level overview of the entire system
+- **[Authentication Architecture](Authentication-Architecture)** - Understand the auth system components
+- **[Authentication Quick Reference](Authentication-Quick-Reference)** - Quick lookup for common tasks
+- **[Testing Strategy](Testing-Strategy)** - Comprehensive testing guide
 - **[Developer Guide](Developer-Guide)** - Technical implementation details
 - **[API Reference](API-Reference)** - Complete API documentation
 - **[Troubleshooting](Troubleshooting)** - Common issues and solutions
@@ -23,7 +26,7 @@ The Multi-Role User Authentication System provides a robust, scalable solution f
 - **Comprehensive Testing**: Full test coverage with PHPUnit
 
 ### Technology Stack
-- **Backend**: Laravel 11 (PHP 8.2+)
+- **Backend**: Laravel 12 (PHP 8.2+)
 - **Frontend**: React 18 with TypeScript
 - **Authentication**: Laravel Breeze + Spatie Laravel Permission
 - **Database**: MySQL/PostgreSQL with migrations
@@ -89,7 +92,7 @@ The Multi-Role User Authentication System provides a robust, scalable solution f
 ### Developer Documentation
 - [Developer Guide](Developer-Guide) - Technical implementation
 - [API Reference](API-Reference) - Complete API documentation
-- [Database Schema](Database-Schema) - Database structure and relationships
+- [Database Schema](Database-Schema) - Complete database schema with all tables
 - [Testing Guide](Testing-Guide) - Running and writing tests
 
 ### Operations
@@ -125,4 +128,4 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ---
 
-**Need help?** Check out our [Support](Support) page or open an [issue](https://github.com/your-username/thorium90/issues) on GitHub. 
+**Need help?** Check out our [Support](Support) page or open an [issue](https://github.com/your-username/thorium90/issues) on GitHub.
