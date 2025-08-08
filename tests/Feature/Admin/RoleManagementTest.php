@@ -284,9 +284,8 @@ class RoleManagementTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => 
             $page->has('permissions')
-                ->where('permissions', fn ($permissions) => 
-                    is_array($permissions) && count($permissions) > 0
-                )
+                ->has('permissions.posts') // Should have posts group
+                ->has('permissions.users') // Should have users group
         );
     }
 

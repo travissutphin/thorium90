@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -78,25 +80,21 @@ class RoleController extends Controller
     /**
      * Store a newly created role.
      */
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name',
-            'permissions' => 'array',
-            'permissions.*' => 'string|exists:permissions,name',
-        ]);
+        $validated = $request->validated();
 
         $role = Role::create([
-            'name' => $request->name,
-            'guard_name' => 'web',
+            'name' => $validated['name'],
+            'guard_name' => $validated['guard_name'],
         ]);
 
-        if ($request->has('permissions')) {
-            $role->givePermissionTo($request->permissions);
+        if (!empty($validated['permissions'])) {
+            $role->givePermissionTo($validated['permissions']);
         }
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role created successfully.');
+            ->with('success', "Role '{$role->name}' created successfully with " . count($validated['permissions']) . " permissions.");
     }
 
     /**
@@ -136,27 +134,37 @@ class RoleController extends Controller
     /**
      * Update the specified role.
      */
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
-            'permissions' => 'array',
-            'permissions.*' => 'string|exists:permissions,name',
-        ]);
+        $validated = $request->validated();
+        $addedPermissions = $request->getAddedPermissions();
+        $removedPermissions = $request->getRemovedPermissions();
 
-        $role->update([
-            'name' => $request->name,
-        ]);
+        // Update role name if changed
+        if ($request->isNameChanging()) {
+            $role->update([
+                'name' => $validated['name'],
+            ]);
+        }
 
         // Sync permissions
-        if ($request->has('permissions')) {
-            $role->syncPermissions($request->permissions);
-        } else {
-            $role->syncPermissions([]);
+        $role->syncPermissions($validated['permissions']);
+
+        // Build success message with details
+        $message = "Role '{$role->name}' updated successfully.";
+        if (!empty($addedPermissions) || !empty($removedPermissions)) {
+            $details = [];
+            if (!empty($addedPermissions)) {
+                $details[] = count($addedPermissions) . " permissions added";
+            }
+            if (!empty($removedPermissions)) {
+                $details[] = count($removedPermissions) . " permissions removed";
+            }
+            $message .= " (" . implode(', ', $details) . ")";
         }
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role updated successfully.');
+            ->with('success', $message);
     }
 
     /**
