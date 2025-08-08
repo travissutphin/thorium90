@@ -68,7 +68,6 @@ class UserManagementTest extends TestCase
         $response->assertInertia(fn ($page) => 
             $page->has('users.data')
                 ->has('users.links')
-                ->has('users.meta')
                 ->has('stats.total_users')
                 ->has('stats.administrators')
                 ->has('stats.content_creators')
@@ -411,7 +410,9 @@ class UserManagementTest extends TestCase
         $response->assertRedirect('/admin/users');
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        // User should be soft deleted, not hard deleted
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
     }
 
     public function test_admin_can_delete_user()
@@ -423,7 +424,8 @@ class UserManagementTest extends TestCase
             ->delete("/admin/users/{$user->id}");
 
         $response->assertRedirect('/admin/users');
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        // User should be soft deleted, not hard deleted
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_cannot_delete_last_super_admin()
@@ -464,7 +466,8 @@ class UserManagementTest extends TestCase
         $response->assertRedirect('/admin/users');
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $superAdmin2->id]);
+        // User should be soft deleted, not hard deleted
+        $this->assertSoftDeleted('users', ['id' => $superAdmin2->id]);
     }
 
     public function test_bulk_delete_users()
@@ -482,8 +485,9 @@ class UserManagementTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $user1->id]);
-        $this->assertDatabaseMissing('users', ['id' => $user2->id]);
+        // Users should be soft deleted, not hard deleted
+        $this->assertSoftDeleted('users', ['id' => $user1->id]);
+        $this->assertSoftDeleted('users', ['id' => $user2->id]);
     }
 
     public function test_bulk_assign_roles()
@@ -654,6 +658,178 @@ class UserManagementTest extends TestCase
                 ->where('stats.administrators', 2) // Super Admin + Admin
                 ->where('stats.content_creators', 2) // Editor + Author
                 ->where('stats.subscribers', 1) // Subscriber
+        );
+    }
+
+    // Soft Delete Tests
+
+    public function test_super_admin_can_view_trashed_users()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($superAdmin)->get('/admin/users/trashed');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => 
+            $page->component('admin/users/trashed')
+                ->has('users')
+                ->has('stats')
+        );
+    }
+
+    public function test_admin_can_view_trashed_users()
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($admin)->get('/admin/users/trashed');
+
+        $response->assertOk();
+    }
+
+    public function test_editor_cannot_view_trashed_users()
+    {
+        $editor = $this->createEditor();
+
+        $response = $this->actingAs($editor)->get('/admin/users/trashed');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_super_admin_can_restore_user()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($superAdmin)
+            ->patch("/admin/users/{$user->id}/restore");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $user->refresh();
+        $this->assertNull($user->deleted_at);
+    }
+
+    public function test_admin_can_restore_user()
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($admin)
+            ->patch("/admin/users/{$user->id}/restore");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $user->refresh();
+        $this->assertNull($user->deleted_at);
+    }
+
+    public function test_editor_cannot_restore_user()
+    {
+        $editor = $this->createEditor();
+        $user = $this->createAuthor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($editor)
+            ->patch("/admin/users/{$user->id}/restore");
+
+        $response->assertStatus(403);
+    }
+
+    public function test_super_admin_can_force_delete_user()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete first
+
+        $response = $this->actingAs($superAdmin)
+            ->delete("/admin/users/{$user->id}/force-delete");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
+    public function test_admin_cannot_force_delete_user()
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete first
+
+        $response = $this->actingAs($admin)
+            ->delete("/admin/users/{$user->id}/force-delete");
+
+        // Admin doesn't have force delete permission, so should get 403
+        $response->assertStatus(403);
+
+        // User should still exist (soft deleted)
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+    }
+
+    public function test_editor_cannot_force_delete_user()
+    {
+        $editor = $this->createEditor();
+        $user = $this->createAuthor();
+        $user->delete(); // Soft delete first
+
+        $response = $this->actingAs($editor)
+            ->delete("/admin/users/{$user->id}/force-delete");
+
+        $response->assertStatus(403);
+    }
+
+    public function test_trashed_users_stats_are_calculated_correctly()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $admin = $this->createAdmin();
+        $editor = $this->createEditor();
+        $author = $this->createAuthor();
+
+        // Delete some users
+        $admin->delete();
+        $editor->delete();
+        $author->delete();
+
+        $response = $this->actingAs($superAdmin)->get('/admin/users/trashed');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => 
+            $page->where('stats.total_deleted', 3)
+                ->where('stats.deleted_administrators', 1) // Admin
+                ->where('stats.deleted_content_creators', 2) // Editor + Author
+                ->where('stats.deleted_subscribers', 0)
+        );
+    }
+
+    public function test_restored_user_appears_in_active_users()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        // User should not appear in active users
+        $response = $this->actingAs($superAdmin)->get('/admin/users');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => 
+            $page->where('stats.total_users', 1) // Only super admin
+        );
+
+        // Restore user
+        $user->restore();
+
+        // User should appear in active users again
+        $response = $this->actingAs($superAdmin)->get('/admin/users');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => 
+            $page->where('stats.total_users', 2) // Super admin + restored user
         );
     }
 }

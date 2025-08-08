@@ -17,6 +17,19 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])->prefix('a
     // User Management Routes
     Route::resource('users', UserController::class)->except(['show']);
     Route::post('/users/bulk-action', [UserController::class, 'bulkAction'])->name('users.bulk-action');
+    
+    // Soft Delete Routes
+    Route::middleware('permission:view users')->group(function () {
+        Route::get('/users/trashed', [UserController::class, 'trashed'])->name('users.trashed');
+    });
+    
+    Route::middleware('permission:restore users')->group(function () {
+        Route::patch('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+    });
+    
+    Route::middleware('permission:force delete users')->group(function () {
+        Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
+    });
 
     // User Role Management Routes
     Route::middleware('permission:manage user roles')->group(function () {

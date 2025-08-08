@@ -1,4 +1,4 @@
-import { CanAccess } from '@/components/CanAccess';
+ import { CanAccess } from '@/components/CanAccess';
 import { UserRoles } from '@/components/RoleBadge';
 import { UserInfo } from '@/components/user-info';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,7 @@ export default function UsersIndex({ users, stats }: Props) {
     const [deletingUser, setDeletingUser] = useState<number | null>(null);
 
     const handleDeleteUser = (userId: number) => {
-        if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        if (confirm('Are you sure you want to delete this user? The user will be moved to the deleted users list and can be restored later.')) {
             setDeletingUser(userId);
             router.delete(`/admin/users/${userId}`, {
                 onFinish: () => setDeletingUser(null),
@@ -114,14 +114,25 @@ export default function UsersIndex({ users, stats }: Props) {
                         <p className="text-muted-foreground">Manage users and their roles</p>
                     </div>
                     
-                    <CanAccess permission="create users">
-                        <Button asChild>
-                            <Link href="/admin/users/create">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add User
-                            </Link>
-                        </Button>
-                    </CanAccess>
+                    <div className="flex gap-2">
+                        <CanAccess permission="view users">
+                            <Button variant="outline" asChild>
+                                <Link href="/admin/users/trashed">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Deleted Users
+                                </Link>
+                            </Button>
+                        </CanAccess>
+                        
+                        <CanAccess permission="create users">
+                            <Button asChild>
+                                <Link href="/admin/users/create">
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add User
+                                </Link>
+                            </Button>
+                        </CanAccess>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}

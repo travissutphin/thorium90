@@ -14,10 +14,12 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->middleware('permission:view users')->only(['index', 'show']);
+        $this->middleware('permission:view users')->only(['index', 'show', 'trashed']);
         $this->middleware('permission:create users')->only(['create', 'store']);
         $this->middleware('permission:edit users')->only(['edit', 'update']);
         $this->middleware('permission:delete users')->only(['destroy']);
+        $this->middleware('permission:restore users')->only(['restore']);
+        $this->middleware('permission:force delete users')->only(['forceDelete']);
     }
 
     /**
@@ -260,10 +262,10 @@ class UserController extends Controller
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        $user->delete();
+        $user->delete(); // This will be a soft delete now
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', 'User deleted successfully. The user can be restored if needed.');
     }
 
     /**
@@ -353,5 +355,86 @@ class UserController extends Controller
         }
 
         return redirect()->back()->with('error', 'Invalid action.');
+    }
+
+    /**
+     * Display a listing of soft-deleted users.
+     */
+    public function trashed()
+    {
+        $users = User::onlyTrashed()
+            ->with(['roles.permissions'])
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20)
+            ->through(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'email_verified_at' => $user->email_verified_at?->toISOString(),
+                    'provider' => $user->provider,
+                    'avatar' => $user->avatar,
+                    'roles' => $user->roles->map(function ($role) {
+                        return [
+                            'id' => $role->id,
+                            'name' => $role->name,
+                            'permissions' => $role->permissions->pluck('name')->toArray(),
+                        ];
+                    }),
+                    'role_names' => $user->roles->pluck('name')->toArray(),
+                    'all_permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+                    'is_social_user' => $user->isSocialUser(),
+                    'avatar_url' => $user->getAvatarUrl(),
+                    'created_at' => $user->created_at->toISOString(),
+                    'updated_at' => $user->updated_at->toISOString(),
+                    'deleted_at' => $user->deleted_at->toISOString(),
+                ];
+            });
+
+        // Get deleted user statistics
+        $stats = [
+            'total_deleted' => User::onlyTrashed()->count(),
+            'deleted_administrators' => User::onlyTrashed()->role(['Super Admin', 'Admin'])->count(),
+            'deleted_content_creators' => User::onlyTrashed()->role(['Editor', 'Author'])->count(),
+            'deleted_subscribers' => User::onlyTrashed()->role('Subscriber')->count(),
+        ];
+
+        return Inertia::render('admin/users/trashed', [
+            'users' => $users,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted user.
+     */
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        
+        $user->restore();
+
+        return redirect()->back()
+            ->with('success', "User '{$user->name}' has been restored successfully.");
+    }
+
+    /**
+     * Permanently delete a user.
+     */
+    public function forceDelete($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        
+        // Additional security check - only Super Admins can force delete
+        if (!auth()->user()->hasRole('Super Admin')) {
+            return redirect()->back()
+                ->with('error', 'Only Super Admins can permanently delete users.');
+        }
+
+        $userName = $user->name;
+        $user->forceDelete();
+
+        return redirect()->back()
+            ->with('success', "User '{$userName}' has been permanently deleted.");
     }
 }
