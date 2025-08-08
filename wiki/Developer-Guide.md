@@ -84,28 +84,35 @@ For detailed information about when and how to use each component, see the [Auth
 
 ### User Model
 
-The core of the authentication system is the `User` model with the `HasRoles` trait:
+The core of the authentication system is the `User` model with the `HasRoles` and `SoftDeletes` traits:
 
 ```php
 <?php
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
         'password',
+        'provider',
+        'provider_id',
+        'avatar',
+        'email_verified_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_recovery_codes',
+        'two_factor_secret',
     ];
 
     protected function casts(): array
@@ -115,6 +122,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Soft delete methods are automatically available
+    // $user->delete() - soft delete
+    // $user->restore() - restore soft deleted user
+    // $user->forceDelete() - permanently delete
+    // User::withTrashed() - include soft deleted users
+    // User::onlyTrashed() - only soft deleted users
 }
 ```
 
@@ -550,6 +564,515 @@ public function users()
     return $this->morphedByMany(User::class, 'model', 'model_has_permissions');
 }
 ```
+
+## 🗑️ Soft Delete Implementation
+
+### Overview
+
+The system implements Laravel's soft delete functionality for user management, providing data safety and recovery options while maintaining referential integrity.
+
+### Database Schema
+
+#### Soft Delete Migration
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->softDeletes();
+            $table->index('deleted_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
+    }
+};
+```
+
+### Controller Implementation
+
+#### UserController Soft Delete Methods
+
+```php
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware(['auth', 'verified']);
+        $this->middleware('permission:view users')->only(['index', 'trashed']);
+        $this->middleware('permission:delete users')->only(['destroy']);
+        $this->middleware('permission:restore users')->only(['restore']);
+        $this->middleware('permission:force delete users')->only(['forceDelete']);
+    }
+
+    /**
+     * Soft delete a user
+     */
+    public function destroy(User $user)
+    {
+        // Security checks
+        if ($user->hasRole('Super Admin')) {
+            $superAdminCount = User::role('Super Admin')->count();
+            if ($superAdminCount <= 1) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'Cannot delete the last Super Admin user.');
+            }
+        }
+
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        $user->delete(); // Soft delete
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully. The user can be restored if needed.');
+    }
+
+    /**
+     * Display soft-deleted users
+     */
+    public function trashed()
+    {
+        $users = User::onlyTrashed()
+            ->with(['roles.permissions'])
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(20);
+
+        $stats = [
+            'total_deleted' => User::onlyTrashed()->count(),
+            'deleted_administrators' => User::onlyTrashed()->role(['Super Admin', 'Admin'])->count(),
+            'deleted_content_creators' => User::onlyTrashed()->role(['Editor', 'Author'])->count(),
+            'deleted_subscribers' => User::onlyTrashed()->role('Subscriber')->count(),
+        ];
+
+        return Inertia::render('admin/users/trashed', [
+            'users' => $users,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted user
+     */
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()->back()
+            ->with('success', "User '{$user->name}' has been restored successfully.");
+    }
+
+    /**
+     * Permanently delete a user (Super Admin only)
+     */
+    public function forceDelete($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        
+        if (!auth()->user()->hasRole('Super Admin')) {
+            return redirect()->back()
+                ->with('error', 'Only Super Admins can permanently delete users.');
+        }
+
+        $userName = $user->name;
+        $user->forceDelete();
+
+        return redirect()->back()
+            ->with('success', "User '{$userName}' has been permanently deleted.");
+    }
+}
+```
+
+### Route Configuration
+
+```php
+<?php
+
+// routes/admin.php
+
+// Standard user management routes
+Route::resource('users', UserController::class)->except(['show']);
+Route::post('/users/bulk-action', [UserController::class, 'bulkAction'])->name('users.bulk-action');
+
+// Soft delete routes with proper permissions
+Route::middleware('permission:view users')->group(function () {
+    Route::get('/users/trashed', [UserController::class, 'trashed'])->name('users.trashed');
+});
+
+Route::middleware('permission:restore users')->group(function () {
+    Route::patch('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+});
+
+Route::middleware('permission:force delete users')->group(function () {
+    Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
+});
+```
+
+### Permission System
+
+#### New Permissions
+
+```php
+// database/seeders/PermissionSeeder.php
+
+$permissions = [
+    // Existing permissions
+    'view users',
+    'create users',
+    'edit users',
+    'delete users',
+    'manage user roles',
+    
+    // New soft delete permissions
+    'restore users',      // Restore soft-deleted users
+    'force delete users', // Permanently delete users (Super Admin only)
+];
+```
+
+#### Role Assignments
+
+```php
+// tests/Traits/WithRoles.php
+
+protected function createAdminRole(): void
+{
+    $role = Role::firstOrCreate(['name' => 'Admin']);
+    
+    $permissions = [
+        'view dashboard',
+        'view users',
+        'create users',
+        'edit users',
+        'delete users',
+        'restore users',  // Admins can restore users
+        'manage user roles',
+        // Note: 'force delete users' is Super Admin only
+    ];
+    
+    $role->syncPermissions($permissions);
+}
+
+protected function createSuperAdminRole(): void
+{
+    $role = Role::firstOrCreate(['name' => 'Super Admin']);
+    
+    // Super Admin gets all permissions including force delete
+    $role->syncPermissions(Permission::all());
+}
+```
+
+### Frontend Implementation
+
+#### Trashed Users Component
+
+```tsx
+// resources/js/pages/admin/users/trashed.tsx
+
+import { CanAccess } from '@/components/CanAccess';
+import { Button } from '@/components/ui/button';
+import { router } from '@inertiajs/react';
+
+interface TrashedUser {
+    id: number;
+    name: string;
+    email: string;
+    deleted_at: string;
+    role_names: string[];
+}
+
+export default function TrashedUsers({ users, stats }) {
+    const handleRestoreUser = (userId: number) => {
+        if (confirm('Are you sure you want to restore this user?')) {
+            router.patch(`/admin/users/${userId}/restore`);
+        }
+    };
+
+    const handleForceDeleteUser = (userId: number) => {
+        if (confirm('Are you sure you want to permanently delete this user? This action cannot be undone!')) {
+            router.delete(`/admin/users/${userId}/force-delete`);
+        }
+    };
+
+    return (
+        <div>
+            <h1>Deleted Users</h1>
+            
+            {users.data.map((user: TrashedUser) => (
+                <div key={user.id} className="user-row deleted">
+                    <div className="user-info">
+                        <h3>{user.name}</h3>
+                        <p>{user.email}</p>
+                        <p>Deleted: {new Date(user.deleted_at).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div className="actions">
+                        <CanAccess permission="restore users">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => handleRestoreUser(user.id)}
+                                className="text-green-600"
+                            >
+                                Restore
+                            </Button>
+                        </CanAccess>
+                        
+                        <CanAccess permission="force delete users">
+                            <Button 
+                                variant="destructive" 
+                                onClick={() => handleForceDeleteUser(user.id)}
+                            >
+                                Permanently Delete
+                            </Button>
+                        </CanAccess>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+```
+
+#### Updated Users Index
+
+```tsx
+// resources/js/pages/admin/users/index.tsx
+
+export default function UsersIndex({ users, stats }) {
+    const handleDeleteUser = (userId: number) => {
+        if (confirm('Are you sure you want to delete this user? The user will be moved to the deleted users list and can be restored later.')) {
+            router.delete(`/admin/users/${userId}`);
+        }
+    };
+
+    return (
+        <div>
+            <div className="header">
+                <h1>User Management</h1>
+                <div className="actions">
+                    <CanAccess permission="view users">
+                        <Button variant="outline" asChild>
+                            <Link href="/admin/users/trashed">
+                                Deleted Users
+                            </Link>
+                        </Button>
+                    </CanAccess>
+                    
+                    <CanAccess permission="create users">
+                        <Button asChild>
+                            <Link href="/admin/users/create">
+                                Add User
+                            </Link>
+                        </Button>
+                    </CanAccess>
+                </div>
+            </div>
+            
+            {/* User list with updated delete behavior */}
+        </div>
+    );
+}
+```
+
+### Testing Implementation
+
+#### Soft Delete Tests
+
+```php
+<?php
+
+namespace Tests\Feature\Admin;
+
+use App\Models\User;
+use Tests\TestCase;
+use Tests\Traits\WithRoles;
+
+class UserSoftDeleteTest extends TestCase
+{
+    use RefreshDatabase, WithRoles;
+
+    public function test_user_is_soft_deleted_not_hard_deleted()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+
+        $response = $this->actingAs($superAdmin)
+            ->delete("/admin/users/{$user->id}");
+
+        $response->assertRedirect('/admin/users');
+        
+        // User should be soft deleted, not hard deleted
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+    }
+
+    public function test_super_admin_can_view_trashed_users()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($superAdmin)->get('/admin/users/trashed');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => 
+            $page->component('admin/users/trashed')
+                ->has('users')
+                ->has('stats')
+        );
+    }
+
+    public function test_super_admin_can_restore_user()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete
+
+        $response = $this->actingAs($superAdmin)
+            ->patch("/admin/users/{$user->id}/restore");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $user->refresh();
+        $this->assertNull($user->deleted_at);
+    }
+
+    public function test_super_admin_can_force_delete_user()
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete first
+
+        $response = $this->actingAs($superAdmin)
+            ->delete("/admin/users/{$user->id}/force-delete");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
+    public function test_admin_cannot_force_delete_user()
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createEditor();
+        $user->delete(); // Soft delete first
+
+        $response = $this->actingAs($admin)
+            ->delete("/admin/users/{$user->id}/force-delete");
+
+        // Admin doesn't have force delete permission
+        $response->assertStatus(403);
+
+        // User should still exist (soft deleted)
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+    }
+}
+```
+
+### Security Considerations
+
+#### Permission-Based Access
+
+```php
+// Only users with appropriate permissions can perform soft delete operations
+$this->middleware('permission:delete users')->only(['destroy']);
+$this->middleware('permission:restore users')->only(['restore']);
+$this->middleware('permission:force delete users')->only(['forceDelete']);
+```
+
+#### Business Logic Protection
+
+```php
+// Prevent deletion of last Super Admin
+if ($user->hasRole('Super Admin')) {
+    $superAdminCount = User::role('Super Admin')->count();
+    if ($superAdminCount <= 1) {
+        return redirect()->back()->with('error', 'Cannot delete the last Super Admin user.');
+    }
+}
+
+// Prevent self-deletion
+if ($user->id === auth()->id()) {
+    return redirect()->back()->with('error', 'You cannot delete your own account.');
+}
+```
+
+### Performance Considerations
+
+#### Database Indexing
+
+```sql
+-- Index on deleted_at for better query performance
+CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+
+-- Composite indexes for role-based queries on soft-deleted users
+CREATE INDEX idx_users_deleted_roles ON users(deleted_at, id);
+```
+
+#### Query Optimization
+
+```php
+// Efficient queries for soft-deleted users
+$trashedUsers = User::onlyTrashed()
+    ->with(['roles:id,name']) // Only load necessary role data
+    ->select(['id', 'name', 'email', 'deleted_at']) // Only select needed columns
+    ->orderBy('deleted_at', 'desc')
+    ->paginate(20);
+
+// Statistics queries with proper indexing
+$stats = [
+    'total_deleted' => User::onlyTrashed()->count(),
+    'deleted_administrators' => User::onlyTrashed()
+        ->whereHas('roles', fn($q) => $q->whereIn('name', ['Super Admin', 'Admin']))
+        ->count(),
+];
+```
+
+### Best Practices
+
+#### Data Integrity
+
+1. **Always use soft deletes** for user records to maintain referential integrity
+2. **Preserve relationships** - soft-deleted users maintain their role and permission associations
+3. **Audit trail** - deletion timestamps provide accountability
+4. **Recovery options** - users can be restored with all their data intact
+
+#### Security
+
+1. **Permission-based access** - different permissions for delete, restore, and force delete
+2. **Role hierarchy** - only Super Admins can permanently delete users
+3. **Business logic protection** - prevent deletion of critical users (last Super Admin, self)
+4. **Confirmation dialogs** - require explicit confirmation for destructive actions
+
+#### User Experience
+
+1. **Clear messaging** - inform users that deletion is reversible
+2. **Visual indicators** - distinguish soft-deleted users in the interface
+3. **Easy recovery** - simple restore process for administrators
+4. **Comprehensive statistics** - show counts of deleted users by role
 
 ## 🧪 Testing
 
