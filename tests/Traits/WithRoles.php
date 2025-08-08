@@ -59,6 +59,8 @@ trait WithRoles
             'create users',
             'edit users',
             'delete users',
+            'restore users',
+            'force delete users',
             'manage user roles',
             
             // Content Management
@@ -125,6 +127,7 @@ trait WithRoles
             'create users',
             'edit users',
             'delete users',
+            'restore users',
             'manage user roles',
             'view posts',
             'create posts',

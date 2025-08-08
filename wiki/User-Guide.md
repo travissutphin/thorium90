@@ -153,10 +153,25 @@ Click your profile picture/name to access:
 2. In the **"Roles"** section, select the appropriate role(s)
 3. Click **"Update User"**
 
-#### Deactivating Users
+#### Deleting Users (Soft Delete)
 1. Find the user in the list
-2. Click the **"Deactivate"** button
+2. Click the **"Delete"** button (trash icon)
 3. Confirm the action
+4. **Note**: Users are soft-deleted and can be restored later
+
+#### Managing Deleted Users
+1. Navigate to **"Deleted Users"** from the Users page
+2. View all soft-deleted users with deletion timestamps
+3. **Restore Users**: Click the restore button to reactivate deleted users
+4. **Permanent Deletion**: Super Admins can permanently delete users (cannot be undone)
+
+#### User Deletion Security Features
+- **Soft Delete by Default**: Users are never permanently deleted unless explicitly forced
+- **Data Preservation**: All user data and relationships remain intact during soft deletion
+- **Audit Trail**: Deletion timestamps and history are maintained
+- **Recovery Options**: Deleted users can be restored with all their data
+- **Super Admin Protection**: Cannot delete the last Super Admin or yourself
+- **Permission-Based**: Only users with appropriate permissions can delete/restore users
 
 ### Role Management
 
@@ -412,4 +427,4 @@ The dashboard provides key metrics based on your role:
 
 ---
 
-**Need more help?** Check out our [FAQ](FAQ) or [Contact Support](Support) for additional assistance. 
+**Need more help?** Check out our [FAQ](FAQ) or [Contact Support](Support) for additional assistance.

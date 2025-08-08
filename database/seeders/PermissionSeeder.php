@@ -60,6 +60,8 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'create users']);
         Permission::create(['name' => 'edit users']);
         Permission::create(['name' => 'delete users']);
+        Permission::create(['name' => 'restore users']);      // Restore soft-deleted users
+        Permission::create(['name' => 'force delete users']); // Permanently delete users
         Permission::create(['name' => 'manage user roles']);
 
         // Content Management Permissions
