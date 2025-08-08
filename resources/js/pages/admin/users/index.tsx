@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Edit, Trash2, Shield } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,47 +21,86 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Mock user data for demonstration
-const mockUsers = [
-    {
-        id: 1,
-        name: 'Test User',
-        email: 'test@example.com',
-        role_names: ['Super Admin'],
-        created_at: '2025-01-01T00:00:00Z',
-    },
-    {
-        id: 2,
-        name: 'Admin User',
-        email: 'admin@example.com',
-        role_names: ['Admin'],
-        created_at: '2025-01-01T00:00:00Z',
-    },
-    {
-        id: 3,
-        name: 'Editor User',
-        email: 'editor@example.com',
-        role_names: ['Editor'],
-        created_at: '2025-01-01T00:00:00Z',
-    },
-    {
-        id: 4,
-        name: 'Author User',
-        email: 'author@example.com',
-        role_names: ['Author'],
-        created_at: '2025-01-01T00:00:00Z',
-    },
-    {
-        id: 5,
-        name: 'Subscriber User',
-        email: 'subscriber@example.com',
-        role_names: ['Subscriber'],
-        created_at: '2025-01-01T00:00:00Z',
-    },
-];
+interface UserRole {
+    id: number;
+    name: string;
+    guard_name: string;
+    permissions: Array<{
+        id: number;
+        name: string;
+        guard_name: string;
+        created_at: string;
+        updated_at: string;
+    }>;
+    created_at: string;
+    updated_at: string;
+}
 
-export default function UsersIndex() {
+interface UserData {
+    id: number;
+    name: string;
+    email: string;
+    email_verified_at: string | null;
+    provider?: string | null;
+    avatar?: string;
+    roles: UserRole[];
+    permissions: Array<{
+        id: number;
+        name: string;
+        guard_name: string;
+        created_at: string;
+        updated_at: string;
+    }>;
+    role_names: string[];
+    all_permissions: string[];
+    is_social_user: boolean;
+    avatar_url: string;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+}
+
+interface Stats {
+    total_users: number;
+    administrators: number;
+    content_creators: number;
+    subscribers: number;
+    verified_users: number;
+    social_users: number;
+}
+
+interface PaginationLink {
+    url?: string;
+    label: string;
+    active: boolean;
+}
+
+interface Props {
+    users: {
+        data: UserData[];
+        links: PaginationLink[];
+        meta: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+    stats: Stats;
+}
+
+export default function UsersIndex({ users, stats }: Props) {
     const { hasPermission } = usePermissions();
+    const [deletingUser, setDeletingUser] = useState<number | null>(null);
+
+    const handleDeleteUser = (userId: number) => {
+        if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            setDeletingUser(userId);
+            router.delete(`/admin/users/${userId}`, {
+                onFinish: () => setDeletingUser(null),
+            });
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -91,7 +131,7 @@ export default function UsersIndex() {
                             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{mockUsers.length}</div>
+                            <div className="text-2xl font-bold">{stats.total_users}</div>
                         </CardContent>
                     </Card>
                     
@@ -100,9 +140,7 @@ export default function UsersIndex() {
                             <CardTitle className="text-sm font-medium">Administrators</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {mockUsers.filter(user => user.role_names.some(role => ['Super Admin', 'Admin'].includes(role))).length}
-                            </div>
+                            <div className="text-2xl font-bold">{stats.administrators}</div>
                         </CardContent>
                     </Card>
                     
@@ -111,9 +149,7 @@ export default function UsersIndex() {
                             <CardTitle className="text-sm font-medium">Content Creators</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {mockUsers.filter(user => user.role_names.some(role => ['Editor', 'Author'].includes(role))).length}
-                            </div>
+                            <div className="text-2xl font-bold">{stats.content_creators}</div>
                         </CardContent>
                     </Card>
                     
@@ -122,9 +158,7 @@ export default function UsersIndex() {
                             <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {mockUsers.filter(user => user.role_names.includes('Subscriber')).length}
-                            </div>
+                            <div className="text-2xl font-bold">{stats.subscribers}</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -137,18 +171,24 @@ export default function UsersIndex() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {mockUsers.map((user) => (
+                            {users.data.map((user) => (
                                 <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                                     <div className="flex items-center gap-4">
                                         <UserInfo 
-                                            user={user as any} 
+                                            user={user} 
                                             showEmail={true} 
                                         />
                                         <div className="flex flex-col gap-2">
                                             <UserRoles roles={user.role_names} />
-                                            <span className="text-xs text-muted-foreground">
-                                                Created: {new Date(user.created_at).toLocaleDateString()}
-                                            </span>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>Created: {new Date(user.created_at).toLocaleDateString()}</span>
+                                                {user.email_verified_at && (
+                                                    <span className="text-green-600">• Verified</span>
+                                                )}
+                                                {user.is_social_user && (
+                                                    <span className="text-blue-600">• Social Login</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -170,7 +210,13 @@ export default function UsersIndex() {
                                         </CanAccess>
                                         
                                         <CanAccess permission="delete users">
-                                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="text-destructive hover:text-destructive"
+                                                onClick={() => handleDeleteUser(user.id)}
+                                                disabled={deletingUser === user.id}
+                                            >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </CanAccess>
@@ -178,6 +224,24 @@ export default function UsersIndex() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Pagination */}
+                        {users.links && users.links.length > 3 && (
+                            <div className="flex justify-center mt-6">
+                                <div className="flex gap-2">
+                                    {users.links.map((link, index) => (
+                                        <Button
+                                            key={index}
+                                            variant={link.active ? "default" : "outline"}
+                                            size="sm"
+                                            disabled={!link.url}
+                                            onClick={() => link.url && router.get(link.url)}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

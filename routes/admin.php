@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserRoleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -14,23 +15,8 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])->prefix('a
     })->name('dashboard');
 
     // User Management Routes
-    Route::middleware('permission:view users')->group(function () {
-        Route::get('/users', function () {
-            return Inertia::render('admin/users/index');
-        })->name('users.index');
-    });
-
-    Route::middleware('permission:create users')->group(function () {
-        Route::get('/users/create', function () {
-            return Inertia::render('admin/users/create');
-        })->name('users.create');
-    });
-
-    Route::middleware('permission:edit users')->group(function () {
-        Route::get('/users/{user}/edit', function () {
-            return Inertia::render('admin/users/edit');
-        })->name('users.edit');
-    });
+    Route::resource('users', UserController::class)->except(['show']);
+    Route::post('/users/bulk-action', [UserController::class, 'bulkAction'])->name('users.bulk-action');
 
     // User Role Management Routes
     Route::middleware('permission:manage user roles')->group(function () {
