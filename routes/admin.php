@@ -45,9 +45,18 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])->prefix('a
 
     // System Settings (Admin+ only)
     Route::middleware('permission:manage settings')->group(function () {
-        Route::get('/settings', function () {
-            return Inertia::render('admin/settings/index');
-        })->name('settings.index');
+        Route::get('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [App\Http\Controllers\Admin\AdminSettingsController::class, 'update'])->name('settings.update');
+        Route::put('/settings/{key}', [App\Http\Controllers\Admin\AdminSettingsController::class, 'updateSingle'])->name('settings.update-single');
+        Route::post('/settings/reset', [App\Http\Controllers\Admin\AdminSettingsController::class, 'reset'])->name('settings.reset');
+        Route::get('/settings/category/{category}', [App\Http\Controllers\Admin\AdminSettingsController::class, 'getByCategory'])->name('settings.category');
+        Route::get('/settings/export', [App\Http\Controllers\Admin\AdminSettingsController::class, 'export'])->name('settings.export');
+        Route::post('/settings/import', [App\Http\Controllers\Admin\AdminSettingsController::class, 'import'])->name('settings.import');
+    });
+
+    // System Statistics (Admin+ only)
+    Route::middleware('permission:view system stats')->group(function () {
+        Route::get('/settings/stats', [App\Http\Controllers\Admin\AdminSettingsController::class, 'stats'])->name('settings.stats');
     });
 });
 

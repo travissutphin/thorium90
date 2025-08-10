@@ -54,10 +54,10 @@ class RoleSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create the five core roles for the system
-        Role::create(['name' => 'Super Admin']);  // Highest level access
-        Role::create(['name' => 'Admin']);        // Administrative access
-        Role::create(['name' => 'Editor']);       // Content management
-        Role::create(['name' => 'Author']);       // Content creation
-        Role::create(['name' => 'Subscriber']);   // Basic access
+        Role::firstOrCreate(['name' => 'Super Admin']);  // Highest level access
+        Role::firstOrCreate(['name' => 'Admin']);        // Administrative access
+        Role::firstOrCreate(['name' => 'Editor']);       // Content management
+        Role::firstOrCreate(['name' => 'Author']);       // Content creation
+        Role::firstOrCreate(['name' => 'Subscriber']);   // Basic access
     }
 }

@@ -75,6 +75,9 @@ trait WithRoles
             // System Administration
             'view dashboard',
             'manage settings',
+            'manage security settings',
+            'view system stats',
+            'view audit logs',
             'manage roles',
             'manage permissions',
             
@@ -141,6 +144,7 @@ trait WithRoles
             'moderate comments',
             'delete comments',
             'manage settings',
+            'view system stats',
         ];
         
         $role->syncPermissions($permissions);
