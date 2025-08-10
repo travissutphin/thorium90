@@ -56,41 +56,44 @@ class PermissionSeeder extends Seeder
 
         // User Management Permissions
         // These permissions control access to user management functionality
-        Permission::create(['name' => 'view users']);
-        Permission::create(['name' => 'create users']);
-        Permission::create(['name' => 'edit users']);
-        Permission::create(['name' => 'delete users']);
-        Permission::create(['name' => 'restore users']);      // Restore soft-deleted users
-        Permission::create(['name' => 'force delete users']); // Permanently delete users
-        Permission::create(['name' => 'manage user roles']);
+        Permission::firstOrCreate(['name' => 'view users']);
+        Permission::firstOrCreate(['name' => 'create users']);
+        Permission::firstOrCreate(['name' => 'edit users']);
+        Permission::firstOrCreate(['name' => 'delete users']);
+        Permission::firstOrCreate(['name' => 'restore users']);      // Restore soft-deleted users
+        Permission::firstOrCreate(['name' => 'force delete users']); // Permanently delete users
+        Permission::firstOrCreate(['name' => 'manage user roles']);
 
         // Content Management Permissions
         // These permissions control access to content creation and management
-        Permission::create(['name' => 'view posts']);
-        Permission::create(['name' => 'create posts']);
-        Permission::create(['name' => 'edit posts']);
-        Permission::create(['name' => 'delete posts']);
-        Permission::create(['name' => 'publish posts']);
-        Permission::create(['name' => 'edit own posts']);    // Limited to user's own content
-        Permission::create(['name' => 'delete own posts']);  // Limited to user's own content
+        Permission::firstOrCreate(['name' => 'view posts']);
+        Permission::firstOrCreate(['name' => 'create posts']);
+        Permission::firstOrCreate(['name' => 'edit posts']);
+        Permission::firstOrCreate(['name' => 'delete posts']);
+        Permission::firstOrCreate(['name' => 'publish posts']);
+        Permission::firstOrCreate(['name' => 'edit own posts']);    // Limited to user's own content
+        Permission::firstOrCreate(['name' => 'delete own posts']);  // Limited to user's own content
 
         // System Management Permissions
         // These permissions control access to system administration features
-        Permission::create(['name' => 'manage settings']);
-        Permission::create(['name' => 'view dashboard']);
-        Permission::create(['name' => 'manage roles']);
-        Permission::create(['name' => 'manage permissions']);
+        Permission::firstOrCreate(['name' => 'manage settings']);
+        Permission::firstOrCreate(['name' => 'view system stats']);
+        Permission::firstOrCreate(['name' => 'manage security settings']);
+        Permission::firstOrCreate(['name' => 'view audit logs']);
+        Permission::firstOrCreate(['name' => 'view dashboard']);
+        Permission::firstOrCreate(['name' => 'manage roles']);
+        Permission::firstOrCreate(['name' => 'manage permissions']);
 
         // Media Management Permissions
         // These permissions control access to media upload and management
-        Permission::create(['name' => 'upload media']);
-        Permission::create(['name' => 'manage media']);
-        Permission::create(['name' => 'delete media']);
+        Permission::firstOrCreate(['name' => 'upload media']);
+        Permission::firstOrCreate(['name' => 'manage media']);
+        Permission::firstOrCreate(['name' => 'delete media']);
 
         // Comment Management Permissions
         // These permissions control access to comment viewing and moderation
-        Permission::create(['name' => 'view comments']);
-        Permission::create(['name' => 'moderate comments']);
-        Permission::create(['name' => 'delete comments']);
+        Permission::firstOrCreate(['name' => 'view comments']);
+        Permission::firstOrCreate(['name' => 'moderate comments']);
+        Permission::firstOrCreate(['name' => 'delete comments']);
     }
 }

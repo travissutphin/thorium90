@@ -565,6 +565,247 @@ public function users()
 }
 ```
 
+## ⚙️ Admin Settings System
+
+### Overview
+
+The Admin Settings system provides comprehensive configuration management for the Multi-Role User Authentication system. It allows administrators to configure system-wide settings across multiple categories with proper permission controls, validation, caching, and audit logging.
+
+### Key Features
+
+- **Category-based Organization**: Settings organized into logical categories
+- **Type-safe Value Handling**: Support for string, integer, boolean, JSON, and array data types
+- **Permission-based Access Control**: Different permission levels for general vs. security settings
+- **Caching for Performance**: Automatic caching with cache invalidation
+- **Import/Export Functionality**: Backup and restore configurations
+- **System Statistics**: Real-time monitoring of system health
+- **Audit Logging**: Track all setting changes for security compliance
+
+### Settings Model
+
+The `Setting` model provides a comprehensive API for managing configuration values:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
+class Setting extends Model
+{
+    // Basic operations
+    public static function get(string $key, $default = null);
+    public static function set(string $key, $value, string $type = 'string', string $category = 'general', ?string $description = null, bool $isPublic = false): Setting;
+    public static function has(string $key): bool;
+    public static function forget(string $key): bool;
+    
+    // Category operations
+    public static function getByCategory(string $category, bool $publicOnly = false);
+    public static function getGroupedByCategory(bool $publicOnly = false);
+    
+    // Filtering
+    public static function getAll(bool $publicOnly = false);
+    
+    // Type casting
+    public function getCastedValue();
+}
+```
+
+### Usage Examples
+
+```php
+// Basic operations
+$appName = Setting::get('app.name', 'Default App');
+Setting::set('app.name', 'My Application', 'string', 'application', 'App name', true);
+
+// Category operations
+$authSettings = Setting::getByCategory('authentication');
+$allSettings = Setting::getGroupedByCategory();
+
+// Type-specific examples
+Setting::set('app.debug', true, 'boolean', 'application');
+Setting::set('auth.login_attempts', 5, 'integer', 'authentication');
+Setting::set('auth.social_providers', ['google', 'github'], 'array', 'authentication');
+Setting::set('email.notification_preferences', ['user_registered' => true], 'json', 'email');
+```
+
+### Settings Categories
+
+1. **Application**: Basic app configuration (name, version, maintenance mode)
+2. **Authentication**: Login, registration, and security settings
+3. **User Management**: User account and profile settings
+4. **Security**: Password policies, 2FA, IP whitelisting, audit logging
+5. **Email**: Email configuration and templates
+6. **Features**: Feature toggles and experimental features
+7. **System**: System-level configuration (caching, logging, performance)
+
+### Controller Implementation
+
+```php
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class AdminSettingsController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware(['auth', 'verified']);
+        $this->middleware('permission:manage settings')->except(['stats']);
+        $this->middleware('permission:view system stats')->only(['stats']);
+    }
+
+    public function index()
+    {
+        $settings = Setting::getGroupedByCategory();
+        $stats = $this->getSystemStats();
+        
+        return Inertia::render('admin/settings/index', [
+            'settings' => $settings,
+            'stats' => $stats,
+            'categories' => $this->getSettingsCategories(),
+        ]);
+    }
+
+    public function update(Request $request)
+    {
+        $settings = $request->input('settings', []);
+        $this->validateSettings($settings);
+        
+        foreach ($settings as $key => $data) {
+            // Security settings require special permission
+            if (str_starts_with($key, 'security.') && !auth()->user()->can('manage security settings')) {
+                continue;
+            }
+            
+            Setting::set($key, $data['value'], $data['type'], $data['category'], $data['description'], $data['is_public']);
+            $this->logSettingChange($key, $data['value']);
+        }
+        
+        return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+}
+```
+
+### Frontend Integration
+
+```tsx
+// React component for settings management
+export default function AdminSettingsIndex({ settings, categories, stats }) {
+    const [formData, setFormData] = useState(settings);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const handleSettingChange = (category: string, key: string, value: unknown) => {
+        setFormData(prev => ({
+            ...prev,
+            [category]: {
+                ...prev[category],
+                [key]: { ...prev[category][key], value }
+            }
+        }));
+        setHasChanges(true);
+    };
+
+    const renderSettingInput = (category: string, key: string, setting: Setting) => {
+        switch (setting.type) {
+            case 'boolean':
+                return (
+                    <Switch
+                        checked={setting.value}
+                        onCheckedChange={(checked) => handleSettingChange(category, key, checked)}
+                    />
+                );
+            case 'integer':
+                return (
+                    <Input
+                        type="number"
+                        value={setting.value}
+                        onChange={(e) => handleSettingChange(category, key, parseInt(e.target.value))}
+                    />
+                );
+            // ... other types
+        }
+    };
+
+    return (
+        <AdminLayout>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                {/* Settings form with category tabs */}
+            </Tabs>
+        </AdminLayout>
+    );
+}
+```
+
+### Permissions
+
+The system uses granular permissions:
+
+- **manage settings**: Basic settings management (Admin+)
+- **view system stats**: View system statistics (Admin+)
+- **manage security settings**: Manage security settings (Super Admin only)
+- **view audit logs**: View audit logs (Admin+)
+
+### Caching Strategy
+
+Settings are automatically cached for performance:
+
+```php
+// Automatic caching with 24-hour expiration
+$value = Setting::get('app.name'); // Cached after first access
+
+// Cache invalidation on updates
+Setting::set('app.name', 'New Name'); // Automatically clears cache
+
+// Manual cache operations
+Setting::clearCache(); // Clear all settings cache
+```
+
+### Testing
+
+Comprehensive test coverage includes:
+
+```php
+public function test_admin_can_update_settings()
+{
+    $admin = $this->createAdmin();
+
+    $response = $this->actingAs($admin)
+        ->put('/admin/settings', [
+            'settings' => [
+                'app.name' => [
+                    'value' => 'Updated Name',
+                    'type' => 'string',
+                    'category' => 'application'
+                ]
+            ]
+        ]);
+
+    $response->assertRedirect();
+    $this->assertEquals('Updated Name', Setting::get('app.name'));
+}
+
+public function test_security_settings_require_special_permission()
+{
+    $admin = $this->createAdmin();
+
+    $response = $this->actingAs($admin)
+        ->put('/admin/settings/security.password_min_length', [
+            'value' => 12,
+            'type' => 'integer'
+        ]);
+
+    $response->assertStatus(403);
+}
+```
+
 ## 🗑️ Soft Delete Implementation
 
 ### Overview
