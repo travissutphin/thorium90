@@ -1,240 +1,643 @@
 # Developer Guide
 
-This guide provides comprehensive technical information for developers working with the Multi-Role User Authentication System.
+## 🚨 **IMPORTANT: Start Here First**
 
-## 🏗️ System Architecture
+**BEFORE reading this guide, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
 
-### Overview
+This ensures you understand the system architecture and patterns before diving into technical details.
 
-The system follows a modern full-stack architecture with Laravel backend and React frontend connected via Inertia.js. The authentication system is built on multiple specialized components working together:
+## Overview
+
+This guide provides technical implementation details for developers working with the Thorium90 CMS. It covers architecture, code organization, development patterns, and extension points.
+
+## Architecture Overview
+
+### Technology Stack
+
+**Backend:**
+- **Laravel 11**: PHP framework with Eloquent ORM
+- **Spatie Laravel Permission**: Role and permission management
+- **Laravel Sanctum**: API authentication
+- **Laravel Fortify**: Authentication scaffolding
+- **Inertia.js**: Server-side rendering adapter
+
+**Frontend:**
+- **React 18**: UI library with hooks
+- **TypeScript**: Type-safe JavaScript
+- **Inertia.js**: SPA-like experience without API
+- **Tailwind CSS**: Utility-first CSS framework
+- **Vite**: Build tool and dev server
+
+**Database:**
+- **MySQL/PostgreSQL**: Primary database
+- **SQLite**: Development and testing
+- **Redis**: Caching and sessions (production)
+
+### Directory Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend (React + Inertia.js)             │
-├─────────────────────────────────────────────────────────────────┤
-│                     Authentication Middleware Layer              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │   Fortify    │  │   Sanctum   │  │  Socialite  │            │
-│  │  (Headless)  │  │ (API/SPA)   │  │   (OAuth)   │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│                    Laravel 12 Core Authentication                │
-│              (Sessions, Guards, Providers, Middleware)           │
-├─────────────────────────────────────────────────────────────────┤
-│                  Spatie Laravel Permission                       │
-│              (Roles, Permissions, Authorization)                 │
-├─────────────────────────────────────────────────────────────────┤
-│                         Database Layer                           │
-│        (Users, Roles, Permissions, Tokens, Social Logins)       │
-└─────────────────────────────────────────────────────────────────┘
+thorium90/
+├── app/
+│   ├── Http/Controllers/          # Request handlers
+│   │   ├── Admin/                 # Admin-specific controllers
+│   │   ├── Auth/                  # Authentication controllers
+│   │   └── PageController.php     # Content management
+│   ├── Models/                    # Eloquent models
+│   │   ├── User.php              # User model with roles
+│   │   ├── Page.php              # Content pages
+│   │   └── Setting.php           # System settings
+│   ├── Middleware/               # HTTP middleware
+│   ├── Providers/                # Service providers
+│   └── Actions/                  # Business logic actions
+├── database/
+│   ├── migrations/               # Database schema
+│   ├── seeders/                  # Data seeders
+│   └── factories/                # Model factories
+├── resources/
+│   ├── js/                       # React frontend
+│   │   ├── components/           # Reusable components
+│   │   ├── pages/                # Inertia pages
+│   │   ├── layouts/              # Page layouts
+│   │   └── types/                # TypeScript definitions
+│   └── views/                    # Blade templates
+├── routes/
+│   ├── web.php                   # Web routes
+│   ├── api.php                   # API routes
+│   ├── admin.php                 # Admin routes
+│   └── auth.php                  # Authentication routes
+├── tests/
+│   ├── Feature/                  # Integration tests
+│   └── Unit/                     # Unit tests
+└── wiki/                         # Documentation
 ```
 
-### Key Components
+## Core Components
 
-#### Backend (Laravel)
-- **Models**: User, Role, Permission with relationships
-- **Middleware**: Route protection and permission checking
-- **Controllers**: Business logic and API endpoints
-- **Gates**: Laravel authorization system integration
-- **Seeders**: Database initialization and testing data
+### Authentication System
 
-#### Frontend (React)
-- **Components**: Reusable UI components with permission checks
-- **Hooks**: Custom hooks for permission management
-- **Context**: Global state management for user data
-- **Routes**: Protected routes and navigation
-
-#### Integration (Inertia.js)
-- **Data Sharing**: User permissions and roles shared with frontend
-- **Navigation**: SPA-like navigation with server-side rendering
-- **State Management**: Synchronized state between frontend and backend
-
-### Authentication Components Overview
-
-The authentication system leverages multiple Laravel packages, each serving a specific purpose:
-
-#### Laravel 12 Core
-- **Purpose**: Foundation for all authentication features
-- **Features**: Sessions, guards, providers, middleware
-- **Usage**: Always active, provides base authentication functionality
-
-#### Laravel Fortify
-- **Purpose**: Headless authentication backend
-- **Features**: Registration, login, 2FA, password reset, email verification
-- **Usage**: All user authentication flows except social login
-
-#### Laravel Sanctum
-- **Purpose**: API authentication and SPA sessions
-- **Features**: Personal access tokens, SPA authentication, CSRF protection
-- **Usage**: API endpoints, mobile apps, React SPA authentication
-
-#### Laravel Socialite
-- **Purpose**: OAuth/social login integration
-- **Features**: Multiple provider support (Google, GitHub, Facebook, etc.)
-- **Usage**: Social login buttons and OAuth flows
-
-#### Spatie Laravel Permission
-- **Purpose**: Role-based access control (RBAC)
-- **Features**: Roles, permissions, middleware, caching
-- **Usage**: All authorization decisions throughout the application
-
-For detailed information about when and how to use each component, see the [Authentication Architecture](Authentication-Architecture.md) guide.
-
-## 🔐 Authentication System
-
-### User Model
-
-The core of the authentication system is the `User` model with the `HasRoles` and `SoftDeletes` traits:
+#### User Model
 
 ```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Permission\Traits\HasRoles;
-
+// app/Models/User.php
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, SoftDeletes;
-
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
+    
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'provider',
-        'provider_id',
-        'avatar',
-        'email_verified_at',
+        'name', 'email', 'password', 'provider', 'provider_id', 'avatar'
     ];
-
+    
     protected $hidden = [
-        'password',
-        'remember_token',
-        'two_factor_recovery_codes',
-        'two_factor_secret',
+        'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'
     ];
-
-    protected function casts(): array
+    
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'two_factor_confirmed_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+    
+    // Relationships
+    public function pages()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Page::class);
     }
-
-    // Soft delete methods are automatically available
-    // $user->delete() - soft delete
-    // $user->restore() - restore soft deleted user
-    // $user->forceDelete() - permanently delete
-    // User::withTrashed() - include soft deleted users
-    // User::onlyTrashed() - only soft deleted users
 }
 ```
 
-### Available Methods
+#### Permission System
 
-The `HasRoles` trait provides these key methods:
+The system uses Spatie Laravel Permission with these key concepts:
+
+**Roles:**
+- Super Admin (all permissions)
+- Admin (most permissions except system settings)
+- Editor (content management)
+- Author (own content only)
+- Subscriber (basic access)
+
+**Permission Categories:**
+- User Management: `view users`, `create users`, `edit users`, `delete users`
+- Content Management: `view pages`, `create pages`, `edit pages`, `delete pages`, `publish pages`
+- Settings: `manage settings`, `view system stats`
+- Media: `upload media`, `manage media`
+
+#### Middleware Integration
 
 ```php
-// Role checking
-$user->hasRole('Admin');
-$user->hasAnyRole(['Admin', 'Editor']);
-$user->hasAllRoles(['Admin', 'Editor']);
+// routes/admin.php
+Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Admin routes
+    });
 
-// Permission checking
-$user->hasPermissionTo('create pages');
-$user->hasAnyPermission(['create pages', 'edit pages']);
-$user->hasAllPermissions(['create pages', 'edit pages']);
-
-// Role assignment
-$user->assignRole('Admin');
-$user->syncRoles(['Admin', 'Editor']);
-$user->removeRole('Editor');
-
-// Permission assignment
-$user->givePermissionTo('create pages');
-$user->syncPermissions(['create pages', 'edit pages']);
-$user->revokePermissionTo('create pages');
-
-// Getting all permissions (including inherited)
-$user->getAllPermissions();
-$user->getDirectPermissions();
-$user->getPermissionsViaRoles();
+Route::middleware(['auth', 'verified', 'permission:create pages'])
+    ->group(function () {
+        // Protected routes
+    });
 ```
 
-## 🛡️ Middleware System
+### Content Management System
 
-### Route Protection
-
-The system provides four middleware classes for route protection:
-
-#### 1. EnsureUserHasRole
+#### Page Model
 
 ```php
-// Protect routes requiring specific role(s)
-Route::middleware(['auth', 'role:Admin'])->group(function () {
-    Route::get('/admin', [AdminController::class, 'index']);
-});
-
-// Multiple roles (OR logic)
-Route::middleware(['auth', 'role:Admin,Editor'])->group(function () {
-    Route::get('/content', [ContentController::class, 'index']);
-});
-```
-
-#### 2. EnsureUserHasPermission
-
-```php
-// Protect routes requiring specific permission(s)
-Route::middleware(['auth', 'permission:create pages'])->group(function () {
-    Route::post('/content/pages', [PageController::class, 'store']);
-});
-
-// Multiple permissions (AND logic)
-Route::middleware(['auth', 'permission:create pages,edit pages'])->group(function () {
-    Route::get('/content/pages/manage', [PageController::class, 'manage']);
-});
-```
-
-#### 3. EnsureUserHasAnyRole
-
-```php
-// Protect routes requiring any of multiple roles
-Route::middleware(['auth', 'role.any:Admin,Editor'])->group(function () {
-    Route::get('/content/manage', [ContentController::class, 'manage']);
-});
-```
-
-#### 4. EnsureUserHasAnyPermission
-
-```php
-// Protect routes requiring any of multiple permissions
-Route::middleware(['auth', 'permission.any:create-posts,edit-posts'])->group(function () {
-    Route::get('/posts', [PostController::class, 'index']);
-});
-```
-
-### Middleware Implementation
-
-```php
-<?php
-
-namespace App\Http\Middleware;
-
-use Closure;
-use Illuminate\Http\Request;
-
-class EnsureUserHasRole
+// app/Models/Page.php
+class Page extends Model
 {
-    public function handle(Request $request, Closure $next, string ...$roles): Response
+    use HasFactory, SoftDeletes;
+    
+    protected $fillable = [
+        'title', 'slug', 'content', 'excerpt', 'status', 'is_featured',
+        'meta_title', 'meta_description', 'meta_keywords',
+        'schema_type', 'schema_data', 'user_id', 'published_at'
+    ];
+    
+    protected $casts = [
+        'is_featured' => 'boolean',
+        'schema_data' => 'array',
+        'published_at' => 'datetime',
+    ];
+    
+    // Scopes
+    public function scopePublished($query)
     {
-        if (!$request->user()) {
-            return redirect()->route('login');
-        }
+        return $query->where('status', 'published')
+                    ->whereNotNull('published_at')
+                    ->where('published_at', '<=', now());
+    }
+    
+    // SEO Methods
+    public function getMetaTitle()
+    {
+        return $this->meta_title ?: $this->title;
+    }
+    
+    // Schema.org generation
+    public function generateSchema()
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => $this->schema_type ?: 'WebPage',
+            'name' => $this->title,
+            'description' => $this->meta_description,
+            'author' => ['@type' => 'Person', 'name' => $this->user->name],
+            'datePublished' => $this->published_at?->toISOString(),
+            'dateModified' => $this->updated_at->toISOString(),
+        ];
+    }
+}
+```
 
-        if (!$request->user()->hasAnyRole($roles)) {
-            abort(403, 'You do not have the required role to access this resource.');
+#### Page Controller Pattern
+
+```php
+// app/Http/Controllers/PageController.php
+class PageController extends Controller
+{
+    public function store(Request $request)
+    {
+        $this->authorize('create pages');
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:pages,slug',
+            'content' => 'nullable|string',
+            'status' => 'required|in:draft,published,private',
+            // ... other fields
+        ]);
+        
+        // Auto-generate slug if not provided
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['title']);
+        }
+        
+        // Ensure unique slug
+        $validated['slug'] = $this->ensureUniqueSlug($validated['slug']);
+        
+        // Set published timestamp
+        if ($validated['status'] === 'published') {
+            $validated['published_at'] = now();
+        }
+        
+        $validated['user_id'] = Auth::id();
+        
+        $page = Page::create($validated);
+        
+        return redirect()->route('content.pages.index')
+                        ->with('success', 'Page created successfully.');
+    }
+    
+    private function ensureUniqueSlug($slug, $excludeId = null)
+    {
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (Page::where('slug', $slug)
+                  ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+                  ->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        return $slug;
+    }
+}
+```
+
+### Frontend Architecture
+
+#### Inertia.js Integration
+
+```typescript
+// resources/js/app.tsx
+import { createInertiaApp } from '@inertiajs/react'
+import { createRoot } from 'react-dom/client'
+
+createInertiaApp({
+    title: (title) => `${title} - Thorium90 CMS`,
+    resolve: (name) => {
+        const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
+        return pages[`./pages/${name}.tsx`]
+    },
+    setup({ el, App, props }) {
+        const root = createRoot(el)
+        root.render(<App {...props} />)
+    },
+})
+```
+
+#### TypeScript Definitions
+
+```typescript
+// resources/js/types/index.ts
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    roles: string[];
+    permissions: string[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Page {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    excerpt?: string;
+    status: 'draft' | 'published' | 'private';
+    is_featured: boolean;
+    meta_title?: string;
+    meta_description?: string;
+    meta_keywords?: string;
+    schema_type: string;
+    user: User;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PageData<T = {}> {
+    component: string;
+    props: T & {
+        auth: {
+            user: User;
+        };
+        flash: {
+            success?: string;
+            error?: string;
+        };
+    };
+    url: string;
+    version: string;
+}
+```
+
+#### Component Patterns
+
+```tsx
+// resources/js/pages/content/pages/create.tsx
+import { useForm } from '@inertiajs/react'
+import { FormEventHandler } from 'react'
+import AppLayout from '@/layouts/AppLayout'
+
+interface Props {
+    schemaTypes: Record<string, string>;
+}
+
+export default function CreatePage({ schemaTypes }: Props) {
+    const { data, setData, post, processing, errors } = useForm({
+        title: '',
+        slug: '',
+        content: '',
+        status: 'draft' as const,
+        is_featured: false,
+        meta_title: '',
+        meta_description: '',
+        schema_type: 'WebPage',
+    })
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault()
+        post(route('content.pages.store'))
+    }
+
+    return (
+        <AppLayout title="Create Page">
+            <form onSubmit={submit} className="space-y-6">
+                <div>
+                    <label htmlFor="title">Title</label>
+                    <input
+                        id="title"
+                        type="text"
+                        value={data.title}
+                        onChange={(e) => setData('title', e.target.value)}
+                        className="mt-1 block w-full"
+                        required
+                    />
+                    {errors.title && <div className="text-red-600">{errors.title}</div>}
+                </div>
+                
+                {/* More form fields... */}
+                
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="btn btn-primary"
+                >
+                    {processing ? 'Creating...' : 'Create Page'}
+                </button>
+            </form>
+        </AppLayout>
+    )
+}
+```
+
+## Development Patterns
+
+### Service Layer Pattern
+
+```php
+// app/Services/PageService.php
+class PageService
+{
+    public function createPage(array $data, User $user): Page
+    {
+        $data['user_id'] = $user->id;
+        $data['slug'] = $this->generateUniqueSlug($data['title'], $data['slug'] ?? null);
+        
+        if ($data['status'] === 'published') {
+            $data['published_at'] = now();
+        }
+        
+        return Page::create($data);
+    }
+    
+    public function generateSitemap(): Collection
+    {
+        return Page::published()
+                  ->select(['slug', 'updated_at', 'created_at'])
+                  ->orderBy('updated_at', 'desc')
+                  ->get();
+    }
+    
+    private function generateUniqueSlug(string $title, ?string $slug = null): string
+    {
+        $baseSlug = $slug ?: Str::slug($title);
+        $slug = $baseSlug;
+        $counter = 1;
+        
+        while (Page::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        return $slug;
+    }
+}
+```
+
+### Repository Pattern (Optional)
+
+```php
+// app/Repositories/PageRepository.php
+interface PageRepositoryInterface
+{
+    public function findPublished(): Collection;
+    public function findBySlug(string $slug): ?Page;
+    public function create(array $data): Page;
+    public function update(Page $page, array $data): bool;
+}
+
+class PageRepository implements PageRepositoryInterface
+{
+    public function findPublished(): Collection
+    {
+        return Page::published()->with('user')->get();
+    }
+    
+    public function findBySlug(string $slug): ?Page
+    {
+        return Page::where('slug', $slug)->first();
+    }
+    
+    // ... other methods
+}
+```
+
+### Event-Driven Architecture
+
+```php
+// app/Events/PagePublished.php
+class PagePublished
+{
+    public function __construct(public Page $page) {}
+}
+
+// app/Listeners/UpdateSitemap.php
+class UpdateSitemap
+{
+    public function handle(PagePublished $event): void
+    {
+        // Regenerate sitemap
+        Cache::forget('sitemap');
+    }
+}
+
+// app/Providers/EventServiceProvider.php
+protected $listen = [
+    PagePublished::class => [
+        UpdateSitemap::class,
+    ],
+];
+```
+
+## Testing Strategy
+
+### Feature Tests
+
+```php
+// tests/Feature/Content/PageManagementTest.php
+class PageManagementTest extends TestCase
+{
+    use RefreshDatabase, WithRoles;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed([RoleSeeder::class, PermissionSeeder::class]);
+    }
+
+    /** @test */
+    public function admin_can_create_page_with_seo_data()
+    {
+        $admin = $this->createUserWithRole('Admin');
+        
+        $pageData = [
+            'title' => 'Test Page',
+            'slug' => 'test-page',
+            'content' => 'Test content',
+            'status' => 'draft',
+            'meta_title' => 'SEO Title',
+            'meta_description' => 'SEO Description',
+        ];
+        
+        $response = $this->actingAs($admin)
+                         ->post('/content/pages', $pageData);
+        
+        $response->assertRedirect('/content/pages');
+        $this->assertDatabaseHas('pages', [
+            'slug' => 'test-page',
+            'user_id' => $admin->id,
+        ]);
+    }
+}
+```
+
+### Unit Tests
+
+```php
+// tests/Unit/Models/PageTest.php
+class PageTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function it_generates_schema_markup_correctly()
+    {
+        $user = User::factory()->create();
+        $page = Page::factory()->create([
+            'title' => 'Test Page',
+            'schema_type' => 'Article',
+            'user_id' => $user->id,
+        ]);
+
+        $schema = $page->generateSchema();
+
+        $this->assertEquals('https://schema.org', $schema['@context']);
+        $this->assertEquals('Article', $schema['@type']);
+        $this->assertEquals('Test Page', $schema['name']);
+    }
+}
+```
+
+## API Development
+
+### API Controllers
+
+```php
+// app/Http/Controllers/Api/PageController.php
+class PageController extends Controller
+{
+    public function index(Request $request)
+    {
+        $pages = Page::query()
+            ->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($request->search, fn($q, $search) => 
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+            )
+            ->with('user:id,name')
+            ->paginate($request->per_page ?? 15);
+
+        return response()->json([
+            'success' => true,
+            'data' => $pages->items(),
+            'meta' => [
+                'current_page' => $pages->currentPage(),
+                'last_page' => $pages->lastPage(),
+                'per_page' => $pages->perPage(),
+                'total' => $pages->total(),
+            ],
+        ]);
+    }
+}
+```
+
+### API Resources
+
+```php
+// app/Http/Resources/PageResource.php
+class PageResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'content' => $this->when($request->routeIs('api.pages.show'), $this->content),
+            'excerpt' => $this->excerpt,
+            'status' => $this->status,
+            'is_featured' => $this->is_featured,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
+            'author' => new UserResource($this->whenLoaded('user')),
+            'published_at' => $this->published_at?->toISOString(),
+            'created_at' => $this->created_at->toISOString(),
+            'updated_at' => $this->updated_at->toISOString(),
+        ];
+    }
+}
+```
+
+## Extension Points
+
+### Custom Permissions
+
+```php
+// database/seeders/CustomPermissionSeeder.php
+class CustomPermissionSeeder extends Seeder
+{
+    public function run()
+    {
+        $permissions = [
+            'manage custom feature',
+            'view analytics',
+            'export data',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+    }
+}
+```
+
+### Custom Middleware
+
+```php
+// app/Http/Middleware/CheckCustomPermission.php
+class CheckCustomPermission
+{
+    public function handle(Request $request, Closure $next, string $permission)
+    {
+        if (!$request->user()?->can($permission)) {
+            abort(403, 'Insufficient permissions');
         }
 
         return $next($request);
@@ -242,1438 +645,251 @@ class EnsureUserHasRole
 }
 ```
 
-## 🚪 Laravel Gates
-
-### Gate Definitions
-
-The system defines comprehensive Gates in `AppServiceProvider`:
+### Custom Models
 
 ```php
-public function boot(): void
+// app/Models/CustomContent.php
+class CustomContent extends Model
 {
-    // User Management Gates
-    Gate::define('view-users', function (User $user) {
-        return $user->hasPermissionTo('view users');
-    });
-
-    Gate::define('create-users', function (User $user) {
-        return $user->hasPermissionTo('create users');
-    });
-
-    // Content Management Gates
-    Gate::define('create-posts', function (User $user) {
-        return $user->hasPermissionTo('create posts');
-    });
-
-    Gate::define('edit-posts', function (User $user) {
-        return $user->hasPermissionTo('edit posts');
-    });
-
-    // Own Content Gates
-    Gate::define('edit-own-posts', function (User $user, $post = null) {
-        if ($user->hasPermissionTo('edit posts')) {
-            return true; // Can edit any post
-        }
-        
-        if ($user->hasPermissionTo('edit own posts')) {
-            return $post ? $post->user_id === $user->id : true;
-        }
-        
-        return false;
-    });
-
-    // Role-based Gates
-    Gate::define('is-admin', function (User $user) {
-        return $user->hasAnyRole(['Super Admin', 'Admin']);
-    });
-
-    Gate::define('is-content-creator', function (User $user) {
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'Editor', 'Author']);
-    });
-}
-```
-
-### Using Gates
-
-```php
-// In controllers
-if (Gate::allows('edit-posts', $post)) {
-    // User can edit this post
-}
-
-// In blade templates
-@can('create-users')
-    <button>Create User</button>
-@endcan
-
-// In policies
-public function update(User $user, Post $post)
-{
-    return Gate::allows('edit-own-posts', $post);
-}
-```
-
-## 🔄 Frontend Integration
-
-### Inertia.js Data Sharing
-
-The `HandleInertiaRequests` middleware shares user data with the frontend:
-
-```php
-public function share(Request $request): array
-{
-    $user = $request->user();
-    $authUser = null;
-
-    if ($user) {
-        $user->load(['roles.permissions', 'permissions']);
-        
-        $authUser = [
-            ...$user->toArray(),
-            
-            // Permission checking functions
-            'can' => function (string $permission) use ($user) {
-                return $user->hasPermissionTo($permission);
-            },
-            'hasRole' => function (string $role) use ($user) {
-                return $user->hasRole($role);
-            },
-            'hasAnyRole' => function (array $roles) use ($user) {
-                return $user->hasAnyRole($roles);
-            },
-            
-            // Arrays for easy access
-            'role_names' => $user->roles->pluck('name')->toArray(),
-            'permission_names' => $user->getAllPermissions()->pluck('name')->toArray(),
-            
-            // Computed properties
-            'is_admin' => $user->hasAnyRole(['Super Admin', 'Admin']),
-            'is_content_creator' => $user->hasAnyRole(['Super Admin', 'Admin', 'Editor', 'Author']),
-        ];
-    }
-
-    return [
-        'auth' => ['user' => $authUser],
-        // ... other shared data
-    ];
-}
-```
-
-### React Components
-
-#### Permission Checking
-
-```tsx
-import { usePage } from '@inertiajs/react';
-
-interface User {
-  can: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
-  hasAnyRole: (roles: string[]) => boolean;
-  is_admin: boolean;
-  is_content_creator: boolean;
-  role_names: string[];
-  permission_names: string[];
-}
-
-export default function PostEditor() {
-  const { auth } = usePage().props;
-  const user = auth.user as User;
-
-  if (!user.can('edit-posts')) {
-    return <div>Access denied</div>;
-  }
-
-  return (
-    <div>
-      <h1>Edit Post</h1>
-      {/* Editor content */}
-    </div>
-  );
-}
-```
-
-#### Conditional Rendering
-
-```tsx
-export default function Navigation() {
-  const { auth } = usePage().props;
-  const user = auth.user as User;
-
-  return (
-    <nav>
-      <Link href="/dashboard">Dashboard</Link>
-      
-      {user.can('create-posts') && (
-        <Link href="/posts/create">Create Post</Link>
-      )}
-      
-      {user.is_admin && (
-        <Link href="/admin">Admin Panel</Link>
-      )}
-      
-      {user.hasAnyRole(['Admin', 'Editor']) && (
-        <Link href="/content/manage">Manage Content</Link>
-      )}
-    </nav>
-  );
-}
-```
-
-#### Custom Hooks
-
-```tsx
-// hooks/usePermissions.ts
-import { usePage } from '@inertiajs/react';
-
-export function usePermissions() {
-  const { auth } = usePage().props;
-  const user = auth.user as User;
-
-  return {
-    can: user.can,
-    hasRole: user.hasRole,
-    hasAnyRole: user.hasAnyRole,
-    isAdmin: user.is_admin,
-    isContentCreator: user.is_content_creator,
-    roles: user.role_names,
-    permissions: user.permission_names,
-  };
-}
-
-// Usage in components
-export default function MyComponent() {
-  const { can, isAdmin } = usePermissions();
-
-  if (!can('view-posts')) {
-    return <div>Access denied</div>;
-  }
-
-  return (
-    <div>
-      {isAdmin && <AdminPanel />}
-      <PostList />
-    </div>
-  );
-}
-```
-
-## 🗄️ Database Schema
-
-### Core Tables
-
-#### Users Table
-```sql
-CREATE TABLE users (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
-```
-
-#### Roles Table
-```sql
-CREATE TABLE roles (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    guard_name VARCHAR(255) NOT NULL DEFAULT 'web',
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
-```
-
-#### Permissions Table
-```sql
-CREATE TABLE permissions (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    guard_name VARCHAR(255) NOT NULL DEFAULT 'web',
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
-```
-
-#### Pivot Tables
-```sql
--- User roles
-CREATE TABLE model_has_roles (
-    role_id BIGINT UNSIGNED NOT NULL,
-    model_type VARCHAR(255) NOT NULL,
-    model_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (role_id, model_id, model_type),
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
-);
-
--- User permissions
-CREATE TABLE model_has_permissions (
-    permission_id BIGINT UNSIGNED NOT NULL,
-    model_type VARCHAR(255) NOT NULL,
-    model_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (permission_id, model_id, model_type),
-    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
-);
-
--- Role permissions
-CREATE TABLE role_has_permissions (
-    permission_id BIGINT UNSIGNED NOT NULL,
-    role_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (permission_id, role_id),
-    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
-);
-```
-
-### Relationships
-
-```php
-// User Model
-public function roles()
-{
-    return $this->morphToMany(Role::class, 'model', 'model_has_roles');
-}
-
-public function permissions()
-{
-    return $this->morphToMany(Permission::class, 'model', 'model_has_permissions');
-}
-
-// Role Model
-public function permissions()
-{
-    return $this->belongsToMany(Permission::class, 'role_has_permissions');
-}
-
-public function users()
-{
-    return $this->morphedByMany(User::class, 'model', 'model_has_roles');
-}
-
-// Permission Model
-public function roles()
-{
-    return $this->belongsToMany(Role::class, 'role_has_permissions');
-}
-
-public function users()
-{
-    return $this->morphedByMany(User::class, 'model', 'model_has_permissions');
-}
-```
-
-## ⚙️ Admin Settings System
-
-### Overview
-
-The Admin Settings system provides comprehensive configuration management for the Multi-Role User Authentication system. It allows administrators to configure system-wide settings across multiple categories with proper permission controls, validation, caching, and audit logging.
-
-### Key Features
-
-- **Category-based Organization**: Settings organized into logical categories
-- **Type-safe Value Handling**: Support for string, integer, boolean, JSON, and array data types
-- **Permission-based Access Control**: Different permission levels for general vs. security settings
-- **Caching for Performance**: Automatic caching with cache invalidation
-- **Import/Export Functionality**: Backup and restore configurations
-- **System Statistics**: Real-time monitoring of system health
-- **Audit Logging**: Track all setting changes for security compliance
-
-### Settings Model
-
-The `Setting` model provides a comprehensive API for managing configuration values:
-
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
-
-class Setting extends Model
-{
-    // Basic operations
-    public static function get(string $key, $default = null);
-    public static function set(string $key, $value, string $type = 'string', string $category = 'general', ?string $description = null, bool $isPublic = false): Setting;
-    public static function has(string $key): bool;
-    public static function forget(string $key): bool;
+    use HasFactory, SoftDeletes;
     
-    // Category operations
-    public static function getByCategory(string $category, bool $publicOnly = false);
-    public static function getGroupedByCategory(bool $publicOnly = false);
+    protected $fillable = ['title', 'content', 'user_id'];
     
-    // Filtering
-    public static function getAll(bool $publicOnly = false);
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     
-    // Type casting
-    public function getCastedValue();
-}
-```
-
-### Usage Examples
-
-```php
-// Basic operations
-$appName = Setting::get('app.name', 'Default App');
-Setting::set('app.name', 'My Application', 'string', 'application', 'App name', true);
-
-// Category operations
-$authSettings = Setting::getByCategory('authentication');
-$allSettings = Setting::getGroupedByCategory();
-
-// Type-specific examples
-Setting::set('app.debug', true, 'boolean', 'application');
-Setting::set('auth.login_attempts', 5, 'integer', 'authentication');
-Setting::set('auth.social_providers', ['google', 'github'], 'array', 'authentication');
-Setting::set('email.notification_preferences', ['user_registered' => true], 'json', 'email');
-```
-
-### Settings Categories
-
-1. **Application**: Basic app configuration (name, version, maintenance mode)
-2. **Authentication**: Login, registration, and security settings
-3. **User Management**: User account and profile settings
-4. **Security**: Password policies, 2FA, IP whitelisting, audit logging
-5. **Email**: Email configuration and templates
-6. **Features**: Feature toggles and experimental features
-7. **System**: System-level configuration (caching, logging, performance)
-
-### Controller Implementation
-
-```php
-<?php
-
-namespace App\Http\Controllers\Admin;
-
-use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-
-class AdminSettingsController extends Controller
-{
-    public function __construct()
+    public function scopePublished($query)
     {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('permission:manage settings')->except(['stats']);
-        $this->middleware('permission:view system stats')->only(['stats']);
-    }
-
-    public function index()
-    {
-        $settings = Setting::getGroupedByCategory();
-        $stats = $this->getSystemStats();
-        
-        return Inertia::render('admin/settings/index', [
-            'settings' => $settings,
-            'stats' => $stats,
-            'categories' => $this->getSettingsCategories(),
-        ]);
-    }
-
-    public function update(Request $request)
-    {
-        $settings = $request->input('settings', []);
-        $this->validateSettings($settings);
-        
-        foreach ($settings as $key => $data) {
-            // Security settings require special permission
-            if (str_starts_with($key, 'security.') && !auth()->user()->can('manage security settings')) {
-                continue;
-            }
-            
-            Setting::set($key, $data['value'], $data['type'], $data['category'], $data['description'], $data['is_public']);
-            $this->logSettingChange($key, $data['value']);
-        }
-        
-        return redirect()->back()->with('success', 'Settings updated successfully.');
+        return $query->where('status', 'published');
     }
 }
 ```
 
-### Frontend Integration
-
-```tsx
-// React component for settings management
-export default function AdminSettingsIndex({ settings, categories, stats }) {
-    const [formData, setFormData] = useState(settings);
-    const [hasChanges, setHasChanges] = useState(false);
-
-    const handleSettingChange = (category: string, key: string, value: unknown) => {
-        setFormData(prev => ({
-            ...prev,
-            [category]: {
-                ...prev[category],
-                [key]: { ...prev[category][key], value }
-            }
-        }));
-        setHasChanges(true);
-    };
-
-    const renderSettingInput = (category: string, key: string, setting: Setting) => {
-        switch (setting.type) {
-            case 'boolean':
-                return (
-                    <Switch
-                        checked={setting.value}
-                        onCheckedChange={(checked) => handleSettingChange(category, key, checked)}
-                    />
-                );
-            case 'integer':
-                return (
-                    <Input
-                        type="number"
-                        value={setting.value}
-                        onChange={(e) => handleSettingChange(category, key, parseInt(e.target.value))}
-                    />
-                );
-            // ... other types
-        }
-    };
-
-    return (
-        <AdminLayout>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Settings form with category tabs */}
-            </Tabs>
-        </AdminLayout>
-    );
-}
-```
-
-### Permissions
-
-The system uses granular permissions:
-
-- **manage settings**: Basic settings management (Admin+)
-- **view system stats**: View system statistics (Admin+)
-- **manage security settings**: Manage security settings (Super Admin only)
-- **view audit logs**: View audit logs (Admin+)
-
-### Caching Strategy
-
-Settings are automatically cached for performance:
-
-```php
-// Automatic caching with 24-hour expiration
-$value = Setting::get('app.name'); // Cached after first access
-
-// Cache invalidation on updates
-Setting::set('app.name', 'New Name'); // Automatically clears cache
-
-// Manual cache operations
-Setting::clearCache(); // Clear all settings cache
-```
-
-### Testing
-
-Comprehensive test coverage includes:
-
-```php
-public function test_admin_can_update_settings()
-{
-    $admin = $this->createAdmin();
-
-    $response = $this->actingAs($admin)
-        ->put('/admin/settings', [
-            'settings' => [
-                'app.name' => [
-                    'value' => 'Updated Name',
-                    'type' => 'string',
-                    'category' => 'application'
-                ]
-            ]
-        ]);
-
-    $response->assertRedirect();
-    $this->assertEquals('Updated Name', Setting::get('app.name'));
-}
-
-public function test_security_settings_require_special_permission()
-{
-    $admin = $this->createAdmin();
-
-    $response = $this->actingAs($admin)
-        ->put('/admin/settings/security.password_min_length', [
-            'value' => 12,
-            'type' => 'integer'
-        ]);
-
-    $response->assertStatus(403);
-}
-```
-
-## 🗑️ Soft Delete Implementation
-
-### Overview
-
-The system implements Laravel's soft delete functionality for user management, providing data safety and recovery options while maintaining referential integrity.
-
-### Database Schema
-
-#### Soft Delete Migration
-
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->softDeletes();
-            $table->index('deleted_at');
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-        });
-    }
-};
-```
-
-### Controller Implementation
-
-#### UserController Soft Delete Methods
-
-```php
-<?php
-
-namespace App\Http\Controllers\Admin;
-
-use App\Models\User;
-use Illuminate\Http\Request;
-
-class UserController extends Controller
-{
-    public function __construct()
-    {
-        $this->middleware(['auth', 'verified']);
-        $this->middleware('permission:view users')->only(['index', 'trashed']);
-        $this->middleware('permission:delete users')->only(['destroy']);
-        $this->middleware('permission:restore users')->only(['restore']);
-        $this->middleware('permission:force delete users')->only(['forceDelete']);
-    }
-
-    /**
-     * Soft delete a user
-     */
-    public function destroy(User $user)
-    {
-        // Security checks
-        if ($user->hasRole('Super Admin')) {
-            $superAdminCount = User::role('Super Admin')->count();
-            if ($superAdminCount <= 1) {
-                return redirect()->route('admin.users.index')
-                    ->with('error', 'Cannot delete the last Super Admin user.');
-            }
-        }
-
-        if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'You cannot delete your own account.');
-        }
-
-        $user->delete(); // Soft delete
-
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully. The user can be restored if needed.');
-    }
-
-    /**
-     * Display soft-deleted users
-     */
-    public function trashed()
-    {
-        $users = User::onlyTrashed()
-            ->with(['roles.permissions'])
-            ->orderBy('deleted_at', 'desc')
-            ->paginate(20);
-
-        $stats = [
-            'total_deleted' => User::onlyTrashed()->count(),
-            'deleted_administrators' => User::onlyTrashed()->role(['Super Admin', 'Admin'])->count(),
-            'deleted_content_creators' => User::onlyTrashed()->role(['Editor', 'Author'])->count(),
-            'deleted_subscribers' => User::onlyTrashed()->role('Subscriber')->count(),
-        ];
-
-        return Inertia::render('admin/users/trashed', [
-            'users' => $users,
-            'stats' => $stats,
-        ]);
-    }
-
-    /**
-     * Restore a soft-deleted user
-     */
-    public function restore($id)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-        $user->restore();
-
-        return redirect()->back()
-            ->with('success', "User '{$user->name}' has been restored successfully.");
-    }
-
-    /**
-     * Permanently delete a user (Super Admin only)
-     */
-    public function forceDelete($id)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-        
-        if (!auth()->user()->hasRole('Super Admin')) {
-            return redirect()->back()
-                ->with('error', 'Only Super Admins can permanently delete users.');
-        }
-
-        $userName = $user->name;
-        $user->forceDelete();
-
-        return redirect()->back()
-            ->with('success', "User '{$userName}' has been permanently deleted.");
-    }
-}
-```
-
-### Route Configuration
-
-```php
-<?php
-
-// routes/admin.php
-
-// Standard user management routes
-Route::resource('users', UserController::class)->except(['show']);
-Route::post('/users/bulk-action', [UserController::class, 'bulkAction'])->name('users.bulk-action');
-
-// Soft delete routes with proper permissions
-Route::middleware('permission:view users')->group(function () {
-    Route::get('/users/trashed', [UserController::class, 'trashed'])->name('users.trashed');
-});
-
-Route::middleware('permission:restore users')->group(function () {
-    Route::patch('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
-});
-
-Route::middleware('permission:force delete users')->group(function () {
-    Route::delete('/users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
-});
-```
-
-### Permission System
-
-#### New Permissions
-
-```php
-// database/seeders/PermissionSeeder.php
-
-$permissions = [
-    // Existing permissions
-    'view users',
-    'create users',
-    'edit users',
-    'delete users',
-    'manage user roles',
-    
-    // New soft delete permissions
-    'restore users',      // Restore soft-deleted users
-    'force delete users', // Permanently delete users (Super Admin only)
-];
-```
-
-#### Role Assignments
-
-```php
-// tests/Traits/WithRoles.php
-
-protected function createAdminRole(): void
-{
-    $role = Role::firstOrCreate(['name' => 'Admin']);
-    
-    $permissions = [
-        'view dashboard',
-        'view users',
-        'create users',
-        'edit users',
-        'delete users',
-        'restore users',  // Admins can restore users
-        'manage user roles',
-        // Note: 'force delete users' is Super Admin only
-    ];
-    
-    $role->syncPermissions($permissions);
-}
-
-protected function createSuperAdminRole(): void
-{
-    $role = Role::firstOrCreate(['name' => 'Super Admin']);
-    
-    // Super Admin gets all permissions including force delete
-    $role->syncPermissions(Permission::all());
-}
-```
-
-### Frontend Implementation
-
-#### Trashed Users Component
-
-```tsx
-// resources/js/pages/admin/users/trashed.tsx
-
-import { CanAccess } from '@/components/CanAccess';
-import { Button } from '@/components/ui/button';
-import { router } from '@inertiajs/react';
-
-interface TrashedUser {
-    id: number;
-    name: string;
-    email: string;
-    deleted_at: string;
-    role_names: string[];
-}
-
-export default function TrashedUsers({ users, stats }) {
-    const handleRestoreUser = (userId: number) => {
-        if (confirm('Are you sure you want to restore this user?')) {
-            router.patch(`/admin/users/${userId}/restore`);
-        }
-    };
-
-    const handleForceDeleteUser = (userId: number) => {
-        if (confirm('Are you sure you want to permanently delete this user? This action cannot be undone!')) {
-            router.delete(`/admin/users/${userId}/force-delete`);
-        }
-    };
-
-    return (
-        <div>
-            <h1>Deleted Users</h1>
-            
-            {users.data.map((user: TrashedUser) => (
-                <div key={user.id} className="user-row deleted">
-                    <div className="user-info">
-                        <h3>{user.name}</h3>
-                        <p>{user.email}</p>
-                        <p>Deleted: {new Date(user.deleted_at).toLocaleDateString()}</p>
-                    </div>
-                    
-                    <div className="actions">
-                        <CanAccess permission="restore users">
-                            <Button 
-                                variant="outline" 
-                                onClick={() => handleRestoreUser(user.id)}
-                                className="text-green-600"
-                            >
-                                Restore
-                            </Button>
-                        </CanAccess>
-                        
-                        <CanAccess permission="force delete users">
-                            <Button 
-                                variant="destructive" 
-                                onClick={() => handleForceDeleteUser(user.id)}
-                            >
-                                Permanently Delete
-                            </Button>
-                        </CanAccess>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-```
-
-#### Updated Users Index
-
-```tsx
-// resources/js/pages/admin/users/index.tsx
-
-export default function UsersIndex({ users, stats }) {
-    const handleDeleteUser = (userId: number) => {
-        if (confirm('Are you sure you want to delete this user? The user will be moved to the deleted users list and can be restored later.')) {
-            router.delete(`/admin/users/${userId}`);
-        }
-    };
-
-    return (
-        <div>
-            <div className="header">
-                <h1>User Management</h1>
-                <div className="actions">
-                    <CanAccess permission="view users">
-                        <Button variant="outline" asChild>
-                            <Link href="/admin/users/trashed">
-                                Deleted Users
-                            </Link>
-                        </Button>
-                    </CanAccess>
-                    
-                    <CanAccess permission="create users">
-                        <Button asChild>
-                            <Link href="/admin/users/create">
-                                Add User
-                            </Link>
-                        </Button>
-                    </CanAccess>
-                </div>
-            </div>
-            
-            {/* User list with updated delete behavior */}
-        </div>
-    );
-}
-```
-
-### Testing Implementation
-
-#### Soft Delete Tests
-
-```php
-<?php
-
-namespace Tests\Feature\Admin;
-
-use App\Models\User;
-use Tests\TestCase;
-use Tests\Traits\WithRoles;
-
-class UserSoftDeleteTest extends TestCase
-{
-    use RefreshDatabase, WithRoles;
-
-    public function test_user_is_soft_deleted_not_hard_deleted()
-    {
-        $superAdmin = $this->createSuperAdmin();
-        $user = $this->createEditor();
-
-        $response = $this->actingAs($superAdmin)
-            ->delete("/admin/users/{$user->id}");
-
-        $response->assertRedirect('/admin/users');
-        
-        // User should be soft deleted, not hard deleted
-        $this->assertSoftDeleted('users', ['id' => $user->id]);
-        $this->assertDatabaseHas('users', ['id' => $user->id]);
-    }
-
-    public function test_super_admin_can_view_trashed_users()
-    {
-        $superAdmin = $this->createSuperAdmin();
-        $user = $this->createEditor();
-        $user->delete(); // Soft delete
-
-        $response = $this->actingAs($superAdmin)->get('/admin/users/trashed');
-
-        $response->assertOk();
-        $response->assertInertia(fn ($page) => 
-            $page->component('admin/users/trashed')
-                ->has('users')
-                ->has('stats')
-        );
-    }
-
-    public function test_super_admin_can_restore_user()
-    {
-        $superAdmin = $this->createSuperAdmin();
-        $user = $this->createEditor();
-        $user->delete(); // Soft delete
-
-        $response = $this->actingAs($superAdmin)
-            ->patch("/admin/users/{$user->id}/restore");
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-
-        $user->refresh();
-        $this->assertNull($user->deleted_at);
-    }
-
-    public function test_super_admin_can_force_delete_user()
-    {
-        $superAdmin = $this->createSuperAdmin();
-        $user = $this->createEditor();
-        $user->delete(); // Soft delete first
-
-        $response = $this->actingAs($superAdmin)
-            ->delete("/admin/users/{$user->id}/force-delete");
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
-    }
-
-    public function test_admin_cannot_force_delete_user()
-    {
-        $admin = $this->createAdmin();
-        $user = $this->createEditor();
-        $user->delete(); // Soft delete first
-
-        $response = $this->actingAs($admin)
-            ->delete("/admin/users/{$user->id}/force-delete");
-
-        // Admin doesn't have force delete permission
-        $response->assertStatus(403);
-
-        // User should still exist (soft deleted)
-        $this->assertSoftDeleted('users', ['id' => $user->id]);
-    }
-}
-```
-
-### Security Considerations
-
-#### Permission-Based Access
-
-```php
-// Only users with appropriate permissions can perform soft delete operations
-$this->middleware('permission:delete users')->only(['destroy']);
-$this->middleware('permission:restore users')->only(['restore']);
-$this->middleware('permission:force delete users')->only(['forceDelete']);
-```
-
-#### Business Logic Protection
-
-```php
-// Prevent deletion of last Super Admin
-if ($user->hasRole('Super Admin')) {
-    $superAdminCount = User::role('Super Admin')->count();
-    if ($superAdminCount <= 1) {
-        return redirect()->back()->with('error', 'Cannot delete the last Super Admin user.');
-    }
-}
-
-// Prevent self-deletion
-if ($user->id === auth()->id()) {
-    return redirect()->back()->with('error', 'You cannot delete your own account.');
-}
-```
-
-### Performance Considerations
-
-#### Database Indexing
-
-```sql
--- Index on deleted_at for better query performance
-CREATE INDEX idx_users_deleted_at ON users(deleted_at);
-
--- Composite indexes for role-based queries on soft-deleted users
-CREATE INDEX idx_users_deleted_roles ON users(deleted_at, id);
-```
-
-#### Query Optimization
-
-```php
-// Efficient queries for soft-deleted users
-$trashedUsers = User::onlyTrashed()
-    ->with(['roles:id,name']) // Only load necessary role data
-    ->select(['id', 'name', 'email', 'deleted_at']) // Only select needed columns
-    ->orderBy('deleted_at', 'desc')
-    ->paginate(20);
-
-// Statistics queries with proper indexing
-$stats = [
-    'total_deleted' => User::onlyTrashed()->count(),
-    'deleted_administrators' => User::onlyTrashed()
-        ->whereHas('roles', fn($q) => $q->whereIn('name', ['Super Admin', 'Admin']))
-        ->count(),
-];
-```
-
-### Best Practices
-
-#### Data Integrity
-
-1. **Always use soft deletes** for user records to maintain referential integrity
-2. **Preserve relationships** - soft-deleted users maintain their role and permission associations
-3. **Audit trail** - deletion timestamps provide accountability
-4. **Recovery options** - users can be restored with all their data intact
-
-#### Security
-
-1. **Permission-based access** - different permissions for delete, restore, and force delete
-2. **Role hierarchy** - only Super Admins can permanently delete users
-3. **Business logic protection** - prevent deletion of critical users (last Super Admin, self)
-4. **Confirmation dialogs** - require explicit confirmation for destructive actions
-
-#### User Experience
-
-1. **Clear messaging** - inform users that deletion is reversible
-2. **Visual indicators** - distinguish soft-deleted users in the interface
-3. **Easy recovery** - simple restore process for administrators
-4. **Comprehensive statistics** - show counts of deleted users by role
-
-## 🧪 Testing
-
-### Test Structure
-
-The system includes comprehensive tests for all components:
-
-#### Feature Tests
-
-```php
-<?php
-
-namespace Tests\Feature;
-
-use Tests\TestCase;
-use Tests\Traits\WithRoles;
-
-class UIPermissionTest extends TestCase
-{
-    use RefreshDatabase, WithRoles;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->createRolesAndPermissions();
-    }
-
-    public function test_inertia_shares_user_data_correctly()
-    {
-        $admin = $this->createAdmin();
-        
-        $response = $this->actingAs($admin)->get('/dashboard');
-        
-        $response->assertOk();
-        $response->assertInertia(fn ($page) => 
-            $page->has('auth.user.role_names')
-                ->has('auth.user.permission_names')
-                ->has('auth.user.is_admin')
-                ->where('auth.user.is_admin', true)
-        );
-    }
-}
-```
-
-#### WithRoles Trait
-
-```php
-trait WithRoles
-{
-    protected function createRolesAndPermissions()
-    {
-        // Create permissions
-        $permissions = [
-            'view dashboard',
-            'create posts',
-            'edit posts',
-            // ... more permissions
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission, 'guard_name' => 'web']);
-        }
-
-        // Create roles with permissions
-        $admin = Role::create(['name' => 'Admin', 'guard_name' => 'web']);
-        $admin->givePermissionTo([
-            'view dashboard',
-            'create posts',
-            'edit posts',
-        ]);
-    }
-
-    protected function createAdmin(): User
-    {
-        return $this->createUserWithRole('Admin');
-    }
-
-    protected function assertUserHasRole(User $user, string $roleName): void
-    {
-        $this->assertTrue($user->hasRole($roleName));
-    }
-}
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-php artisan test
-
-# Run specific test file
-php artisan test tests/Feature/UIPermissionTest.php
-
-# Run with coverage
-php artisan test --coverage
-
-# Run tests in parallel
-php artisan test --parallel
-```
-
-For comprehensive testing procedures, regression testing workflow, and CI/CD integration, see the [Testing Strategy](Testing-Strategy.md) guide.
-
-## 🔧 Configuration
-
-### Permission Configuration
-
-The Spatie Laravel Permission package configuration is in `config/permission.php`:
-
-```php
-return [
-    'models' => [
-        'permission' => Spatie\Permission\Models\Permission::class,
-        'role' => Spatie\Permission\Models\Role::class,
-    ],
-
-    'table_names' => [
-        'roles' => 'roles',
-        'permissions' => 'permissions',
-        'model_has_permissions' => 'model_has_permissions',
-        'model_has_roles' => 'model_has_roles',
-        'role_has_permissions' => 'role_has_permissions',
-    ],
-
-    'column_names' => [
-        'model_morph_key' => 'model_id',
-    ],
-
-    'display_permission_in_exception' => false,
-
-    'display_role_in_exception' => false,
-
-    'enable_wildcard_permission' => false,
-
-    'cache' => [
-        'expiration_time' => \DateInterval::createFromDateString('24 hours'),
-        'key' => 'spatie.permission.cache',
-        'store' => 'default',
-    ],
-];
-```
-
-### Environment Variables
-
-```env
-# Application
-APP_NAME="Multi-Role Auth System"
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-
-# Database
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=thorium90
-DB_USERNAME=root
-DB_PASSWORD=
-
-# Session
-SESSION_DRIVER=file
-SESSION_LIFETIME=120
-SESSION_SECURE_COOKIE=false
-
-# Cache
-CACHE_DRIVER=file
-QUEUE_CONNECTION=sync
-```
-
-## 🚀 Performance Optimization
-
-### Caching
-
-```php
-// Cache permissions for better performance
-$user->getAllPermissions(); // Uses cache automatically
-
-// Clear cache when permissions change
-app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-```
+## Performance Optimization
 
 ### Database Optimization
 
-```sql
--- Add indexes for better performance
-CREATE INDEX idx_model_has_roles_model_id ON model_has_roles(model_id);
-CREATE INDEX idx_model_has_permissions_model_id ON model_has_permissions(model_id);
-CREATE INDEX idx_role_has_permissions_role_id ON role_has_permissions(role_id);
+```php
+// Eager loading relationships
+$pages = Page::with(['user:id,name'])
+            ->select(['id', 'title', 'slug', 'status', 'user_id', 'created_at'])
+            ->paginate(15);
+
+// Query optimization with indexes
+Schema::table('pages', function (Blueprint $table) {
+    $table->index(['status', 'published_at']);
+    $table->index(['user_id', 'status']);
+    $table->index('is_featured');
+});
+```
+
+### Caching Strategies
+
+```php
+// Cache frequently accessed data
+public function getPublishedPages()
+{
+    return Cache::remember('pages.published', 3600, function () {
+        return Page::published()->with('user')->get();
+    });
+}
+
+// Cache invalidation
+public function updatePage(Page $page, array $data)
+{
+    $page->update($data);
+    
+    Cache::forget('pages.published');
+    Cache::forget("page.{$page->slug}");
+}
 ```
 
 ### Frontend Optimization
 
-```tsx
-// Memoize permission checks
-const canCreatePosts = useMemo(() => user.can('create-posts'), [user]);
+```typescript
+// Lazy loading components
+const PageEditor = lazy(() => import('./components/PageEditor'))
 
-// Conditional rendering optimization
-const AdminPanel = lazy(() => import('./AdminPanel'));
-
-{user.is_admin && <Suspense fallback={<div>Loading...</div>}><AdminPanel /></Suspense>}
+// Memoization for expensive calculations
+const MemoizedPageList = memo(({ pages }: { pages: Page[] }) => {
+    const sortedPages = useMemo(
+        () => pages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        [pages]
+    )
+    
+    return <div>{/* Render pages */}</div>
+})
 ```
 
-## 🔒 Security Best Practices
+## Security Best Practices
 
 ### Input Validation
 
 ```php
-// Validate role assignments
-public function assignRole(Request $request, User $user)
+// Custom validation rules
+class UniqueSlugRule implements Rule
 {
-    $request->validate([
-        'role' => 'required|exists:roles,name'
-    ]);
-
-    $user->assignRole($request->role);
+    public function __construct(private ?int $excludeId = null) {}
+    
+    public function passes($attribute, $value)
+    {
+        return !Page::where('slug', $value)
+                   ->when($this->excludeId, fn($q) => $q->where('id', '!=', $this->excludeId))
+                   ->exists();
+    }
+    
+    public function message()
+    {
+        return 'The slug has already been taken.';
+    }
 }
 ```
 
-### SQL Injection Prevention
+### Authorization Policies
 
 ```php
-// Use Eloquent relationships (already protected)
-$user->roles; // Safe
-
-// Use parameterized queries
-DB::table('users')->where('role', $role)->get(); // Safe
-```
-
-### XSS Prevention
-
-```tsx
-// Use React's built-in XSS protection
-const userInput = "<script>alert('xss')</script>";
-return <div>{userInput}</div>; // Automatically escaped
+// app/Policies/PagePolicy.php
+class PagePolicy
+{
+    public function view(User $user, Page $page): bool
+    {
+        if ($page->status === 'published') {
+            return true;
+        }
+        
+        return $user->id === $page->user_id || $user->can('edit pages');
+    }
+    
+    public function update(User $user, Page $page): bool
+    {
+        return $user->id === $page->user_id || $user->can('edit pages');
+    }
+    
+    public function delete(User $user, Page $page): bool
+    {
+        return $user->id === $page->user_id || $user->can('delete pages');
+    }
+}
 ```
 
 ### CSRF Protection
 
-```php
-// Laravel automatically includes CSRF protection
-// Ensure forms include CSRF token
-<form method="POST" action="/users">
-    @csrf
-    <!-- form fields -->
-</form>
+```typescript
+// Frontend CSRF handling
+import { router } from '@inertiajs/react'
+
+// Inertia automatically handles CSRF tokens
+router.post('/content/pages', formData)
+
+// For manual requests
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
 ```
 
-## 🔄 Extending the System
+## Deployment Considerations
 
-### Adding New Permissions
+### Environment Configuration
 
-1. **Create Migration**
 ```bash
-php artisan make:migration add_new_permissions
+# Production optimizations
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+composer install --optimize-autoloader --no-dev
+npm run build
 ```
 
-2. **Add Permissions**
+### Database Migrations
+
 ```php
+// Safe migration patterns
 public function up()
 {
-    Permission::create(['name' => 'manage-reports']);
-    Permission::create(['name' => 'view-analytics']);
+    Schema::table('pages', function (Blueprint $table) {
+        $table->string('new_field')->nullable()->after('existing_field');
+    });
+}
+
+public function down()
+{
+    Schema::table('pages', function (Blueprint $table) {
+        $table->dropColumn('new_field');
+    });
 }
 ```
 
-3. **Update Seeders**
-```php
-// In PermissionSeeder
-$permissions = [
-    // ... existing permissions
-    'manage-reports',
-    'view-analytics',
-];
-```
-
-4. **Add Gates**
-```php
-// In AppServiceProvider
-Gate::define('manage-reports', function (User $user) {
-    return $user->hasPermissionTo('manage-reports');
-});
-```
-
-### Adding New Roles
-
-1. **Create Role**
-```php
-$moderator = Role::create(['name' => 'Moderator']);
-$moderator->givePermissionTo([
-    'view-posts',
-    'moderate-comments',
-    'view-reports',
-]);
-```
-
-2. **Update Frontend**
-```tsx
-// Add to computed properties
-'is_moderator' => $user->hasRole('Moderator'),
-```
-
-### Custom Permission Logic
+### Queue Configuration
 
 ```php
-// Complex permission logic
-Gate::define('edit-post', function (User $user, Post $post) {
-    // Super admins can edit anything
-    if ($user->hasRole('Super Admin')) {
-        return true;
-    }
+// app/Jobs/ProcessPageContent.php
+class ProcessPageContent implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     
-    // Admins can edit any post
-    if ($user->hasRole('Admin')) {
-        return true;
-    }
+    public function __construct(private Page $page) {}
     
-    // Authors can edit their own posts
-    if ($user->hasRole('Author')) {
-        return $post->user_id === $user->id;
+    public function handle(): void
+    {
+        // Process page content (SEO analysis, etc.)
     }
-    
-    return false;
-});
+}
 ```
 
-## 📚 API Reference
+## Troubleshooting
 
-### User Model Methods
+### Common Issues
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `hasRole($role)` | Check if user has specific role | `$user->hasRole('Admin')` |
-| `hasAnyRole($roles)` | Check if user has any of the roles | `$user->hasAnyRole(['Admin', 'Editor'])` |
-| `hasAllRoles($roles)` | Check if user has all roles | `$user->hasAllRoles(['Admin', 'Editor'])` |
-| `hasPermissionTo($permission)` | Check if user has permission | `$user->hasPermissionTo('create-posts')` |
-| `hasAnyPermission($permissions)` | Check if user has any permission | `$user->hasAnyPermission(['create-posts', 'edit-posts'])` |
-| `getAllPermissions()` | Get all permissions (direct + inherited) | `$user->getAllPermissions()` |
-| `assignRole($role)` | Assign role to user | `$user->assignRole('Admin')` |
-| `syncRoles($roles)` | Replace all user roles | `$user->syncRoles(['Admin', 'Editor'])` |
+1. **Permission Denied Errors**: Check role assignments and permission seeding
+2. **Route Not Found**: Verify route definitions and middleware
+3. **Database Connection**: Check environment configuration
+4. **Frontend Build Issues**: Clear node_modules and reinstall
 
-### Middleware Aliases
+### Debug Tools
 
-| Alias | Class | Description |
-|-------|-------|-------------|
-| `role` | `EnsureUserHasRole` | Check for specific role(s) |
-| `permission` | `EnsureUserHasPermission` | Check for specific permission(s) |
-| `role.any` | `EnsureUserHasAnyRole` | Check for any of multiple roles |
-| `permission.any` | `EnsureUserHasAnyPermission` | Check for any of multiple permissions |
+```php
+// Enable query logging
+DB::enableQueryLog();
+// ... run queries
+dd(DB::getQueryLog());
 
-### Frontend Properties
+// Debug permissions
+dd(auth()->user()->getAllPermissions()->pluck('name'));
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `auth.user.can` | Function | Check permission |
-| `auth.user.hasRole` | Function | Check role |
-| `auth.user.hasAnyRole` | Function | Check any role |
-| `auth.user.role_names` | Array | User's role names |
-| `auth.user.permission_names` | Array | User's permission names |
-| `auth.user.is_admin` | Boolean | Is admin user |
-| `auth.user.is_content_creator` | Boolean | Is content creator |
+// Debug Inertia data
+// Add to HandleInertiaRequests middleware
+public function share(Request $request): array
+{
+    return array_merge(parent::share($request), [
+        'debug' => app()->environment('local') ? [
+            'user_permissions' => $request->user()?->getAllPermissions()->pluck('name'),
+        ] : [],
+    ]);
+}
+```
+
+## Contributing
+
+### Code Standards
+
+- Follow PSR-12 coding standards
+- Use TypeScript for frontend code
+- Write tests for new features
+- Document public methods
+- Use meaningful commit messages
+
+### Development Workflow
+
+1. Create feature branch from `main`
+2. Write tests first (TDD)
+3. Implement feature
+4. Run test suite
+5. Create pull request
+6. Code review
+7. Merge to main
+
+For more information, see the [Contributing Guide](Contributing-Guide).
 
 ---
 
-**Need more technical details?** Check out our [API Reference](API-Reference) or [Database Schema](Database-Schema) pages.
+This developer guide provides the foundation for working with Thorium90 CMS. For specific implementation details, refer to the source code and additional documentation.

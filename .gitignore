@@ -1,24 +1,57 @@
-/.phpunit.cache
-/bootstrap/ssr
+# Dependencies
 /node_modules
+/vendor
+
+# Laravel specific
+/bootstrap/ssr
 /public/build
 /public/hot
 /public/storage
+/public/css
+/public/js
+/public/mix-manifest.json
 /storage/*.key
 /storage/pail
-/vendor
+
+# Environment files
 .env
 .env.backup
 .env.production
-.phpactor.json
+.env.testing
+
+# Testing
+/.phpunit.cache
+/.phpunit.cache/
 .phpunit.result.cache
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-/auth.json
+/coverage/
+
+# IDE and editor files
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+.phpactor.json
+_ide_helper*.php
+.php-cs-fixer.cache
+.php_cs.cache
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Laravel Homestead
+Homestead.json
+Homestead.yaml
+
+# NPM/Yarn
+npm-debug.log
+yarn-error.log
+yarn.lock
+
+# Composer
+/auth.json
+
+# Documentation build artifacts
+/docs/_build/

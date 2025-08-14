@@ -1,6 +1,19 @@
 # Contributing Guide
 
-Thank you for your interest in contributing to the Multi-Role User Authentication System! This guide will help you get started with contributing to the project.
+Thank you for contributing to the Multi-Role User Authentication System! Your contributions help make this project better for everyone.
+
+## 🚀 **Getting Started (REQUIRED READING)**
+
+### **Step 1: Understand the System**
+1. **[Home](Home)** - System overview and goals
+2. **[Development Workflow](Development-Workflow)** - **MANDATORY: Consistency process**
+3. **[Developer Guide](Developer-Guide)** - Technical implementation details
+4. **[Authentication System Summary](Authentication-System-Summary)** - Auth architecture
+
+### **Step 2: Follow the Workflow**
+**BEFORE writing any code, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
+
+This ensures your contributions align with the existing system architecture and goals.
 
 ## 🤝 How to Contribute
 

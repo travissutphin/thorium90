@@ -141,6 +141,15 @@ class SettingsSeeder extends Seeder
             'Message displayed during maintenance mode',
             true
         );
+
+        Setting::set(
+            'app.debug',
+            false,
+            'boolean',
+            'application',
+            'Enable debug mode (development only)',
+            false
+        );
     }
 
     /**

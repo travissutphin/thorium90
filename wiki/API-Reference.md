@@ -1,85 +1,160 @@
 # API Reference
 
-This page provides comprehensive documentation for the Multi-Role User Authentication System API.
+## Overview
 
-## 🔐 Authentication Endpoints
+The Thorium90 CMS provides a comprehensive REST API built with Laravel Sanctum for authentication. This API allows you to manage users, roles, permissions, pages, and settings programmatically.
 
-### Login
-```http
-POST /login
+## Base URL
+
+```
+https://yourdomain.com/api
+```
+
+## Authentication
+
+The API uses Laravel Sanctum for authentication with support for:
+- **Personal Access Tokens** - For server-to-server communication
+- **SPA Authentication** - For single-page applications
+- **Mobile Authentication** - For mobile applications
+
+### Getting an API Token
+
+#### 1. Personal Access Token
+
+```bash
+POST /api/auth/tokens
 ```
 
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123",
-  "remember": false
+    "email": "user@example.com",
+    "password": "password",
+    "token_name": "My API Token",
+    "abilities": ["read", "write"]
 }
 ```
 
 **Response:**
 ```json
 {
-  "user": {
-    "id": 1,
-    "name": "John Doe",
+    "token": "1|abc123...",
+    "user": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "user@example.com"
+    }
+}
+```
+
+#### 2. SPA Authentication
+
+```bash
+GET /sanctum/csrf-cookie
+POST /api/auth/login
+```
+
+### Using the Token
+
+Include the token in the Authorization header:
+
+```bash
+Authorization: Bearer 1|abc123...
+```
+
+## Rate Limiting
+
+API requests are rate limited:
+- **Authenticated users**: 60 requests per minute
+- **Unauthenticated users**: 10 requests per minute
+- **Token creation**: 5 requests per minute
+
+## Response Format
+
+All API responses follow a consistent format:
+
+### Success Response
+```json
+{
+    "success": true,
+    "data": {
+        // Response data
+    },
+    "message": "Operation completed successfully"
+}
+```
+
+### Error Response
+```json
+{
+    "success": false,
+    "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "The given data was invalid.",
+        "details": {
+            "email": ["The email field is required."]
+        }
+    }
+}
+```
+
+### Pagination Response
+```json
+{
+    "success": true,
+    "data": [...],
+    "meta": {
+        "current_page": 1,
+        "last_page": 5,
+        "per_page": 15,
+        "total": 75
+    },
+    "links": {
+        "first": "https://api.example.com/users?page=1",
+        "last": "https://api.example.com/users?page=5",
+        "prev": null,
+        "next": "https://api.example.com/users?page=2"
+    }
+}
+```
+
+## Authentication Endpoints
+
+### Login
+
+```bash
+POST /api/auth/login
+```
+
+**Request Body:**
+```json
+{
     "email": "user@example.com",
-    "roles": ["Admin"],
-    "permissions": ["view-dashboard", "create pages"],
-    "is_admin": true,
-    "is_content_creator": true
-  }
+    "password": "password"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "user@example.com",
+            "roles": ["Admin"],
+            "permissions": ["view users", "create users"]
+        }
+    },
+    "message": "Login successful"
 }
 ```
 
 ### Logout
-```http
-POST /logout
-```
 
-**Response:**
-```json
-{
-  "message": "Logged out successfully"
-}
-```
-
-### Register
-```http
-POST /register
-```
-
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "password_confirmation": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "user": {
-    "id": 2,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "roles": ["Subscriber"],
-    "permissions": ["view-dashboard"],
-    "is_admin": false,
-    "is_content_creator": false
-  }
-}
-```
-
-## 👥 User Management API
-
-### Get All Users
-```http
-GET /api/users
+```bash
+POST /api/auth/logout
 ```
 
 **Headers:**
@@ -87,747 +162,627 @@ GET /api/users
 Authorization: Bearer {token}
 ```
 
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `per_page`: Items per page (default: 15)
-- `search`: Search term for name or email
-- `role`: Filter by role
-- `permission`: Filter by permission
+### Get Current User
+
+```bash
+GET /api/auth/user
+```
 
 **Response:**
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com",
-      "roles": ["Admin"],
-      "permissions": ["view-dashboard", "create-posts"],
-      "created_at": "2024-01-01T00:00:00.000000Z",
-      "updated_at": "2024-01-01T00:00:00.000000Z"
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "user@example.com",
+        "roles": ["Admin"],
+        "permissions": ["view users", "create users"],
+        "created_at": "2025-01-01T00:00:00Z"
     }
-  ],
-  "meta": {
-    "current_page": 1,
-    "last_page": 5,
-    "per_page": 15,
-    "total": 75
-  }
+}
+```
+
+## User Management
+
+### List Users
+
+```bash
+GET /api/users
+```
+
+**Query Parameters:**
+- `page` (integer) - Page number
+- `per_page` (integer) - Items per page (max 100)
+- `search` (string) - Search by name or email
+- `role` (string) - Filter by role
+- `sort` (string) - Sort field (name, email, created_at)
+- `order` (string) - Sort order (asc, desc)
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john@example.com",
+            "roles": ["Admin"],
+            "created_at": "2025-01-01T00:00:00Z"
+        }
+    ],
+    "meta": {
+        "current_page": 1,
+        "total": 25
+    }
 }
 ```
 
 ### Get User
-```http
+
+```bash
 GET /api/users/{id}
 ```
 
 **Response:**
 ```json
 {
-  "data": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "roles": ["Admin"],
-    "permissions": ["view-dashboard", "create-posts"],
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
+    "success": true,
+    "data": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@example.com",
+        "roles": ["Admin"],
+        "permissions": ["view users", "create users"],
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z"
+    }
 }
 ```
 
 ### Create User
-```http
+
+```bash
 POST /api/users
 ```
 
 **Request Body:**
 ```json
 {
-  "name": "Jane Doe",
-  "email": "jane@example.com",
-  "password": "password123",
-  "password_confirmation": "password123",
-  "roles": ["Editor"]
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "password": "secure-password",
+    "roles": ["Editor"]
 }
 ```
 
 **Response:**
 ```json
 {
-  "data": {
-    "id": 3,
-    "name": "Jane Doe",
-    "email": "jane@example.com",
-    "roles": ["Editor"],
-    "permissions": ["view-dashboard", "create-posts", "edit-posts"],
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
+    "success": true,
+    "data": {
+        "id": 2,
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "roles": ["Editor"]
+    },
+    "message": "User created successfully"
 }
 ```
 
 ### Update User
-```http
+
+```bash
 PUT /api/users/{id}
 ```
 
 **Request Body:**
 ```json
 {
-  "name": "Jane Smith",
-  "email": "jane.smith@example.com",
-  "roles": ["Editor", "Author"]
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "id": 3,
     "name": "Jane Smith",
     "email": "jane.smith@example.com",
-    "roles": ["Editor", "Author"],
-    "permissions": ["view-dashboard", "create-posts", "edit-posts", "edit-own-posts"],
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
+    "roles": ["Editor", "Author"]
 }
 ```
 
 ### Delete User
-```http
+
+```bash
 DELETE /api/users/{id}
 ```
 
 **Response:**
 ```json
 {
-  "message": "User deleted successfully"
+    "success": true,
+    "message": "User deleted successfully"
 }
 ```
 
-## 🏷️ Role Management API
+## Role Management
 
-### Get All Roles
-```http
+### List Roles
+
+```bash
 GET /api/roles
 ```
 
 **Response:**
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "Super Admin",
-      "permissions": ["view-dashboard", "create-posts", "edit-posts", "delete-posts"],
-      "users_count": 1,
-      "created_at": "2024-01-01T00:00:00.000000Z",
-      "updated_at": "2024-01-01T00:00:00.000000Z"
-    },
-    {
-      "id": 2,
-      "name": "Admin",
-      "permissions": ["view-dashboard", "create-posts", "edit-posts"],
-      "users_count": 3,
-      "created_at": "2024-01-01T00:00:00.000000Z",
-      "updated_at": "2024-01-01T00:00:00.000000Z"
-    }
-  ]
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "Super Admin",
+            "permissions": ["*"],
+            "users_count": 1
+        },
+        {
+            "id": 2,
+            "name": "Admin",
+            "permissions": ["view users", "create users"],
+            "users_count": 5
+        }
+    ]
 }
 ```
 
 ### Get Role
-```http
+
+```bash
 GET /api/roles/{id}
 ```
 
-**Response:**
-```json
-{
-  "data": {
-    "id": 1,
-    "name": "Super Admin",
-    "permissions": [
-      {
-        "id": 1,
-        "name": "view-dashboard",
-        "guard_name": "web"
-      },
-      {
-        "id": 2,
-        "name": "create-posts",
-        "guard_name": "web"
-      }
-    ],
-    "users": [
-      {
-        "id": 1,
-        "name": "John Doe",
-        "email": "john@example.com"
-      }
-    ],
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
-}
-```
-
 ### Create Role
-```http
+
+```bash
 POST /api/roles
 ```
 
 **Request Body:**
 ```json
 {
-  "name": "Moderator",
-  "permissions": ["view-dashboard", "moderate-comments"]
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "id": 6,
-    "name": "Moderator",
-    "permissions": ["view-dashboard", "moderate-comments"],
-    "users_count": 0,
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
+    "name": "Content Manager",
+    "permissions": ["view pages", "create pages", "edit pages"]
 }
 ```
 
 ### Update Role
-```http
+
+```bash
 PUT /api/roles/{id}
 ```
 
-**Request Body:**
-```json
-{
-  "name": "Senior Moderator",
-  "permissions": ["view-dashboard", "moderate-comments", "delete-comments"]
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "id": 6,
-    "name": "Senior Moderator",
-    "permissions": ["view-dashboard", "moderate-comments", "delete-comments"],
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
-}
-```
-
 ### Delete Role
-```http
+
+```bash
 DELETE /api/roles/{id}
 ```
 
-**Response:**
-```json
-{
-  "message": "Role deleted successfully"
-}
-```
+## Permission Management
 
-## 🔑 Permission Management API
+### List Permissions
 
-### Get All Permissions
-```http
+```bash
 GET /api/permissions
 ```
 
 **Response:**
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "view-dashboard",
-      "guard_name": "web",
-      "roles_count": 5,
-      "created_at": "2024-01-01T00:00:00.000000Z",
-      "updated_at": "2024-01-01T00:00:00.000000Z"
-    },
-    {
-      "id": 2,
-      "name": "create-posts",
-      "guard_name": "web",
-      "roles_count": 3,
-      "created_at": "2024-01-01T00:00:00.000000Z",
-      "updated_at": "2024-01-01T00:00:00.000000Z"
-    }
-  ]
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "view users",
+            "category": "User Management"
+        },
+        {
+            "id": 2,
+            "name": "create users",
+            "category": "User Management"
+        }
+    ]
 }
 ```
 
-### Get Permission
-```http
-GET /api/permissions/{id}
-```
+### Assign Permission to Role
 
-**Response:**
-```json
-{
-  "data": {
-    "id": 1,
-    "name": "view-dashboard",
-    "guard_name": "web",
-    "roles": [
-      {
-        "id": 1,
-        "name": "Super Admin"
-      },
-      {
-        "id": 2,
-        "name": "Admin"
-      }
-    ],
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
-}
-```
-
-### Create Permission
-```http
-POST /api/permissions
+```bash
+POST /api/roles/{roleId}/permissions
 ```
 
 **Request Body:**
 ```json
 {
-  "name": "manage-reports",
-  "guard_name": "web"
+    "permissions": ["view users", "create users"]
 }
 ```
 
-**Response:**
-```json
-{
-  "data": {
-    "id": 25,
-    "name": "manage-reports",
-    "guard_name": "web",
-    "roles_count": 0,
-    "created_at": "2024-01-01T00:00:00.000000Z",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
-}
+### Remove Permission from Role
+
+```bash
+DELETE /api/roles/{roleId}/permissions/{permissionId}
 ```
 
-### Update Permission
-```http
-PUT /api/permissions/{id}
-```
+## Pages Management
 
-**Request Body:**
-```json
-{
-  "name": "view-reports",
-  "guard_name": "web"
-}
-```
+### List Pages
 
-**Response:**
-```json
-{
-  "data": {
-    "id": 25,
-    "name": "view-reports",
-    "guard_name": "web",
-    "updated_at": "2024-01-01T00:00:00.000000Z"
-  }
-}
-```
-
-### Delete Permission
-```http
-DELETE /api/permissions/{id}
-```
-
-**Response:**
-```json
-{
-  "message": "Permission deleted successfully"
-}
-```
-
-## 🔍 Permission Checking API
-
-### Check User Permissions
-```http
-POST /api/permissions/check
-```
-
-**Request Body:**
-```json
-{
-  "user_id": 1,
-  "permissions": ["create-posts", "edit-posts"]
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "user_id": 1,
-    "permissions": {
-      "create-posts": true,
-      "edit-posts": true
-    },
-    "all_permissions": ["view-dashboard", "create-posts", "edit-posts", "delete-posts"]
-  }
-}
-```
-
-### Check User Roles
-```http
-POST /api/roles/check
-```
-
-**Request Body:**
-```json
-{
-  "user_id": 1,
-  "roles": ["Admin", "Editor"]
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "user_id": 1,
-    "roles": {
-      "Admin": true,
-      "Editor": false
-    },
-    "all_roles": ["Super Admin", "Admin"]
-  }
-}
-```
-
-## 📊 Dashboard API
-
-### Get Dashboard Statistics
-```http
-GET /api/dashboard/stats
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "users": {
-      "total": 150,
-      "new_this_month": 25,
-      "active_today": 45
-    },
-    "roles": {
-      "total": 5,
-      "most_popular": "Subscriber"
-    },
-    "permissions": {
-      "total": 20,
-      "most_used": "view-dashboard"
-    },
-    "system": {
-      "version": "1.0.0",
-      "last_backup": "2024-01-01T00:00:00.000000Z",
-      "uptime": "99.9%"
-    }
-  }
-}
-```
-
-### Get User Activity
-```http
-GET /api/dashboard/activity
+```bash
+GET /api/pages
 ```
 
 **Query Parameters:**
-- `user_id`: Filter by specific user
-- `days`: Number of days to include (default: 7)
+- `status` (string) - Filter by status (draft, published, private)
+- `author` (integer) - Filter by author ID
+- `featured` (boolean) - Filter featured pages
+- `search` (string) - Search in title and content
 
 **Response:**
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "user_id": 1,
-      "action": "login",
-      "description": "User logged in",
-      "ip_address": "192.168.1.1",
-      "user_agent": "Mozilla/5.0...",
-      "created_at": "2024-01-01T10:00:00.000000Z"
-    },
-    {
-      "id": 2,
-      "user_id": 1,
-      "action": "create_post",
-      "description": "Created new post: 'Getting Started'",
-      "ip_address": "192.168.1.1",
-      "user_agent": "Mozilla/5.0...",
-      "created_at": "2024-01-01T11:00:00.000000Z"
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "title": "Welcome to Thorium90",
+            "slug": "welcome-to-thorium90",
+            "status": "published",
+            "is_featured": true,
+            "author": {
+                "id": 1,
+                "name": "John Doe"
+            },
+            "published_at": "2025-01-01T00:00:00Z",
+            "created_at": "2025-01-01T00:00:00Z"
+        }
+    ]
+}
+```
+
+### Get Page
+
+```bash
+GET /api/pages/{id}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "title": "Welcome to Thorium90",
+        "slug": "welcome-to-thorium90",
+        "content": "Full page content...",
+        "excerpt": "Page excerpt...",
+        "status": "published",
+        "is_featured": true,
+        "meta_title": "SEO Title",
+        "meta_description": "SEO Description",
+        "meta_keywords": "cms, laravel, react",
+        "schema_type": "Article",
+        "schema_data": {},
+        "author": {
+            "id": 1,
+            "name": "John Doe"
+        },
+        "published_at": "2025-01-01T00:00:00Z",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T00:00:00Z"
     }
-  ]
 }
 ```
 
-## 🔐 Authentication Middleware
+### Create Page
 
-### Protected Routes
-All API endpoints (except login/register) require authentication:
-
-```http
-Authorization: Bearer {token}
+```bash
+POST /api/pages
 ```
 
-### Role-Based Protection
-Some endpoints require specific roles:
-
-```http
-X-Required-Role: Admin
-```
-
-### Permission-Based Protection
-Some endpoints require specific permissions:
-
-```http
-X-Required-Permission: create-users
-```
-
-## 📝 Error Responses
-
-### Authentication Errors
+**Request Body:**
 ```json
 {
-  "error": "Unauthorized",
-  "message": "Invalid credentials",
-  "code": 401
+    "title": "New Page",
+    "slug": "new-page",
+    "content": "Page content here...",
+    "excerpt": "Brief description",
+    "status": "draft",
+    "is_featured": false,
+    "meta_title": "SEO Title",
+    "meta_description": "SEO Description",
+    "meta_keywords": "keyword1, keyword2",
+    "schema_type": "Article"
 }
 ```
 
-### Authorization Errors
+### Update Page
+
+```bash
+PUT /api/pages/{id}
+```
+
+### Delete Page
+
+```bash
+DELETE /api/pages/{id}
+```
+
+### Publish Page
+
+```bash
+POST /api/pages/{id}/publish
+```
+
+### Unpublish Page
+
+```bash
+POST /api/pages/{id}/unpublish
+```
+
+## Settings Management
+
+### List Settings
+
+```bash
+GET /api/settings
+```
+
+**Query Parameters:**
+- `category` (string) - Filter by category
+- `public` (boolean) - Filter public settings only
+
+**Response:**
 ```json
 {
-  "error": "Forbidden",
-  "message": "Insufficient permissions",
-  "code": 403
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "key": "site_name",
+            "value": "Thorium90 CMS",
+            "type": "string",
+            "category": "general",
+            "description": "The name of your website",
+            "is_public": true
+        }
+    ]
 }
 ```
 
-### Validation Errors
+### Get Setting
+
+```bash
+GET /api/settings/{key}
+```
+
+### Update Setting
+
+```bash
+PUT /api/settings/{key}
+```
+
+**Request Body:**
 ```json
 {
-  "error": "Validation Error",
-  "message": "The given data was invalid.",
-  "errors": {
-    "email": ["The email field is required."],
-    "password": ["The password must be at least 8 characters."]
-  },
-  "code": 422
+    "value": "New Site Name"
 }
 ```
 
-### Not Found Errors
+### Bulk Update Settings
+
+```bash
+POST /api/settings/bulk
+```
+
+**Request Body:**
 ```json
 {
-  "error": "Not Found",
-  "message": "User not found",
-  "code": 404
+    "settings": {
+        "site_name": "My Website",
+        "site_description": "A great website",
+        "timezone": "America/New_York"
+    }
 }
 ```
 
-### Server Errors
+## File Upload
+
+### Upload File
+
+```bash
+POST /api/upload
+```
+
+**Request Body (multipart/form-data):**
+```
+file: [binary file data]
+folder: "pages" (optional)
+```
+
+**Response:**
 ```json
 {
-  "error": "Internal Server Error",
-  "message": "Something went wrong",
-  "code": 500
+    "success": true,
+    "data": {
+        "url": "/storage/uploads/pages/image.jpg",
+        "filename": "image.jpg",
+        "size": 1024000,
+        "mime_type": "image/jpeg"
+    }
 }
 ```
 
-## 🔄 Rate Limiting
+## Search
 
-### Default Limits
-- **Authentication endpoints**: 5 requests per minute
-- **API endpoints**: 60 requests per minute
-- **Admin endpoints**: 30 requests per minute
+### Global Search
 
-### Rate Limit Headers
-```http
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 59
-X-RateLimit-Reset: 1640995200
+```bash
+GET /api/search
 ```
 
-### Rate Limit Exceeded
+**Query Parameters:**
+- `q` (string, required) - Search query
+- `type` (string) - Filter by type (users, pages, settings)
+- `limit` (integer) - Limit results (max 50)
+
+**Response:**
 ```json
 {
-  "error": "Too Many Requests",
-  "message": "Rate limit exceeded",
-  "code": 429
+    "success": true,
+    "data": {
+        "users": [
+            {
+                "id": 1,
+                "name": "John Doe",
+                "email": "john@example.com"
+            }
+        ],
+        "pages": [
+            {
+                "id": 1,
+                "title": "Welcome Page",
+                "slug": "welcome"
+            }
+        ]
+    }
 }
 ```
 
-## 📊 Response Formats
+## Webhooks
 
-### Standard Response
+### List Webhooks
+
+```bash
+GET /api/webhooks
+```
+
+### Create Webhook
+
+```bash
+POST /api/webhooks
+```
+
+**Request Body:**
 ```json
 {
-  "data": {
-    // Response data
-  },
-  "meta": {
-    // Metadata (pagination, etc.)
-  }
+    "url": "https://example.com/webhook",
+    "events": ["user.created", "page.published"],
+    "secret": "webhook-secret"
 }
 ```
 
-### Paginated Response
-```json
-{
-  "data": [
-    // Array of items
-  ],
-  "meta": {
-    "current_page": 1,
-    "last_page": 5,
-    "per_page": 15,
-    "total": 75,
-    "from": 1,
-    "to": 15
-  },
-  "links": {
-    "first": "http://example.com/api/users?page=1",
-    "last": "http://example.com/api/users?page=5",
-    "prev": null,
-    "next": "http://example.com/api/users?page=2"
-  }
-}
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `VALIDATION_ERROR` | Request validation failed |
+| `AUTHENTICATION_ERROR` | Authentication required |
+| `AUTHORIZATION_ERROR` | Insufficient permissions |
+| `NOT_FOUND` | Resource not found |
+| `RATE_LIMIT_EXCEEDED` | Too many requests |
+| `SERVER_ERROR` | Internal server error |
+
+## SDKs and Libraries
+
+### JavaScript/TypeScript
+
+```bash
+npm install @thorium90/api-client
 ```
 
-### Error Response
-```json
-{
-  "error": "Error Type",
-  "message": "Error message",
-  "code": 400,
-  "details": {
-    // Additional error details
-  }
-}
-```
-
-## 🔧 SDK Examples
-
-### PHP/Laravel
-```php
-use Illuminate\Support\Facades\Http;
-
-// Get users
-$response = Http::withToken($token)
-    ->get('http://api.example.com/api/users');
-
-$users = $response->json()['data'];
-
-// Create user
-$response = Http::withToken($token)
-    ->post('http://api.example.com/api/users', [
-        'name' => 'John Doe',
-        'email' => 'john@example.com',
-        'password' => 'password123',
-        'roles' => ['Editor']
-    ]);
-
-$user = $response->json()['data'];
-```
-
-### JavaScript/Node.js
 ```javascript
-const axios = require('axios');
+import { Thorium90Client } from '@thorium90/api-client';
+
+const client = new Thorium90Client({
+    baseURL: 'https://yourdomain.com/api',
+    token: 'your-api-token'
+});
 
 // Get users
-const response = await axios.get('http://api.example.com/api/users', {
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
+const users = await client.users.list();
+
+// Create page
+const page = await client.pages.create({
+    title: 'New Page',
+    content: 'Page content'
 });
-
-const users = response.data.data;
-
-// Create user
-const userResponse = await axios.post('http://api.example.com/api/users', {
-  name: 'John Doe',
-  email: 'john@example.com',
-  password: 'password123',
-  roles: ['Editor']
-}, {
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
-});
-
-const user = userResponse.data.data;
 ```
 
-### Python
-```python
-import requests
+### PHP
 
+```bash
+composer require thorium90/api-client
+```
+
+```php
+use Thorium90\ApiClient\Client;
+
+$client = new Client([
+    'base_url' => 'https://yourdomain.com/api',
+    'token' => 'your-api-token'
+]);
+
+// Get users
+$users = $client->users()->list();
+
+// Create page
+$page = $client->pages()->create([
+    'title' => 'New Page',
+    'content' => 'Page content'
+]);
+```
+
+## Testing the API
+
+### Using cURL
+
+```bash
 # Get users
-response = requests.get(
-    'http://api.example.com/api/users',
-    headers={'Authorization': f'Bearer {token}'}
-)
+curl -H "Authorization: Bearer your-token" \
+     -H "Accept: application/json" \
+     https://yourdomain.com/api/users
 
-users = response.json()['data']
-
-# Create user
-user_response = requests.post(
-    'http://api.example.com/api/users',
-    json={
-        'name': 'John Doe',
-        'email': 'john@example.com',
-        'password': 'password123',
-        'roles': ['Editor']
-    },
-    headers={'Authorization': f'Bearer {token}'}
-)
-
-user = user_response.json()['data']
+# Create page
+curl -X POST \
+     -H "Authorization: Bearer your-token" \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json" \
+     -d '{"title":"Test Page","content":"Test content"}' \
+     https://yourdomain.com/api/pages
 ```
 
-## 📚 Additional Resources
+### Using Postman
 
-### API Documentation
-- **OpenAPI/Swagger**: Available at `/api/documentation`
-- **Postman Collection**: Download from repository
-- **Insomnia Collection**: Available in repository
+1. Import the Postman collection: [Download Collection](https://github.com/travissutphin/thorium90/blob/main/docs/postman/Thorium90-API.postman_collection.json)
+2. Set up environment variables:
+   - `base_url`: Your API base URL
+   - `token`: Your API token
 
-### Testing
-- **API Tests**: Run with `php artisan test --filter=ApiTest`
-- **Postman Tests**: Automated tests in collection
-- **Mock Server**: Available for development
+## Changelog
 
-### Support
-- **API Issues**: Report on GitHub Issues
-- **Documentation**: Check wiki pages
-- **Community**: Join GitHub Discussions
+### v1.0.0
+- Initial API release
+- User management endpoints
+- Role and permission management
+- Pages CRUD operations
+- Settings management
+- File upload support
 
----
+### v1.1.0 (Planned)
+- Webhook support
+- Advanced search
+- Bulk operations
+- API versioning
+- GraphQL endpoint
 
-**Need help with the API?** Check our [Developer Guide](Developer-Guide) or [Contact Support](Support) for assistance.
+## Support
+
+For API support:
+- **Documentation**: [API Reference](https://docs.thorium90.com/api)
+- **Issues**: [GitHub Issues](https://github.com/travissutphin/thorium90/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/travissutphin/thorium90/discussions)
+- **Email**: api-support@thorium90.com

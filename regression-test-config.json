@@ -1,0 +1,289 @@
+{
+  "version": "2.0",
+  "name": "Enhanced Regression Testing Configuration",
+  "description": "Configuration file for the enhanced regression testing system",
+  "test_groups": {
+    "group_1": {
+      "name": "Foundation & Database",
+      "priority": "critical",
+      "description": "Database integrity and basic setup verification",
+      "tests": [
+        {
+          "name": "Role Verification",
+          "type": "database_check",
+          "command": "php artisan tinker --execute=\"echo \\Spatie\\Permission\\Models\\Role::count();\"",
+          "expected_min": 5,
+          "timeout": 30
+        },
+        {
+          "name": "Permission Verification", 
+          "type": "database_check",
+          "command": "php artisan tinker --execute=\"echo \\Spatie\\Permission\\Models\\Permission::count();\"",
+          "expected_min": 20,
+          "timeout": 30
+        },
+        {
+          "name": "Unit Tests",
+          "type": "phpunit",
+          "path": "tests/Unit/",
+          "timeout": 120
+        }
+      ]
+    },
+    "group_2": {
+      "name": "Authentication Core",
+      "priority": "essential",
+      "description": "Login, registration, password management",
+      "depends_on": ["group_1"],
+      "tests": [
+        {
+          "name": "Registration",
+          "type": "phpunit",
+          "path": "tests/Feature/Auth/RegistrationTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Authentication",
+          "type": "phpunit", 
+          "path": "tests/Feature/Auth/AuthenticationTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Password Reset",
+          "type": "phpunit",
+          "path": "tests/Feature/Auth/PasswordResetTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Email Verification",
+          "type": "phpunit",
+          "path": "tests/Feature/Auth/EmailVerificationTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Password Confirmation",
+          "type": "phpunit",
+          "path": "tests/Feature/Auth/PasswordConfirmationTest.php",
+          "timeout": 60
+        }
+      ]
+    },
+    "group_3": {
+      "name": "Access Control & Middleware",
+      "priority": "security",
+      "description": "Security boundaries and route protection",
+      "depends_on": ["group_1", "group_2"],
+      "tests": [
+        {
+          "name": "Middleware Protection",
+          "type": "phpunit",
+          "path": "tests/Feature/MiddlewareTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Role-Based Access",
+          "type": "phpunit",
+          "path": "tests/Feature/RoleBasedAccessTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Dashboard Access",
+          "type": "phpunit",
+          "path": "tests/Feature/DashboardTest.php",
+          "timeout": 60
+        }
+      ]
+    },
+    "group_4": {
+      "name": "Advanced Authentication",
+      "priority": "extended",
+      "description": "2FA, social login, API authentication",
+      "depends_on": ["group_1", "group_2", "group_3"],
+      "quick_mode_skip": false,
+      "tests": [
+        {
+          "name": "Two-Factor Authentication",
+          "type": "phpunit",
+          "path": "tests/Feature/TwoFactorAuthenticationTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Social Login",
+          "type": "phpunit",
+          "path": "tests/Feature/SocialLoginTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "API Authentication",
+          "type": "phpunit",
+          "path": "tests/Feature/SanctumApiTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Email Resending",
+          "type": "phpunit",
+          "path": "tests/Feature/ResendEmailTest.php",
+          "timeout": 60
+        }
+      ]
+    },
+    "group_5": {
+      "name": "Admin & User Management",
+      "priority": "features",
+      "description": "User and role administration",
+      "depends_on": ["group_1", "group_2", "group_3"],
+      "quick_mode_skip": false,
+      "tests": [
+        {
+          "name": "User Management",
+          "type": "phpunit",
+          "path": "tests/Feature/Admin/UserManagementTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Role Management",
+          "type": "phpunit",
+          "path": "tests/Feature/Admin/RoleManagementTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Role CRUD Operations",
+          "type": "phpunit",
+          "path": "tests/Feature/Admin/RoleManagementCrudTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "User Role Assignments",
+          "type": "phpunit",
+          "path": "tests/Feature/Admin/UserRoleManagementTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Admin Settings",
+          "type": "phpunit",
+          "path": "tests/Feature/Admin/AdminSettingsTest.php",
+          "timeout": 60
+        }
+      ]
+    },
+    "group_6": {
+      "name": "Content & Frontend",
+      "priority": "integration",
+      "description": "CMS features and UI integration",
+      "depends_on": ["group_1", "group_2", "group_3"],
+      "quick_mode_skip": false,
+      "tests": [
+        {
+          "name": "Page Management",
+          "type": "phpunit",
+          "path": "tests/Feature/Content/PageManagementTest.php",
+          "timeout": 90
+        },
+        {
+          "name": "Page SEO",
+          "type": "phpunit",
+          "path": "tests/Feature/Content/PageSEOTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Sitemap Generation",
+          "type": "phpunit",
+          "path": "tests/Feature/Content/SitemapTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "UI Permissions",
+          "type": "phpunit",
+          "path": "tests/Feature/UIPermissionTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Profile Updates",
+          "type": "phpunit",
+          "path": "tests/Feature/Settings/ProfileUpdateTest.php",
+          "timeout": 60
+        },
+        {
+          "name": "Password Updates",
+          "type": "phpunit",
+          "path": "tests/Feature/Settings/PasswordUpdateTest.php",
+          "timeout": 60
+        }
+      ]
+    }
+  },
+  "execution_modes": {
+    "quick": {
+      "description": "Run essential tests only (Groups 1-3)",
+      "groups": ["group_1", "group_2", "group_3"],
+      "estimated_duration": "3-5 minutes"
+    },
+    "full": {
+      "description": "Run all test groups for comprehensive testing",
+      "groups": ["group_1", "group_2", "group_3", "group_4", "group_5", "group_6"],
+      "estimated_duration": "8-12 minutes"
+    },
+    "critical_only": {
+      "description": "Run only critical foundation tests",
+      "groups": ["group_1"],
+      "estimated_duration": "1-2 minutes"
+    }
+  },
+  "environment_setup": {
+    "required_commands": [
+      "php artisan cache:clear",
+      "php artisan config:clear", 
+      "php artisan route:clear",
+      "php artisan view:clear"
+    ],
+    "database_setup": [
+      "php artisan migrate:fresh --force",
+      "php artisan db:seed --force"
+    ],
+    "verification_checks": [
+      {
+        "name": "Laravel Project",
+        "check": "file_exists",
+        "target": "artisan"
+      },
+      {
+        "name": "PHP Available",
+        "check": "command_exists",
+        "target": "php"
+      },
+      {
+        "name": "Composer Available",
+        "check": "command_exists",
+        "target": "composer"
+      }
+    ]
+  },
+  "reporting": {
+    "log_file": "regression-test-detailed.log",
+    "html_report": "regression-test-report.html",
+    "json_report": "regression-test-results.json",
+    "include_performance_metrics": true,
+    "include_failure_analysis": true,
+    "success_thresholds": {
+      "excellent": 100,
+      "good": 95,
+      "acceptable": 90,
+      "needs_attention": 80,
+      "critical": 79
+    }
+  },
+  "failure_handling": {
+    "stop_on_group_failure": true,
+    "max_retries": 1,
+    "retry_delay_seconds": 5,
+    "generate_failure_report": true,
+    "include_debug_info": true
+  },
+  "performance_benchmarks": {
+    "role_loading_ms": 100,
+    "permission_check_ms": 10,
+    "middleware_processing_ms": 20,
+    "database_query_ms": 50,
+    "test_execution_timeout_multiplier": 1.5
+  }
+}

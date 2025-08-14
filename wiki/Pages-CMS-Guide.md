@@ -33,8 +33,9 @@ CREATE TABLE pages (
     content LONGTEXT,
     excerpt TEXT,
     featured_image VARCHAR(255),
-    author_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('draft', 'published', 'scheduled') DEFAULT 'draft',
+    user_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('draft', 'published', 'private') DEFAULT 'draft',
+    is_featured BOOLEAN DEFAULT FALSE,
     published_at TIMESTAMP NULL,
     
     -- SEO Fields
@@ -76,13 +77,11 @@ CREATE TABLE pages (
     INDEX idx_slug (slug),
     INDEX idx_status (status),
     INDEX idx_published_at (published_at),
-    INDEX idx_author (author_id),
-    INDEX idx_parent (parent_id),
+    INDEX idx_user (user_id),
     INDEX idx_deleted (deleted_at),
     
     -- Foreign Keys
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
@@ -137,8 +136,7 @@ class PageController extends Controller
     // Display listing of pages with statistics
     public function index()
     {
-        $pages = Page::with('author')
-            ->withCount('views')
+        $pages = Page::with('user')
             ->latest()
             ->paginate(20);
             
@@ -183,7 +181,7 @@ class PageController extends Controller
         
         $page = Page::create([
             ...$validated,
-            'author_id' => auth()->id(),
+            'user_id' => auth()->id(),
         ]);
         
         return redirect()->route('content.pages.index')
@@ -218,7 +216,7 @@ class Page extends Model
         'og_title', 'og_description', 'og_image',
         'twitter_title', 'twitter_description', 'twitter_image',
         'schema_type', 'schema_data',
-        'status', 'published_at', 'author_id',
+        'status', 'published_at', 'user_id',
     ];
     
     protected $casts = [
@@ -246,19 +244,9 @@ class Page extends Model
     }
     
     // Relationships
-    public function author()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'author_id');
-    }
-    
-    public function parent()
-    {
-        return $this->belongsTo(Page::class, 'parent_id');
-    }
-    
-    public function children()
-    {
-        return $this->hasMany(Page::class, 'parent_id');
+        return $this->belongsTo(User::class);
     }
     
     // SEO Methods
@@ -282,7 +270,7 @@ class Page extends Model
             'description' => $this->getMetaDescription(),
             'author' => [
                 '@type' => 'Person',
-                'name' => $this->author->name,
+                'name' => $this->user->name,
             ],
             'datePublished' => $this->published_at?->toIso8601String(),
             'dateModified' => $this->updated_at->toIso8601String(),

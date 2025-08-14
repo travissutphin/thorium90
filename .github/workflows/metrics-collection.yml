@@ -1,0 +1,62 @@
+name: Collect Development Workflow Metrics
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  collect-metrics:
+    name: Collect Workflow Metrics
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Dependencies
+      run: |
+        pip install pandas matplotlib requests
+        
+    - name: Collect GitHub Metrics
+      id: collect-metrics
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        python scripts/collect-workflow-metrics.py
+        
+    - name: Store Metrics
+      run: |
+        # Store metrics in repository for tracking
+        echo "${{ steps.collect-metrics.outputs.metrics }}" >> workflow-metrics.json
+        
+    - name: Generate Report
+      run: |
+        python scripts/generate-workflow-report.py
+        
+    - name: Create Issue for Review
+      if: github.event_name == 'schedule'
+      run: |
+        gh issue create \
+          --title "Weekly Development Workflow Metrics Report" \
+          --body "## 📊 Weekly Workflow Metrics Report
+        
+        **Date**: $(date -u +%Y-%m-%d)
+        
+        **Metrics Collected**:
+        - Consistency check completion rates
+        - Red flag detection accuracy
+        - Workflow adoption trends
+        - Developer feedback analysis
+        
+        **Next Steps**:
+        - Review metrics for trends
+        - Identify areas for improvement
+        - Plan workflow enhancements
+        
+        See the full report in the workflow artifacts."

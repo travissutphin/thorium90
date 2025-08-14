@@ -1,5 +1,11 @@
 # Testing Strategy
 
+## 🚨 **IMPORTANT: Start Here First**
+
+**BEFORE reading this guide, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
+
+This ensures you understand the testing patterns and requirements within the context of the overall system architecture.
+
 ## Overview
 
 This document outlines the comprehensive testing strategy for the Thorium90 application, including unit tests, feature tests, integration tests, and regression testing procedures.

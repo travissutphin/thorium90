@@ -247,4 +247,20 @@ class RoleBasedAccessTest extends TestCase
         $this->assertUserHasPermission($user, 'view dashboard');
         $this->assertUserLacksPermission($user, 'create pages');
     }
+
+    /**
+     * Assert that a user has a specific permission
+     */
+    protected function assertUserHasPermission($user, $permission)
+    {
+        $this->assertTrue($user->hasPermissionTo($permission), "User should have permission: {$permission}");
+    }
+
+    /**
+     * Assert that a user lacks a specific permission
+     */
+    protected function assertUserLacksPermission($user, $permission)
+    {
+        $this->assertFalse($user->hasPermissionTo($permission), "User should not have permission: {$permission}");
+    }
 }

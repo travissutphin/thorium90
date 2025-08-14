@@ -2,28 +2,33 @@
 
 ## 🚀 Quick Commands
 
-### Windows
+### Enhanced System (Recommended)
 ```batch
-# Full regression test
+# Windows - Essential tests (3-5 min)
+regression-test-enhanced.bat --quick
+
+# Windows - Full comprehensive test (8-12 min)
+regression-test-enhanced.bat
+
+# Linux/Mac - Essential tests (3-5 min)
+./regression-test-enhanced.sh --quick
+
+# Linux/Mac - Full comprehensive test (8-12 min)
+./regression-test-enhanced.sh
+```
+
+### Legacy System
+```batch
+# Windows - Full regression test
 regression-test.bat
+
+# Linux/Mac - Full regression test
+./regression-test.sh
 
 # Individual test suites
 php artisan test tests/Feature/Auth/
 php artisan test tests/Feature/Admin/
 php artisan test tests/Feature/MiddlewareTest.php
-```
-
-### Linux/Mac
-```bash
-# Full regression test
-./regression-test.sh
-
-# Quick validation
-./regression-test.sh --quick
-
-# Individual test suites
-php artisan test tests/Feature/Auth/
-php artisan test tests/Feature/Admin/
 ```
 
 ## 🔧 Environment Setup

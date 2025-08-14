@@ -1,0 +1,56 @@
+name: Request Developer Feedback
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  request-feedback:
+    name: Request Workflow Feedback
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Request Feedback
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Only request feedback for PRs that had consistency checks
+        if gh pr view ${{ github.event.pull_request.number }} --json labels | grep -q "needs-consistency-check"; then
+          echo "PR had consistency check issues, requesting feedback"
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body "## 📝 **Development Workflow Feedback Request**
+          
+          Thank you for your contribution! We'd like to gather feedback on the Development Workflow process to make it more effective.
+          
+          **Quick Feedback Questions** (1-2 minutes):
+          
+          ### 1. **Workflow Effectiveness**
+          - How helpful was the consistency check process? (1-10)
+          - Did it help you write better code?
+          - Any suggestions for improvement?
+          
+          ### 2. **Time Investment**
+          - How long did the consistency check take?
+          - Was the time investment worthwhile?
+          - Any steps that took too long?
+          
+          ### 3. **Process Clarity**
+          - Were the instructions clear?
+          - Any confusing or unclear parts?
+          - What would make it easier to follow?
+          
+          **Your feedback helps improve the process for everyone!**
+          
+          Reply to this comment with your thoughts, or create an issue with the label 'workflow-feedback' for more detailed feedback."
+        else
+          echo "PR completed consistency check successfully, no feedback needed"
+        fi
+        
+    - name: Track Feedback Request
+      run: |
+        # Store feedback request metrics
+        echo "Feedback requested for PR ${{ github.event.pull_request.number }}" >> feedback-requests.log

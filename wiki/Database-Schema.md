@@ -1,5 +1,11 @@
 # Database Schema
 
+## 🚨 **IMPORTANT: Start Here First**
+
+**BEFORE reading this guide, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
+
+This ensures you understand the database structure within the context of the overall system architecture and patterns.
+
 ## Overview
 
 This document provides a complete reference of the database schema for the Thorium90 application, including all tables, relationships, and indexes.
@@ -43,7 +49,7 @@ This document provides a complete reference of the database schema for the Thori
 │ title           │     │ key             │     │ tokenable_type  │
 │ slug            │     │ value           │     │ tokenable_id    │
 │ content         │     │ type            │     │ name            │
-│ author_id (FK)  │     │ category        │     │ token           │
+│ user_id (FK)    │     │ category        │     │ token           │
 │ status          │     │ description     │     │ abilities       │
 │ meta_*          │     │ is_public       │     │ last_used_at    │
 │ og_*            │     │ created_at      │     │ expires_at      │
@@ -105,40 +111,19 @@ CREATE TABLE pages (
     slug VARCHAR(255) NOT NULL UNIQUE,
     content LONGTEXT,
     excerpt TEXT,
-    featured_image VARCHAR(255),
-    author_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('draft', 'published', 'scheduled') DEFAULT 'draft',
+    user_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('draft', 'published', 'private') DEFAULT 'draft',
+    is_featured BOOLEAN DEFAULT FALSE,
     published_at TIMESTAMP NULL,
     
     -- SEO Fields
     meta_title VARCHAR(255),
     meta_description TEXT,
     meta_keywords TEXT,
-    canonical_url VARCHAR(255),
-    robots_meta VARCHAR(100) DEFAULT 'index,follow',
-    
-    -- Open Graph Fields
-    og_title VARCHAR(255),
-    og_description TEXT,
-    og_image VARCHAR(255),
-    og_type VARCHAR(50) DEFAULT 'article',
-    
-    -- Twitter Card Fields
-    twitter_card VARCHAR(50) DEFAULT 'summary_large_image',
-    twitter_title VARCHAR(255),
-    twitter_description TEXT,
-    twitter_image VARCHAR(255),
     
     -- Schema Markup
-    schema_type VARCHAR(50) DEFAULT 'Article',
+    schema_type VARCHAR(50) DEFAULT 'WebPage',
     schema_data JSON,
-    
-    -- Additional Fields
-    template VARCHAR(100) DEFAULT 'default',
-    parent_id BIGINT UNSIGNED NULL,
-    order_column INT DEFAULT 0,
-    is_featured BOOLEAN DEFAULT FALSE,
-    view_count BIGINT DEFAULT 0,
     
     -- Soft Deletes
     deleted_at TIMESTAMP NULL,
@@ -151,13 +136,14 @@ CREATE TABLE pages (
     INDEX idx_slug (slug),
     INDEX idx_status (status),
     INDEX idx_published_at (published_at),
-    INDEX idx_author (author_id),
-    INDEX idx_parent (parent_id),
+    INDEX idx_user (user_id),
     INDEX idx_deleted (deleted_at),
+    INDEX idx_status_published (status, published_at),
+    INDEX idx_featured_status (is_featured, status),
+    INDEX idx_user_status (user_id, status),
     
     -- Foreign Keys
-    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
@@ -425,16 +411,14 @@ CREATE TABLE failed_jobs (
 // User Model
 public function roles() { return $this->belongsToMany(Role::class); }
 public function permissions() { return $this->belongsToMany(Permission::class); }
-public function pages() { return $this->hasMany(Page::class, 'author_id'); }
+public function pages() { return $this->hasMany(Page::class); }
 public function tokens() { return $this->morphMany(PersonalAccessToken::class, 'tokenable'); }
 ```
 
 ### Page Relationships
 ```php
 // Page Model
-public function author() { return $this->belongsTo(User::class, 'author_id'); }
-public function parent() { return $this->belongsTo(Page::class, 'parent_id'); }
-public function children() { return $this->hasMany(Page::class, 'parent_id'); }
+public function user() { return $this->belongsTo(User::class); }
 ```
 
 ### Role & Permission Relationships
@@ -465,6 +449,7 @@ public function users() { return $this->belongsToMany(User::class); }
 - Social login: `(provider, provider_id)` on users
 - Role assignments: `(role_id, model_id, model_type)`
 - Permission assignments: `(permission_id, model_id, model_type)`
+- Page queries: `(status, published_at)`, `(is_featured, status)`, `(user_id, status)`
 
 ## Migration Order
 

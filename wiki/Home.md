@@ -5,6 +5,7 @@ Welcome to the comprehensive documentation for the **Multi-Role User Authenticat
 ## 🚀 Quick Start
 
 - **[Installation Guide](Installation-Guide)** - Get up and running quickly
+- **[Development Workflow](Development-Workflow)** - **REQUIRED: Consistency process for all tasks**
 - **[Testing Strategy](Testing-Strategy)** - Comprehensive testing guide with regression procedures
 - **[Database Schema](Database-Schema)** - Complete database reference with all tables
 - **[Pages CMS Guide](Pages-CMS-Guide)** - Content management system with SEO/AEO/GEO

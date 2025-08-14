@@ -1,5 +1,13 @@
 # Authentication Architecture
 
+## 🚨 **IMPORTANT: Start Here First**
+
+**BEFORE reading this guide, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
+
+This ensures you understand the authentication system within the context of the overall system architecture and patterns.
+
+## Overview
+
 This document provides a comprehensive overview of the authentication system architecture in the Thorium90 Multi-Role User Authentication system, detailing when and where each component (Laravel 12 Core, Fortify, Sanctum, and Socialite) is used.
 
 ## Table of Contents

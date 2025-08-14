@@ -39,9 +39,20 @@ This application includes a comprehensive role-based access control (RBAC) syste
 
 ### Quick Start
 1. **Installation**: `composer install && npm install`
-2. **Environment**: Copy `.env.example` to `.env` and configure
-3. **Database**: `php artisan migrate`
-4. **Development**: `npm run dev` and `php artisan serve`
+2. **Setup**: `cp .env.example .env && php artisan key:generate`
+3. **Database**: `php artisan migrate:fresh --seed`
+4. **Development**: `php artisan serve` and `npm run dev`
+
+### **Required Reading (Start Here)**
+1. **[Development Workflow](wiki/Development-Workflow)** - **MANDATORY: Consistency process for all tasks**
+2. **[System Overview](wiki/Home)** - Understanding the system goals
+3. **[Developer Guide](wiki/Developer-Guide)** - Technical implementation details
+4. **[Testing Strategy](wiki/Testing-Strategy)** - Testing procedures and standards
+
+### Complete Documentation
+- **[Wiki](wiki/)** - Comprehensive system documentation
+- **[Docs](docs/)** - Development and testing guides
+- **[Testing](docs/testing/)** - Testing procedures and regression tests
 
 ### Authentication System
 - [Authentication Guide](docs/authentication/README.md) - Complete system overview

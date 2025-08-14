@@ -27,7 +27,7 @@ class RoleManagementCrudTest extends TestCase
 
         $roleData = [
             'name' => 'Content Manager',
-            'permissions' => ['view dashboard', 'create posts', 'edit posts'],
+            'permissions' => ['view dashboard', 'create pages', 'edit pages'],
         ];
 
         $response = $this->actingAs($superAdmin)
@@ -41,9 +41,9 @@ class RoleManagementCrudTest extends TestCase
         $role = Role::where('name', 'Content Manager')->first();
         $this->assertNotNull($role);
         $this->assertTrue($role->hasPermissionTo('view dashboard'));
-        $this->assertTrue($role->hasPermissionTo('create posts'));
-        $this->assertTrue($role->hasPermissionTo('edit posts'));
-        $this->assertFalse($role->hasPermissionTo('delete posts'));
+        $this->assertTrue($role->hasPermissionTo('create pages'));
+        $this->assertTrue($role->hasPermissionTo('edit pages'));
+        $this->assertFalse($role->hasPermissionTo('delete pages'));
     }
 
     public function test_role_creation_validates_required_name()
@@ -175,7 +175,7 @@ class RoleManagementCrudTest extends TestCase
 
         $response->assertInertia(fn ($page) => 
             $page->has('permissions')
-                ->has('permissions.posts') // Should have posts group
+                ->has('permissions.pages') // Should have pages group
                 ->has('permissions.users') // Should have users group
         );
     }
@@ -239,7 +239,7 @@ class RoleManagementCrudTest extends TestCase
         $superAdmin = $this->createSuperAdmin();
         $role = Role::where('name', 'Author')->first();
 
-        $newPermissions = ['view dashboard', 'create posts', 'edit posts', 'delete posts'];
+        $newPermissions = ['view dashboard', 'create pages', 'edit pages', 'delete pages'];
 
         $response = $this->actingAs($superAdmin)
             ->put("/admin/roles/{$role->id}", [
@@ -332,7 +332,7 @@ class RoleManagementCrudTest extends TestCase
         $role = Role::where('name', 'Author')->first();
         $originalPermissions = $role->permissions->pluck('name')->toArray();
         
-        $newPermissions = array_merge($originalPermissions, ['delete posts']);
+        $newPermissions = array_merge($originalPermissions, ['delete pages']);
 
         $response = $this->actingAs($superAdmin)
             ->put("/admin/roles/{$role->id}", [
@@ -342,7 +342,7 @@ class RoleManagementCrudTest extends TestCase
 
         $response->assertSessionHas('success');
         $successMessage = session('success');
-        $this->assertStringContainsString('1 permissions added', $successMessage);
+        $this->assertStringContainsString('1 permission added', $successMessage);
     }
 
     // DELETE TESTS
@@ -485,7 +485,7 @@ class RoleManagementCrudTest extends TestCase
 
         // Get initial permissions
         $initialPermissions = $role->permissions->pluck('name')->toArray();
-        $this->assertContains('create posts', $initialPermissions);
+        $this->assertContains('create pages', $initialPermissions);
 
         // Update with completely different permissions
         $newPermissions = ['view dashboard', 'upload media'];
@@ -505,7 +505,7 @@ class RoleManagementCrudTest extends TestCase
         $this->assertTrue($role->hasPermissionTo('upload media'));
         
         // Should not have old permissions
-        $this->assertFalse($role->hasPermissionTo('create posts'));
-        $this->assertFalse($role->hasPermissionTo('edit own posts'));
+        $this->assertFalse($role->hasPermissionTo('create pages'));
+        $this->assertFalse($role->hasPermissionTo('edit own pages'));
     }
 }

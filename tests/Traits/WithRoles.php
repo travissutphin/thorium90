@@ -137,6 +137,8 @@ trait WithRoles
             'edit pages',
             'delete pages',
             'publish pages',
+            'edit own pages',
+            'delete own pages',
             'upload media',
             'manage media',
             'delete media',

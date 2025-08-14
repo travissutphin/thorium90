@@ -1,0 +1,113 @@
+name: Development Workflow Consistency Check
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  consistency-check:
+    name: Check Development Workflow Completion
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check Issue/PR Content
+      id: check-content
+      run: |
+        if [ "${{ github.event_name }}" = "issues" ]; then
+          BODY="${{ github.event.issue.body }}"
+          TITLE="${{ github.event.issue.title }}"
+        else
+          BODY="${{ github.event.pull_request.body }}"
+          TITLE="${{ github.event.pull_request.title }}"
+        fi
+        
+        # Check if consistency check is completed
+        if echo "$BODY" | grep -q "Documentation Review.*Read system overview and technical patterns"; then
+          echo "✅ Consistency check appears to be completed"
+          echo "status=completed" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Consistency check not completed"
+          echo "status=incomplete" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check for red flags
+        RED_FLAGS=0
+        if echo "$BODY" | grep -qi "doesn't need user roles\|doesn't need to test\|different framework\|skip.*authorization"; then
+          echo "⚠️  Potential red flags detected"
+          RED_FLAGS=1
+        fi
+        
+        echo "red_flags=$RED_FLAGS" >> $GITHUB_OUTPUT
+
+    - name: Add Labels
+      if: steps.check-content.outputs.status == 'incomplete'
+      run: |
+        if [ "${{ github.event_name }}" = "issues" ]; then
+          gh issue edit "${{ github.event.issue.number }}" --add-label "needs-consistency-check"
+          gh issue comment "${{ github.event.issue.number }}" --body "## 🚨 **Development Workflow Required**
+
+This issue/PR requires completion of the [Development Workflow](wiki/Development-Workflow.md) consistency check before it can be processed.
+
+**Please complete the 5-step consistency process:**
+1. **Documentation Review** (5 minutes)
+2. **Code Pattern Analysis** (10 minutes)  
+3. **Permission & Role Analysis** (5 minutes)
+4. **Database Schema Review** (5 minutes)
+5. **Consistency Validation** (5 minutes)
+
+**Total time: 25 minutes**
+
+Once completed, update this issue/PR with the consistency check results."
+        else
+          gh pr edit "${{ github.event.pull_request.number }}" --add-label "needs-consistency-check"
+          gh pr comment "${{ github.event.pull_request.number }}" --body "## 🚨 **Development Workflow Required**
+
+This PR requires completion of the [Development Workflow](wiki/Development-Workflow.md) consistency check before it can be reviewed.
+
+**Please complete the 5-step consistency process:**
+1. **Documentation Review** (5 minutes)
+2. **Code Pattern Analysis** (10 minutes)  
+3. **Permission & Role Analysis** (5 minutes)
+4. **Database Schema Review** (5 minutes)
+5. **Consistency Validation** (5 minutes)
+
+**Total time: 25 minutes**
+
+Once completed, update this PR with the consistency check results."
+        fi
+
+    - name: Add Warning for Red Flags
+      if: steps.check-content.outputs.red_flags == '1'
+      run: |
+        if [ "${{ github.event_name }}" = "issues" ]; then
+          gh issue comment "${{ github.event.issue.number }}" --body "## ⚠️ **Potential Red Flags Detected**
+
+This issue/PR contains language that may indicate inconsistency with the system goals. Please review the [Development Workflow](wiki/Development-Workflow.md) red flags section and ensure your request aligns with:
+
+- Multi-Role User Authentication System goals
+- Laravel + React + Inertia.js technology stack
+- Existing code patterns and conventions
+- Permission and role integration requirements
+- Testing and documentation standards"
+        else
+          gh pr comment "${{ github.event.pull_request.number }}" --body "## ⚠️ **Potential Red Flags Detected**
+
+This PR contains language that may indicate inconsistency with the system goals. Please review the [Development Workflow](wiki/Development-Workflow.md) red flags section and ensure your implementation aligns with:
+
+- Multi-Role User Authentication System goals
+- Laravel + React + Inertia.js technology stack
+- Existing code patterns and conventions
+- Permission and role integration requirements
+- Testing and documentation standards"
+        fi
+
+    - name: Remove Needs-Check Label
+      if: steps.check-content.outputs.status == 'completed'
+      run: |
+        if [ "${{ github.event_name }}" = "issues" ]; then
+          gh issue edit "${{ github.event.issue.number }}" --remove-label "needs-consistency-check" || true
+        else
+          gh pr edit "${{ github.event.pull_request.number }}" --remove-label "needs-consistency-check" || true
+        fi

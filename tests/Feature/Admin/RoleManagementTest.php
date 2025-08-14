@@ -61,7 +61,7 @@ class RoleManagementTest extends TestCase
 
         $roleData = [
             'name' => 'Test Role',
-            'permissions' => ['view dashboard', 'create posts'],
+            'permissions' => ['view dashboard', 'create pages'],
         ];
 
         $response = $this->actingAs($superAdmin)
@@ -74,7 +74,7 @@ class RoleManagementTest extends TestCase
         
         $role = Role::where('name', 'Test Role')->first();
         $this->assertTrue($role->hasPermissionTo('view dashboard'));
-        $this->assertTrue($role->hasPermissionTo('create posts'));
+        $this->assertTrue($role->hasPermissionTo('create pages'));
     }
 
     public function test_role_creation_validates_required_fields()
@@ -140,7 +140,7 @@ class RoleManagementTest extends TestCase
 
         $updateData = [
             'name' => 'Updated Editor',
-            'permissions' => ['view dashboard', 'create posts', 'edit posts'],
+            'permissions' => ['view dashboard', 'create pages', 'edit pages'],
         ];
 
         $response = $this->actingAs($superAdmin)
@@ -152,8 +152,8 @@ class RoleManagementTest extends TestCase
         $role->refresh();
         $this->assertEquals('Updated Editor', $role->name);
         $this->assertTrue($role->hasPermissionTo('view dashboard'));
-        $this->assertTrue($role->hasPermissionTo('create posts'));
-        $this->assertTrue($role->hasPermissionTo('edit posts'));
+        $this->assertTrue($role->hasPermissionTo('create pages'));
+        $this->assertTrue($role->hasPermissionTo('edit pages'));
     }
 
     public function test_role_update_validates_unique_name_except_current()
@@ -237,13 +237,13 @@ class RoleManagementTest extends TestCase
         $role = Role::where('name', 'Author')->first();
 
         // Initially has certain permissions
-        $this->assertTrue($role->hasPermissionTo('create posts'));
-        $this->assertFalse($role->hasPermissionTo('delete posts'));
+        $this->assertTrue($role->hasPermissionTo('create pages'));
+        $this->assertFalse($role->hasPermissionTo('delete pages'));
 
         // Update with different permissions
         $updateData = [
             'name' => 'Author',
-            'permissions' => ['view dashboard', 'delete posts'], // Remove create posts, add delete posts
+            'permissions' => ['view dashboard', 'delete pages'], // Remove create pages, add delete pages
         ];
 
         $response = $this->actingAs($superAdmin)
@@ -252,8 +252,8 @@ class RoleManagementTest extends TestCase
         $response->assertRedirect('/admin/roles');
 
         $role->refresh();
-        $this->assertFalse($role->hasPermissionTo('create posts')); // Should be removed
-        $this->assertTrue($role->hasPermissionTo('delete posts')); // Should be added
+        $this->assertFalse($role->hasPermissionTo('create pages')); // Should be removed
+        $this->assertTrue($role->hasPermissionTo('delete pages')); // Should be added
         $this->assertTrue($role->hasPermissionTo('view dashboard')); // Should remain
     }
 
@@ -284,7 +284,7 @@ class RoleManagementTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => 
             $page->has('permissions')
-                ->has('permissions.posts') // Should have posts group
+                ->has('permissions.pages') // Should have pages group
                 ->has('permissions.users') // Should have users group
         );
     }

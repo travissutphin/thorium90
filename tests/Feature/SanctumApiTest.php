@@ -181,25 +181,26 @@ class SanctumApiTest extends TestCase
     /** @test */
     public function api_respects_permission_based_access_control()
     {
-        // Create user with specific permission (Admin has manage user roles permission, which should work)
+        // Test Admin access to endpoint requiring permission they don't have
         $user = $this->createUserWithRole('Admin');
         Sanctum::actingAs($user);
 
-        $response = $this->getJson('/api/user-management');
-        $response->assertForbidden(); // Admin doesn't have 'manage users' permission
+        // Admin doesn't have 'manage permissions' permission (only Super Admin does)
+        $response = $this->getJson('/api/admin/permissions');
+        $response->assertForbidden(); // Admin doesn't have 'manage permissions' permission
 
         // Create Super Admin who has all permissions
         $superAdmin = $this->createUserWithRole('Super Admin');
         Sanctum::actingAs($superAdmin);
 
-        $response = $this->getJson('/api/user-management');
+        $response = $this->getJson('/api/admin/permissions');
         $response->assertOk(); // Super Admin has all permissions
 
         // Test user without permission
         $subscriber = $this->createUserWithRole('Subscriber');
         Sanctum::actingAs($subscriber);
 
-        $response = $this->getJson('/api/user-management');
+        $response = $this->getJson('/api/admin/permissions');
         $response->assertForbidden();
     }
 
