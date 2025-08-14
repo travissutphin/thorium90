@@ -51,7 +51,7 @@ class UserRoleManagementTest extends TestCase
         $user = $this->createSubscriber();
 
         $this->assertUserHasRole($user, 'Subscriber');
-        $this->assertUserDoesNotHavePermission($user, 'create posts');
+        $this->assertUserDoesNotHavePermission($user, 'create pages');
 
         $response = $this->actingAs($admin)
             ->put("/admin/users/{$user->id}/roles", [
@@ -64,8 +64,8 @@ class UserRoleManagementTest extends TestCase
         $user->refresh();
         $this->assertUserHasRole($user, 'Author');
         $this->assertUserHasRole($user, 'Editor');
-        $this->assertUserHasPermission($user, 'create posts');
-        $this->assertUserHasPermission($user, 'edit posts');
+        $this->assertUserHasPermission($user, 'create pages');
+        $this->assertUserHasPermission($user, 'edit pages');
     }
 
     public function test_admin_can_remove_roles_from_user()
@@ -74,7 +74,7 @@ class UserRoleManagementTest extends TestCase
         $user = $this->createEditor();
 
         $this->assertUserHasRole($user, 'Editor');
-        $this->assertUserHasPermission($user, 'edit posts');
+        $this->assertUserHasPermission($user, 'edit pages');
 
         $response = $this->actingAs($admin)
             ->put("/admin/users/{$user->id}/roles", [
@@ -87,7 +87,7 @@ class UserRoleManagementTest extends TestCase
         $user->refresh();
         $this->assertFalse($user->hasRole('Editor'));
         $this->assertUserHasRole($user, 'Subscriber');
-        $this->assertUserDoesNotHavePermission($user, 'edit posts');
+        $this->assertUserDoesNotHavePermission($user, 'edit pages');
     }
 
     public function test_cannot_remove_super_admin_role_from_last_super_admin()
@@ -307,8 +307,8 @@ class UserRoleManagementTest extends TestCase
         $admin = $this->createAdmin();
         $user = $this->createSubscriber();
 
-        // Initially cannot create posts
-        $this->assertUserDoesNotHavePermission($user, 'create posts');
+        // Initially cannot create pages
+        $this->assertUserDoesNotHavePermission($user, 'create pages');
 
         // Assign Author role
         $this->actingAs($admin)
@@ -318,8 +318,8 @@ class UserRoleManagementTest extends TestCase
 
         $user->refresh();
 
-        // Now can create posts
-        $this->assertUserHasPermission($user, 'create posts');
+        // Now can create pages
+        $this->assertUserHasPermission($user, 'create pages');
     }
 
     public function test_multiple_role_assignment_combines_permissions()
@@ -335,8 +335,8 @@ class UserRoleManagementTest extends TestCase
         $user->refresh();
 
         // Should have permissions from both roles
-        $this->assertUserHasPermission($user, 'create posts'); // From Author
-        $this->assertUserHasPermission($user, 'edit posts'); // From Editor
-        $this->assertUserHasPermission($user, 'publish posts'); // From Editor
+        $this->assertUserHasPermission($user, 'create pages'); // From Author
+        $this->assertUserHasPermission($user, 'edit pages'); // From Editor
+        $this->assertUserHasPermission($user, 'publish pages'); // From Editor
     }
 }

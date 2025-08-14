@@ -32,19 +32,19 @@ use Spatie\Permission\Models\Permission;
  * 
  * Editor:
  * - Content management focused permissions
- * - Can create, edit, delete, and publish posts
+ * - Can create, edit, delete, and publish pages
  * - Can moderate comments and manage media
  * - Cannot manage users or system settings
  * 
  * Author:
  * - Limited content creation permissions
- * - Can create posts and edit/delete their own posts
+ * - Can create pages and edit/delete their own pages
  * - Can upload media and view comments
  * - Cannot manage other users' content
  * 
  * Subscriber:
  * - Read-only access
- * - Can view posts, dashboard, and comments
+ * - Can view pages, dashboard, and comments
  * - Cannot create or modify content
  * 
  * Usage:
@@ -91,11 +91,11 @@ class RolePermissionSeeder extends Seeder
             'delete users',
             'restore users',
             'manage user roles',
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
             'manage settings',
             'view system stats',
             'view audit logs',
@@ -113,11 +113,11 @@ class RolePermissionSeeder extends Seeder
         $editor = Role::findByName('Editor');
         $editor->givePermissionTo([
             'view users',
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
             'view dashboard',
             'upload media',
             'manage media',
@@ -127,13 +127,13 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Author - Own content management
-        // Authors can create content and manage their own posts but not others'
+        // Authors can create content and manage their own pages but not others'
         $author = Role::findByName('Author');
         $author->givePermissionTo([
-            'view posts',
-            'create posts',
-            'edit own posts',    // Limited to their own content
-            'delete own posts',  // Limited to their own content
+            'view pages',
+            'create pages',
+            'edit own pages',    // Limited to their own content
+            'delete own pages',  // Limited to their own content
             'view dashboard',
             'upload media',
             'view comments',
@@ -143,7 +143,7 @@ class RolePermissionSeeder extends Seeder
         // Subscribers can view content but cannot create or modify anything
         $subscriber = Role::findByName('Subscriber');
         $subscriber->givePermissionTo([
-            'view posts',
+            'view pages',
             'view dashboard',
             'view comments',
         ]);

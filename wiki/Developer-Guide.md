@@ -143,9 +143,9 @@ $user->hasAnyRole(['Admin', 'Editor']);
 $user->hasAllRoles(['Admin', 'Editor']);
 
 // Permission checking
-$user->hasPermissionTo('create-posts');
-$user->hasAnyPermission(['create-posts', 'edit-posts']);
-$user->hasAllPermissions(['create-posts', 'edit-posts']);
+$user->hasPermissionTo('create pages');
+$user->hasAnyPermission(['create pages', 'edit pages']);
+$user->hasAllPermissions(['create pages', 'edit pages']);
 
 // Role assignment
 $user->assignRole('Admin');
@@ -153,9 +153,9 @@ $user->syncRoles(['Admin', 'Editor']);
 $user->removeRole('Editor');
 
 // Permission assignment
-$user->givePermissionTo('create-posts');
-$user->syncPermissions(['create-posts', 'edit-posts']);
-$user->revokePermissionTo('create-posts');
+$user->givePermissionTo('create pages');
+$user->syncPermissions(['create pages', 'edit pages']);
+$user->revokePermissionTo('create pages');
 
 // Getting all permissions (including inherited)
 $user->getAllPermissions();
@@ -187,13 +187,13 @@ Route::middleware(['auth', 'role:Admin,Editor'])->group(function () {
 
 ```php
 // Protect routes requiring specific permission(s)
-Route::middleware(['auth', 'permission:create-posts'])->group(function () {
-    Route::post('/posts', [PostController::class, 'store']);
+Route::middleware(['auth', 'permission:create pages'])->group(function () {
+    Route::post('/content/pages', [PageController::class, 'store']);
 });
 
 // Multiple permissions (AND logic)
-Route::middleware(['auth', 'permission:create-posts,edit-posts'])->group(function () {
-    Route::get('/posts/manage', [PostController::class, 'manage']);
+Route::middleware(['auth', 'permission:create pages,edit pages'])->group(function () {
+    Route::get('/content/pages/manage', [PageController::class, 'manage']);
 });
 ```
 

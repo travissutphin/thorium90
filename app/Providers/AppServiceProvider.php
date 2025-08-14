@@ -26,8 +26,8 @@ use Illuminate\Http\Request;
  * 
  * Gate Categories:
  * - User Management: view-users, create-users, edit-users, delete-users, manage-user-roles
- * - Content Management: view-posts, create-posts, edit-posts, delete-posts, publish-posts
- * - Own Content: edit-own-posts, delete-own-posts (with ownership logic)
+ * - Content Management: view-pages, create-pages, edit-pages, delete-pages, publish-pages
+ * - Own Content: edit-own-pages, delete-own-pages (with ownership logic)
  * - System Management: manage-settings, manage-roles, manage-permissions
  * - Media Management: upload-media, manage-media, delete-media
  * - Comment Management: view-comments, moderate-comments, delete-comments
@@ -36,8 +36,8 @@ use Illuminate\Http\Request;
  * Usage Examples:
  * ```php
  * // In controllers or blade templates
- * if (Gate::allows('edit-posts', $post)) {
- *     // User can edit this post
+ * if (Gate::allows('edit-pages', $page)) {
+ *     // User can edit this page
  * }
  * 
  * // In blade templates
@@ -46,9 +46,9 @@ use Illuminate\Http\Request;
  * @endcan
  * 
  * // In policies
- * public function update(User $user, Post $post)
+ * public function update(User $user, Page $page)
  * {
- *     return Gate::allows('edit-own-posts', $post);
+ *     return Gate::allows('edit-own-pages', $page);
  * }
  * ```
  * 
@@ -100,53 +100,53 @@ class AppServiceProvider extends ServiceProvider
         // Content Management Gates
         // These gates control access to content creation and management
         
-        Gate::define('view-posts', function (User $user) {
-            return $user->hasPermissionTo('view posts');
+        Gate::define('view-pages', function (User $user) {
+            return $user->hasPermissionTo('view pages');
         });
 
-        Gate::define('create-posts', function (User $user) {
-            return $user->hasPermissionTo('create posts');
+        Gate::define('create-pages', function (User $user) {
+            return $user->hasPermissionTo('create pages');
         });
 
-        Gate::define('edit-posts', function (User $user) {
-            return $user->hasPermissionTo('edit posts');
+        Gate::define('edit-pages', function (User $user) {
+            return $user->hasPermissionTo('edit pages');
         });
 
-        Gate::define('delete-posts', function (User $user) {
-            return $user->hasPermissionTo('delete posts');
+        Gate::define('delete-pages', function (User $user) {
+            return $user->hasPermissionTo('delete pages');
         });
 
-        Gate::define('publish-posts', function (User $user) {
-            return $user->hasPermissionTo('publish posts');
+        Gate::define('publish-pages', function (User $user) {
+            return $user->hasPermissionTo('publish pages');
         });
 
         // Own Content Gates
         // These gates implement ownership logic for Authors and other limited users
-        // They check if the user can edit/delete any post or only their own posts
+        // They check if the user can edit/delete any page or only their own pages
         
-        Gate::define('edit-own-posts', function (User $user, $post = null) {
-            // If user has general edit permission, they can edit any post
-            if ($user->hasPermissionTo('edit posts')) {
-                return true; // Can edit any post
+        Gate::define('edit-own-pages', function (User $user, $page = null) {
+            // If user has general edit permission, they can edit any page
+            if ($user->hasPermissionTo('edit pages')) {
+                return true; // Can edit any page
             }
             
-            // If user has own edit permission, check if it's their post
-            if ($user->hasPermissionTo('edit own posts')) {
-                return $post ? $post->user_id === $user->id : true;
+            // If user has own edit permission, check if it's their page
+            if ($user->hasPermissionTo('edit own pages')) {
+                return $page ? $page->user_id === $user->id : true;
             }
             
             return false;
         });
 
-        Gate::define('delete-own-posts', function (User $user, $post = null) {
-            // If user has general delete permission, they can delete any post
-            if ($user->hasPermissionTo('delete posts')) {
-                return true; // Can delete any post
+        Gate::define('delete-own-pages', function (User $user, $page = null) {
+            // If user has general delete permission, they can delete any page
+            if ($user->hasPermissionTo('delete pages')) {
+                return true; // Can delete any page
             }
             
-            // If user has own delete permission, check if it's their post
-            if ($user->hasPermissionTo('delete own posts')) {
-                return $post ? $post->user_id === $user->id : true;
+            // If user has own delete permission, check if it's their page
+            if ($user->hasPermissionTo('delete own pages')) {
+                return $page ? $page->user_id === $user->id : true;
             }
             
             return false;

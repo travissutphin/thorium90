@@ -1,170 +1,217 @@
-# Complete Database Schema
+# Database Schema
 
-This document provides the complete database schema for the Thorium90 Multi-Role User Authentication system, including all tables created by Laravel Core, Fortify, Sanctum, Socialite, and Spatie Laravel Permission.
+## Overview
 
-## Table of Contents
+This document provides a complete reference of the database schema for the Thorium90 application, including all tables, relationships, and indexes.
 
-1. [Core Authentication Tables](#core-authentication-tables)
-2. [Fortify Tables](#fortify-tables)
-3. [Sanctum Tables](#sanctum-tables)
-4. [Socialite Fields](#socialite-fields)
-5. [Spatie Permission Tables](#spatie-permission-tables)
-6. [Laravel Framework Tables](#laravel-framework-tables)
-7. [Relationships](#relationships)
-8. [Indexes](#indexes)
-9. [Migration Order](#migration-order)
+## Entity Relationship Diagram
 
-## Core Authentication Tables
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     users       │     │      roles      │     │   permissions   │
+├─────────────────┤     ├─────────────────┤     ├─────────────────┤
+│ id (PK)         │◄────│ id (PK)         │────►│ id (PK)         │
+│ name            │     │ name            │     │ name            │
+│ email           │     │ guard_name      │     │ guard_name      │
+│ password        │     │ created_at      │     │ created_at      │
+│ provider        │     │ updated_at      │     │ updated_at      │
+│ provider_id     │     └─────────────────┘     └─────────────────┘
+│ avatar          │              │                        │
+│ email_verified  │              │                        │
+│ two_factor_*    │              ▼                        ▼
+│ deleted_at      │     ┌─────────────────┐     ┌─────────────────┐
+│ created_at      │     │ model_has_roles │     │ role_has_perms  │
+│ updated_at      │     ├─────────────────┤     ├─────────────────┤
+└─────────────────┘     │ role_id (FK)    │     │ permission_id   │
+         │              │ model_type      │     │ role_id         │
+         │              │ model_id (FK)   │     └─────────────────┘
+         │              └─────────────────┘
+         │                       │
+         │              ┌─────────────────┐
+         │              │ model_has_perms │
+         │              ├─────────────────┤
+         │              │ permission_id   │
+         │              │ model_type      │
+         │              │ model_id        │
+         │              └─────────────────┘
+         │
+         ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     pages       │     │    settings     │     │ personal_tokens │
+├─────────────────┤     ├─────────────────┤     ├─────────────────┤
+│ id (PK)         │     │ id (PK)         │     │ id (PK)         │
+│ title           │     │ key             │     │ tokenable_type  │
+│ slug            │     │ value           │     │ tokenable_id    │
+│ content         │     │ type            │     │ name            │
+│ author_id (FK)  │     │ category        │     │ token           │
+│ status          │     │ description     │     │ abilities       │
+│ meta_*          │     │ is_public       │     │ last_used_at    │
+│ og_*            │     │ created_at      │     │ expires_at      │
+│ twitter_*       │     │ updated_at      │     │ created_at      │
+│ schema_*        │     └─────────────────┘     │ updated_at      │
+│ deleted_at      │                             └─────────────────┘
+│ created_at      │
+│ updated_at      │
+└─────────────────┘
+```
 
-### Users Table
-The main users table with authentication fields and extensions for Fortify, Sanctum, and Socialite.
+## Tables
+
+### 1. Users Table
+
+Stores user account information with support for social login and two-factor authentication.
 
 ```sql
 CREATE TABLE users (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     email_verified_at TIMESTAMP NULL,
-    password VARCHAR(255) NULL, -- Nullable for social-only users
-    remember_token VARCHAR(100) NULL,
+    password VARCHAR(255) NULL,
     
-    -- Socialite fields
-    provider VARCHAR(255) NULL,
+    -- Social Login Fields
+    provider VARCHAR(50) NULL,
     provider_id VARCHAR(255) NULL,
     avatar VARCHAR(255) NULL,
     
-    -- Two-factor authentication fields (Fortify)
+    -- Two-Factor Authentication
     two_factor_secret TEXT NULL,
     two_factor_recovery_codes TEXT NULL,
     two_factor_confirmed_at TIMESTAMP NULL,
     
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
+    -- Soft Deletes
+    deleted_at TIMESTAMP NULL,
+    
+    -- Timestamps
+    remember_token VARCHAR(100) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     -- Indexes
-    UNIQUE KEY unique_provider_id (provider, provider_id),
     INDEX idx_email (email),
-    INDEX idx_provider (provider),
-    INDEX idx_two_factor_confirmed (two_factor_confirmed_at)
+    INDEX idx_provider (provider, provider_id),
+    INDEX idx_deleted (deleted_at)
 );
 ```
 
-## Fortify Tables
+### 2. Pages Table
 
-### Password Reset Tokens
-Stores password reset tokens for secure password recovery.
+Content management system for pages with SEO optimization.
 
 ```sql
-CREATE TABLE password_reset_tokens (
-    email VARCHAR(255) PRIMARY KEY,
-    token VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL,
+CREATE TABLE pages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    content LONGTEXT,
+    excerpt TEXT,
+    featured_image VARCHAR(255),
+    author_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('draft', 'published', 'scheduled') DEFAULT 'draft',
+    published_at TIMESTAMP NULL,
     
-    INDEX idx_token (token),
-    INDEX idx_created_at (created_at)
+    -- SEO Fields
+    meta_title VARCHAR(255),
+    meta_description TEXT,
+    meta_keywords TEXT,
+    canonical_url VARCHAR(255),
+    robots_meta VARCHAR(100) DEFAULT 'index,follow',
+    
+    -- Open Graph Fields
+    og_title VARCHAR(255),
+    og_description TEXT,
+    og_image VARCHAR(255),
+    og_type VARCHAR(50) DEFAULT 'article',
+    
+    -- Twitter Card Fields
+    twitter_card VARCHAR(50) DEFAULT 'summary_large_image',
+    twitter_title VARCHAR(255),
+    twitter_description TEXT,
+    twitter_image VARCHAR(255),
+    
+    -- Schema Markup
+    schema_type VARCHAR(50) DEFAULT 'Article',
+    schema_data JSON,
+    
+    -- Additional Fields
+    template VARCHAR(100) DEFAULT 'default',
+    parent_id BIGINT UNSIGNED NULL,
+    order_column INT DEFAULT 0,
+    is_featured BOOLEAN DEFAULT FALSE,
+    view_count BIGINT DEFAULT 0,
+    
+    -- Soft Deletes
+    deleted_at TIMESTAMP NULL,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Indexes
+    INDEX idx_slug (slug),
+    INDEX idx_status (status),
+    INDEX idx_published_at (published_at),
+    INDEX idx_author (author_id),
+    INDEX idx_parent (parent_id),
+    INDEX idx_deleted (deleted_at),
+    
+    -- Foreign Keys
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE SET NULL
 );
 ```
 
-### Sessions Table
-Stores user sessions when using database session driver.
+### 3. Roles Table
 
-```sql
-CREATE TABLE sessions (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id BIGINT UNSIGNED NULL,
-    ip_address VARCHAR(45) NULL,
-    user_agent TEXT NULL,
-    payload LONGTEXT NOT NULL,
-    last_activity INT NOT NULL,
-    
-    INDEX idx_user_id (user_id),
-    INDEX idx_last_activity (last_activity),
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-```
-
-## Sanctum Tables
-
-### Personal Access Tokens
-Stores API tokens for Sanctum authentication.
-
-```sql
-CREATE TABLE personal_access_tokens (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    tokenable_type VARCHAR(255) NOT NULL,
-    tokenable_id BIGINT UNSIGNED NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    token VARCHAR(64) UNIQUE NOT NULL,
-    abilities TEXT NULL,
-    last_used_at TIMESTAMP NULL,
-    expires_at TIMESTAMP NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    
-    INDEX idx_tokenable (tokenable_type, tokenable_id),
-    INDEX idx_token (token),
-    INDEX idx_last_used_at (last_used_at),
-    INDEX idx_expires_at (expires_at)
-);
-```
-
-## Socialite Fields
-
-The Socialite integration adds fields directly to the users table rather than creating separate tables:
-
-```sql
--- Added to users table
-ALTER TABLE users ADD COLUMN provider VARCHAR(255) NULL;
-ALTER TABLE users ADD COLUMN provider_id VARCHAR(255) NULL;
-ALTER TABLE users ADD COLUMN avatar VARCHAR(255) NULL;
-ALTER TABLE users ADD UNIQUE KEY unique_provider_id (provider, provider_id);
-```
-
-### Supported Providers
-- Google (`google`)
-- GitHub (`github`)
-- Facebook (`facebook`)
-- LinkedIn (`linkedin`)
-- Twitter/X (`twitter`)
-- GitLab (`gitlab`)
-
-## Spatie Permission Tables
-
-### Roles Table
-Defines available roles in the system.
+Defines system roles for access control.
 
 ```sql
 CREATE TABLE roles (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    guard_name VARCHAR(255) NOT NULL DEFAULT 'web',
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(125) NOT NULL,
+    guard_name VARCHAR(125) NOT NULL DEFAULT 'web',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    UNIQUE KEY unique_role_guard (name, guard_name),
-    INDEX idx_guard_name (guard_name)
+    -- Indexes
+    UNIQUE KEY roles_name_guard_name_unique (name, guard_name)
 );
 ```
 
-### Permissions Table
-Defines available permissions in the system.
+**Default Roles:**
+- Super Admin
+- Admin
+- Editor
+- Author
+- Subscriber
+
+### 4. Permissions Table
+
+Defines granular permissions for the system.
 
 ```sql
 CREATE TABLE permissions (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    guard_name VARCHAR(255) NOT NULL DEFAULT 'web',
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(125) NOT NULL,
+    guard_name VARCHAR(125) NOT NULL DEFAULT 'web',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    UNIQUE KEY unique_permission_guard (name, guard_name),
-    INDEX idx_guard_name (guard_name)
+    -- Indexes
+    UNIQUE KEY permissions_name_guard_name_unique (name, guard_name)
 );
 ```
 
-### Model Has Roles (User-Role Assignments)
-Links users to their assigned roles.
+**Permission Categories:**
+- User Management: view, create, edit, delete, restore, force delete users
+- Role Management: manage user roles
+- Settings: manage settings, view system stats
+- Content: view, create, edit, delete, publish pages, manage SEO, manage schema
+- Media: upload media
+
+### 5. Model Has Roles Table
+
+Junction table for assigning roles to users.
 
 ```sql
 CREATE TABLE model_has_roles (
@@ -172,16 +219,18 @@ CREATE TABLE model_has_roles (
     model_type VARCHAR(255) NOT NULL,
     model_id BIGINT UNSIGNED NOT NULL,
     
+    -- Indexes
     PRIMARY KEY (role_id, model_id, model_type),
-    INDEX idx_model_id (model_id),
-    INDEX idx_model_type (model_type),
+    INDEX model_has_roles_model_id_model_type_index (model_id, model_type),
     
+    -- Foreign Keys
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 ```
 
-### Model Has Permissions (Direct User Permissions)
-Links users to directly assigned permissions (bypassing roles).
+### 6. Model Has Permissions Table
+
+Junction table for direct permission assignments.
 
 ```sql
 CREATE TABLE model_has_permissions (
@@ -189,64 +238,151 @@ CREATE TABLE model_has_permissions (
     model_type VARCHAR(255) NOT NULL,
     model_id BIGINT UNSIGNED NOT NULL,
     
+    -- Indexes
     PRIMARY KEY (permission_id, model_id, model_type),
-    INDEX idx_model_id (model_id),
-    INDEX idx_model_type (model_type),
+    INDEX model_has_permissions_model_id_model_type_index (model_id, model_type),
     
+    -- Foreign Keys
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 );
 ```
 
-### Role Has Permissions (Role-Permission Assignments)
-Links roles to their assigned permissions.
+### 7. Role Has Permissions Table
+
+Junction table for assigning permissions to roles.
 
 ```sql
 CREATE TABLE role_has_permissions (
     permission_id BIGINT UNSIGNED NOT NULL,
     role_id BIGINT UNSIGNED NOT NULL,
     
+    -- Indexes
     PRIMARY KEY (permission_id, role_id),
-    INDEX idx_role_id (role_id),
     
+    -- Foreign Keys
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 ```
 
-## Laravel Framework Tables
+### 8. Settings Table
 
-### Cache Table
-Stores cache data when using database cache driver.
+Stores application configuration settings.
+
+```sql
+CREATE TABLE settings (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    key VARCHAR(255) NOT NULL UNIQUE,
+    value TEXT,
+    type ENUM('string', 'integer', 'boolean', 'json', 'array') DEFAULT 'string',
+    category VARCHAR(100) DEFAULT 'general',
+    description TEXT,
+    is_public BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Indexes
+    INDEX idx_key (key),
+    INDEX idx_category (category),
+    INDEX idx_public (is_public)
+);
+```
+
+**Setting Categories:**
+- general: Site name, description, timezone
+- email: SMTP configuration
+- security: Password policies, 2FA settings
+- seo: Default meta tags, analytics
+- social: Social media links and API keys
+- media: Upload limits, storage paths
+
+### 9. Personal Access Tokens Table
+
+API authentication tokens for Sanctum.
+
+```sql
+CREATE TABLE personal_access_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    tokenable_type VARCHAR(255) NOT NULL,
+    tokenable_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    abilities TEXT,
+    last_used_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Indexes
+    INDEX personal_access_tokens_tokenable_type_tokenable_id_index (tokenable_type, tokenable_id)
+);
+```
+
+### 10. Password Reset Tokens Table
+
+Temporary tokens for password reset functionality.
+
+```sql
+CREATE TABLE password_reset_tokens (
+    email VARCHAR(255) NOT NULL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL,
+    
+    -- Indexes
+    INDEX password_reset_tokens_email_index (email)
+);
+```
+
+### 11. Sessions Table
+
+Active user sessions (if using database driver).
+
+```sql
+CREATE TABLE sessions (
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT,
+    payload LONGTEXT NOT NULL,
+    last_activity INT NOT NULL,
+    
+    -- Indexes
+    INDEX sessions_user_id_index (user_id),
+    INDEX sessions_last_activity_index (last_activity)
+);
+```
+
+### 12. Cache Table
+
+Database cache storage (if using database driver).
 
 ```sql
 CREATE TABLE cache (
-    `key` VARCHAR(255) PRIMARY KEY,
+    key VARCHAR(255) NOT NULL PRIMARY KEY,
     value MEDIUMTEXT NOT NULL,
     expiration INT NOT NULL,
     
-    INDEX idx_expiration (expiration)
+    -- Indexes
+    INDEX cache_expiration_index (expiration)
 );
-```
 
-### Cache Locks Table
-Stores cache locks for atomic operations.
-
-```sql
 CREATE TABLE cache_locks (
-    `key` VARCHAR(255) PRIMARY KEY,
+    key VARCHAR(255) NOT NULL PRIMARY KEY,
     owner VARCHAR(255) NOT NULL,
     expiration INT NOT NULL,
     
-    INDEX idx_expiration (expiration)
+    -- Indexes
+    INDEX cache_locks_expiration_index (expiration)
 );
 ```
 
-### Jobs Table
-Stores queued jobs when using database queue driver.
+### 13. Jobs Table
+
+Queue jobs storage (if using database driver).
 
 ```sql
 CREATE TABLE jobs (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     queue VARCHAR(255) NOT NULL,
     payload LONGTEXT NOT NULL,
     attempts TINYINT UNSIGNED NOT NULL,
@@ -254,322 +390,213 @@ CREATE TABLE jobs (
     available_at INT UNSIGNED NOT NULL,
     created_at INT UNSIGNED NOT NULL,
     
-    INDEX idx_queue (queue),
-    INDEX idx_reserved_at (reserved_at),
-    INDEX idx_available_at (available_at)
+    -- Indexes
+    INDEX jobs_queue_index (queue)
 );
-```
 
-### Job Batches Table
-Stores job batch information for batch processing.
-
-```sql
 CREATE TABLE job_batches (
-    id VARCHAR(255) PRIMARY KEY,
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     total_jobs INT NOT NULL,
     pending_jobs INT NOT NULL,
     failed_jobs INT NOT NULL,
-    failed_job_ids LONGTEXT NOT NULL,
-    options MEDIUMTEXT NULL,
+    failed_job_ids LONGTEXT,
+    options MEDIUMTEXT,
     cancelled_at INT NULL,
     created_at INT NOT NULL,
-    finished_at INT NULL,
-    
-    INDEX idx_created_at (created_at),
-    INDEX idx_finished_at (finished_at)
+    finished_at INT NULL
 );
-```
 
-### Failed Jobs Table
-Stores information about failed jobs.
-
-```sql
 CREATE TABLE failed_jobs (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    uuid VARCHAR(255) UNIQUE NOT NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(255) NOT NULL UNIQUE,
     connection TEXT NOT NULL,
     queue TEXT NOT NULL,
     payload LONGTEXT NOT NULL,
     exception LONGTEXT NOT NULL,
-    failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_uuid (uuid),
-    INDEX idx_failed_at (failed_at)
+    failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ## Relationships
 
-### User Model Relationships
-
+### User Relationships
 ```php
-// User.php
-class User extends Authenticatable implements MustVerifyEmail
-{
-    use HasRoles, HasApiTokens, TwoFactorAuthenticatable;
-    
-    // Spatie Permission relationships
-    public function roles()
-    {
-        return $this->morphToMany(Role::class, 'model', 'model_has_roles');
-    }
-    
-    public function permissions()
-    {
-        return $this->morphToMany(Permission::class, 'model', 'model_has_permissions');
-    }
-    
-    // Sanctum relationship
-    public function tokens()
-    {
-        return $this->morphMany(PersonalAccessToken::class, 'tokenable');
-    }
-    
-    // Session relationship
-    public function sessions()
-    {
-        return $this->hasMany(Session::class);
-    }
-}
+// User Model
+public function roles() { return $this->belongsToMany(Role::class); }
+public function permissions() { return $this->belongsToMany(Permission::class); }
+public function pages() { return $this->hasMany(Page::class, 'author_id'); }
+public function tokens() { return $this->morphMany(PersonalAccessToken::class, 'tokenable'); }
 ```
 
-### Role Model Relationships
-
+### Page Relationships
 ```php
-// Role.php (Spatie Permission)
-class Role extends Model
-{
-    public function permissions()
-    {
-        return $this->belongsToMany(Permission::class, 'role_has_permissions');
-    }
-    
-    public function users()
-    {
-        return $this->morphedByMany(User::class, 'model', 'model_has_roles');
-    }
-}
+// Page Model
+public function author() { return $this->belongsTo(User::class, 'author_id'); }
+public function parent() { return $this->belongsTo(Page::class, 'parent_id'); }
+public function children() { return $this->hasMany(Page::class, 'parent_id'); }
 ```
 
-### Permission Model Relationships
-
+### Role & Permission Relationships
 ```php
-// Permission.php (Spatie Permission)
-class Permission extends Model
-{
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'role_has_permissions');
-    }
-    
-    public function users()
-    {
-        return $this->morphedByMany(User::class, 'model', 'model_has_permissions');
-    }
-}
+// Role Model
+public function permissions() { return $this->belongsToMany(Permission::class); }
+public function users() { return $this->belongsToMany(User::class); }
+
+// Permission Model
+public function roles() { return $this->belongsToMany(Role::class); }
+public function users() { return $this->belongsToMany(User::class); }
 ```
 
-## Indexes
+## Indexes Strategy
 
-### Performance Optimization Indexes
+### Primary Indexes
+- All tables use auto-incrementing BIGINT primary keys
+- UUIDs used for tokens and unique identifiers
 
-```sql
--- Users table indexes
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_provider ON users(provider);
-CREATE INDEX idx_users_two_factor_confirmed ON users(two_factor_confirmed_at);
-CREATE UNIQUE INDEX idx_users_provider_id ON users(provider, provider_id);
+### Performance Indexes
+- Email lookups: `idx_email` on users table
+- Slug lookups: `idx_slug` on pages table
+- Status filtering: `idx_status` on pages table
+- Soft delete queries: `idx_deleted` on relevant tables
+- Category filtering: `idx_category` on settings table
 
--- Personal access tokens indexes
-CREATE INDEX idx_tokens_tokenable ON personal_access_tokens(tokenable_type, tokenable_id);
-CREATE INDEX idx_tokens_last_used ON personal_access_tokens(last_used_at);
-CREATE INDEX idx_tokens_expires ON personal_access_tokens(expires_at);
-
--- Permission system indexes
-CREATE INDEX idx_model_has_roles_model_id ON model_has_roles(model_id);
-CREATE INDEX idx_model_has_permissions_model_id ON model_has_permissions(model_id);
-CREATE INDEX idx_role_has_permissions_role_id ON role_has_permissions(role_id);
-
--- Session indexes
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_last_activity ON sessions(last_activity);
-
--- Password reset indexes
-CREATE INDEX idx_password_resets_token ON password_reset_tokens(token);
-CREATE INDEX idx_password_resets_created ON password_reset_tokens(created_at);
-```
+### Composite Indexes
+- Social login: `(provider, provider_id)` on users
+- Role assignments: `(role_id, model_id, model_type)`
+- Permission assignments: `(permission_id, model_id, model_type)`
 
 ## Migration Order
 
-The migrations should be run in this order to ensure proper foreign key relationships:
+Migrations must be run in this specific order due to foreign key dependencies:
 
-```bash
-# 1. Laravel core tables
-0001_01_01_000000_create_users_table.php
-0001_01_01_000001_create_cache_table.php
-0001_01_01_000002_create_jobs_table.php
+1. `create_users_table`
+2. `create_cache_table`
+3. `create_jobs_table`
+4. `create_permission_tables` (roles, permissions, junction tables)
+5. `create_personal_access_tokens_table`
+6. `add_social_login_fields_to_users_table`
+7. `make_password_nullable_in_users_table`
+8. `add_two_factor_columns_to_users_table`
+9. `add_soft_deletes_to_users_table`
+10. `create_settings_table`
+11. `update_posts_to_pages_permissions`
+12. `create_pages_table`
 
-# 2. Spatie Permission tables
-2025_08_03_144936_create_permission_tables.php
+## Database Optimization Tips
 
-# 3. Sanctum tables
-2025_08_03_200836_create_personal_access_tokens_table.php
+### Query Optimization
+1. Use eager loading to prevent N+1 queries
+2. Add indexes for frequently queried columns
+3. Use database transactions for bulk operations
+4. Implement query caching for static data
 
-# 4. Socialite fields
-2025_08_04_012041_add_social_login_fields_to_users_table.php
-2025_08_04_012349_make_password_nullable_in_users_table.php
+### Storage Optimization
+1. Use appropriate column types (VARCHAR vs TEXT)
+2. Implement archiving for old data
+3. Regular cleanup of soft-deleted records
+4. Optimize JSON columns with virtual columns
 
-# 5. Fortify two-factor fields
-2025_08_06_174746_add_two_factor_columns_to_users_table.php
-```
+### Performance Monitoring
+1. Enable query logging in development
+2. Use Laravel Debugbar for query analysis
+3. Monitor slow query logs
+4. Regular EXPLAIN analysis on complex queries
 
-## Sample Data
+## Backup Strategy
 
-### Default Roles
+### Backup Schedule
+- **Daily**: Full database backup
+- **Hourly**: Incremental backups
+- **Weekly**: Off-site backup storage
+- **Monthly**: Archive old backups
 
+### Critical Tables
+Priority backup for:
+1. users
+2. roles & permissions
+3. pages
+4. settings
+
+### Recovery Procedures
+1. Test restore procedures monthly
+2. Document recovery time objectives (RTO)
+3. Maintain backup verification logs
+4. Store backups in multiple locations
+
+## Security Considerations
+
+### Data Protection
+1. Encrypt sensitive columns (two_factor_secret)
+2. Hash all passwords with bcrypt
+3. Sanitize all user inputs
+4. Use prepared statements for all queries
+
+### Access Control
+1. Database user with minimal privileges
+2. Separate read/write connections
+3. SSL/TLS for database connections
+4. Regular security audits
+
+### Compliance
+1. GDPR compliance for user data
+2. Soft deletes for audit trails
+3. Data retention policies
+4. User data export capabilities
+
+## Maintenance Tasks
+
+### Regular Tasks
 ```sql
-INSERT INTO roles (name, guard_name, created_at, updated_at) VALUES
-('Super Admin', 'web', NOW(), NOW()),
-('Admin', 'web', NOW(), NOW()),
-('Editor', 'web', NOW(), NOW()),
-('Author', 'web', NOW(), NOW()),
-('Subscriber', 'web', NOW(), NOW());
+-- Optimize tables (monthly)
+OPTIMIZE TABLE users, pages, settings;
+
+-- Analyze tables (weekly)
+ANALYZE TABLE users, pages, model_has_roles;
+
+-- Clean old sessions (daily)
+DELETE FROM sessions WHERE last_activity < UNIX_TIMESTAMP(NOW() - INTERVAL 7 DAY);
+
+-- Clean expired tokens (daily)
+DELETE FROM personal_access_tokens WHERE expires_at < NOW();
+
+-- Archive soft-deleted records (monthly)
+INSERT INTO archived_users SELECT * FROM users WHERE deleted_at < NOW() - INTERVAL 90 DAY;
+DELETE FROM users WHERE deleted_at < NOW() - INTERVAL 90 DAY;
 ```
 
-### Default Permissions
-
+### Health Checks
 ```sql
-INSERT INTO permissions (name, guard_name, created_at, updated_at) VALUES
--- Dashboard
-('view dashboard', 'web', NOW(), NOW()),
+-- Check table sizes
+SELECT 
+    table_name,
+    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
+FROM information_schema.tables
+WHERE table_schema = 'thorium90'
+ORDER BY (data_length + index_length) DESC;
 
--- User Management
-('view users', 'web', NOW(), NOW()),
-('create users', 'web', NOW(), NOW()),
-('edit users', 'web', NOW(), NOW()),
-('delete users', 'web', NOW(), NOW()),
-('manage user roles', 'web', NOW(), NOW()),
-
--- Content Management
-('view posts', 'web', NOW(), NOW()),
-('create posts', 'web', NOW(), NOW()),
-('edit posts', 'web', NOW(), NOW()),
-('delete posts', 'web', NOW(), NOW()),
-('publish posts', 'web', NOW(), NOW()),
-('edit own posts', 'web', NOW(), NOW()),
-('delete own posts', 'web', NOW(), NOW()),
-
--- System Administration
-('manage settings', 'web', NOW(), NOW()),
-('manage roles', 'web', NOW(), NOW()),
-('manage permissions', 'web', NOW(), NOW()),
-
--- Media Management
-('upload media', 'web', NOW(), NOW()),
-('manage media', 'web', NOW(), NOW()),
-('delete media', 'web', NOW(), NOW()),
-
--- Comment Management
-('view comments', 'web', NOW(), NOW()),
-('moderate comments', 'web', NOW(), NOW()),
-('delete comments', 'web', NOW(), NOW());
+-- Check index usage
+SELECT 
+    table_name,
+    index_name,
+    cardinality
+FROM information_schema.statistics
+WHERE table_schema = 'thorium90'
+ORDER BY cardinality DESC;
 ```
 
-## Database Constraints
+## Future Considerations
 
-### Foreign Key Constraints
+### Planned Schema Changes
+1. Add versioning to pages table
+2. Implement tagging system
+3. Add media library table
+4. Create audit log table
+5. Add multi-language support
 
-```sql
--- Personal access tokens
-ALTER TABLE personal_access_tokens 
-ADD CONSTRAINT fk_tokens_tokenable 
-FOREIGN KEY (tokenable_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Sessions
-ALTER TABLE sessions 
-ADD CONSTRAINT fk_sessions_user 
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- Model has roles
-ALTER TABLE model_has_roles 
-ADD CONSTRAINT fk_model_roles_role 
-FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE;
-
--- Model has permissions
-ALTER TABLE model_has_permissions 
-ADD CONSTRAINT fk_model_permissions_permission 
-FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE;
-
--- Role has permissions
-ALTER TABLE role_has_permissions 
-ADD CONSTRAINT fk_role_permissions_role 
-FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-ADD CONSTRAINT fk_role_permissions_permission 
-FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE;
-```
-
-### Check Constraints
-
-```sql
--- Ensure provider and provider_id are both set or both null
-ALTER TABLE users 
-ADD CONSTRAINT chk_provider_consistency 
-CHECK (
-    (provider IS NULL AND provider_id IS NULL) OR 
-    (provider IS NOT NULL AND provider_id IS NOT NULL)
-);
-
--- Ensure two-factor fields consistency
-ALTER TABLE users 
-ADD CONSTRAINT chk_two_factor_consistency 
-CHECK (
-    (two_factor_secret IS NULL AND two_factor_recovery_codes IS NULL AND two_factor_confirmed_at IS NULL) OR
-    (two_factor_secret IS NOT NULL)
-);
-```
-
-## Storage Requirements
-
-### Estimated Table Sizes (for 10,000 users)
-
-| Table | Estimated Size | Notes |
-|-------|---------------|-------|
-| users | ~2 MB | Including all auth fields |
-| personal_access_tokens | ~500 KB | Assuming 2 tokens per user |
-| sessions | ~1 MB | Active sessions only |
-| model_has_roles | ~100 KB | User-role assignments |
-| roles | ~1 KB | 5 default roles |
-| permissions | ~2 KB | ~25 permissions |
-| role_has_permissions | ~5 KB | Role-permission mappings |
-| password_reset_tokens | ~50 KB | Temporary storage |
-
-**Total estimated size**: ~4 MB for 10,000 users
-
-## Backup Considerations
-
-### Critical Tables (Must backup)
-- `users` - User accounts and authentication data
-- `roles` - Role definitions
-- `permissions` - Permission definitions
-- `role_has_permissions` - Role-permission mappings
-- `model_has_roles` - User role assignments
-
-### Temporary Tables (Can skip in backups)
-- `sessions` - Regenerated on login
-- `password_reset_tokens` - Temporary tokens
-- `cache` - Regenerated as needed
-- `jobs` - Queue data
-
-### Sensitive Data
-- `two_factor_secret` - Encrypted TOTP secrets
-- `two_factor_recovery_codes` - Encrypted recovery codes
-- `personal_access_tokens.token` - Hashed API tokens
-- `password_reset_tokens.token` - Temporary reset tokens
-
-## Related Documentation
-
-- [Authentication Architecture](Authentication-Architecture.md) - Component overview
-- [Developer Guide](Developer-Guide.md) - Implementation details
-- [API Reference](API-Reference.md) - API documentation
-- [Testing Strategy](Testing-Strategy.md) - Testing procedures
+### Scalability Planning
+1. Implement database sharding for users
+2. Separate read/write databases
+3. Add caching layer (Redis)
+4. Consider NoSQL for certain data types
+5. Implement event sourcing for audit trails

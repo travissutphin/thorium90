@@ -43,10 +43,10 @@ export function AppSidebar() {
         // Content Management Section (Author+)
         if (userRoles.some(role => ['Super Admin', 'Admin', 'Editor', 'Author'].includes(role))) {
             items.push({
-                title: 'Posts',
-                href: '/content/posts',
+                title: 'Pages',
+                href: '/content/pages',
                 icon: FileText,
-                permission: 'view posts',
+                permission: 'view pages',
             });
 
             if (userPermissions.includes('upload media')) {

@@ -20,7 +20,7 @@ use Spatie\Permission\Models\Permission;
  * 
  * Permission Categories:
  * - User Management: view, create, edit, delete users, manage roles
- * - Content Management: view, create, edit, delete, publish posts, own content
+ * - Content Management: view, create, edit, delete, publish pages, own content
  * - System Management: manage settings, view dashboard, manage roles/permissions
  * - Media Management: upload, manage, delete media
  * - Comment Management: view, moderate, delete comments
@@ -66,13 +66,13 @@ class PermissionSeeder extends Seeder
 
         // Content Management Permissions
         // These permissions control access to content creation and management
-        Permission::firstOrCreate(['name' => 'view posts']);
-        Permission::firstOrCreate(['name' => 'create posts']);
-        Permission::firstOrCreate(['name' => 'edit posts']);
-        Permission::firstOrCreate(['name' => 'delete posts']);
-        Permission::firstOrCreate(['name' => 'publish posts']);
-        Permission::firstOrCreate(['name' => 'edit own posts']);    // Limited to user's own content
-        Permission::firstOrCreate(['name' => 'delete own posts']);  // Limited to user's own content
+        Permission::firstOrCreate(['name' => 'view pages']);
+        Permission::firstOrCreate(['name' => 'create pages']);
+        Permission::firstOrCreate(['name' => 'edit pages']);
+        Permission::firstOrCreate(['name' => 'delete pages']);
+        Permission::firstOrCreate(['name' => 'publish pages']);
+        Permission::firstOrCreate(['name' => 'edit own pages']);    // Limited to user's own content
+        Permission::firstOrCreate(['name' => 'delete own pages']);  // Limited to user's own content
 
         // System Management Permissions
         // These permissions control access to system administration features

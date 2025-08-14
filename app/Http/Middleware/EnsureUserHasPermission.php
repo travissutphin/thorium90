@@ -22,8 +22,8 @@ use Symfony\Component\HttpFoundation\Response;
  * Usage:
  * ```php
  * // In routes/web.php
- * Route::middleware(['auth', 'permission:create-posts,edit-posts'])->group(function () {
- *     Route::get('/posts/manage', [PostController::class, 'manage']);
+ * Route::middleware(['auth', 'permission:create-pages,edit-pages'])->group(function () {
+ *     Route::get('/pages/manage', [PageController::class, 'manage']);
  * });
  * 
  * // In RouteServiceProvider or bootstrap/app.php

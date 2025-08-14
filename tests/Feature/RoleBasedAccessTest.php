@@ -25,7 +25,7 @@ class RoleBasedAccessTest extends TestCase
             '/admin/users',
             '/admin/roles',
             '/admin/settings',
-            '/content/posts',
+            '/content/pages',
             '/content/media',
         ];
 
@@ -109,8 +109,8 @@ class RoleBasedAccessTest extends TestCase
     public function test_content_routes_require_content_creator_roles()
     {
         $contentRoutes = [
-            '/content/posts',
-            '/content/posts/create',
+            '/content/pages',
+            '/content/pages/create',
         ];
 
         // Subscriber cannot access content routes
@@ -210,17 +210,17 @@ class RoleBasedAccessTest extends TestCase
 
         // Test permission hierarchy
         $this->assertUserHasPermission($subscriber, 'view dashboard');
-        $this->assertUserLacksPermission($subscriber, 'create posts');
+        $this->assertUserLacksPermission($subscriber, 'create pages');
 
         $this->assertUserHasPermission($author, 'view dashboard');
-        $this->assertUserHasPermission($author, 'create posts');
-        $this->assertUserLacksPermission($author, 'edit posts');
+        $this->assertUserHasPermission($author, 'create pages');
+        $this->assertUserLacksPermission($author, 'edit pages');
 
-        $this->assertUserHasPermission($editor, 'create posts');
-        $this->assertUserHasPermission($editor, 'edit posts');
+        $this->assertUserHasPermission($editor, 'create pages');
+        $this->assertUserHasPermission($editor, 'edit pages');
         $this->assertUserLacksPermission($editor, 'manage users');
 
-        $this->assertUserHasPermission($admin, 'edit posts');
+        $this->assertUserHasPermission($admin, 'edit pages');
         $this->assertUserHasPermission($admin, 'view users');
         $this->assertUserLacksPermission($admin, 'manage roles');
 
@@ -234,9 +234,9 @@ class RoleBasedAccessTest extends TestCase
         $user->assignRole(['Author', 'Editor']);
 
         // User should have permissions from both roles
-        $this->assertUserHasPermission($user, 'create posts'); // From Author
-        $this->assertUserHasPermission($user, 'edit posts'); // From Editor
-        $this->assertUserHasPermission($user, 'publish posts'); // From Editor
+        $this->assertUserHasPermission($user, 'create pages'); // From Author
+        $this->assertUserHasPermission($user, 'edit pages'); // From Editor
+        $this->assertUserHasPermission($user, 'publish pages'); // From Editor
     }
 
     public function test_direct_permission_assignment()
@@ -245,6 +245,6 @@ class RoleBasedAccessTest extends TestCase
         $user->givePermissionTo('view dashboard');
 
         $this->assertUserHasPermission($user, 'view dashboard');
-        $this->assertUserLacksPermission($user, 'create posts');
+        $this->assertUserLacksPermission($user, 'create pages');
     }
 }

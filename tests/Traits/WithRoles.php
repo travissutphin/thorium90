@@ -64,13 +64,13 @@ trait WithRoles
             'manage user roles',
             
             // Content Management
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
-            'edit own posts',
-            'delete own posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
+            'edit own pages',
+            'delete own pages',
             
             // System Administration
             'view dashboard',
@@ -132,11 +132,11 @@ trait WithRoles
             'delete users',
             'restore users',
             'manage user roles',
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
             'upload media',
             'manage media',
             'delete media',
@@ -160,11 +160,11 @@ trait WithRoles
         
         $permissions = [
             'view dashboard',
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
             'upload media',
             'manage media',
             'view comments',
@@ -185,10 +185,10 @@ trait WithRoles
         
         $permissions = [
             'view dashboard',
-            'view posts',
-            'create posts',
-            'edit own posts',
-            'delete own posts',
+            'view pages',
+            'create pages',
+            'edit own pages',
+            'delete own pages',
             'upload media',
             'view comments',
         ];
@@ -275,6 +275,20 @@ trait WithRoles
     {
         $user = User::factory()->create($attributes);
         $user->assignRole('Subscriber');
+        return $user->fresh();
+    }
+
+    /**
+     * Create a user with a specific role.
+     *
+     * @param string $role Role name
+     * @param array $attributes Additional user attributes
+     * @return User
+     */
+    protected function createUserWithRole(string $role, array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        $user->assignRole($role);
         return $user->fresh();
     }
 

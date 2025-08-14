@@ -97,13 +97,13 @@ export default function Dashboard() {
                             <CardDescription>Common tasks based on your permissions</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            <CanAccess permission="create posts">
+                            <CanAccess permission="create pages">
                                 <Link 
-                                    href="/content/posts/create" 
+                                    href="/content/pages/create" 
                                     className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors"
                                 >
                                     <Plus className="h-4 w-4" />
-                                    Create New Post
+                                    Create New Page
                                 </Link>
                             </CanAccess>
                             

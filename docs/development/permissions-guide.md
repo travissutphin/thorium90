@@ -14,8 +14,8 @@ This guide provides comprehensive information for developers working with the Mu
 ### Permission Structure
 ```php
 // Permission format: action resource
-'create posts'     // Can create posts
-'edit own posts'   // Can edit their own posts
+'create pages'     // Can create pages
+'edit own pages'   // Can edit their own pages
 'delete users'     // Can delete user accounts
 'manage settings'  // Can access system settings
 ```
@@ -31,10 +31,10 @@ $editorRole = Role::create(['name' => 'Editor', 'guard_name' => 'web']);
 
 // Assign permissions to role
 $editorRole->givePermissionTo([
-    'view posts',
-    'create posts',
-    'edit posts',
-    'publish posts'
+    'view pages',
+    'create pages',
+    'edit pages',
+    'publish pages'
 ]);
 ```
 
@@ -75,18 +75,18 @@ $user->syncRoles(['Admin', 'Editor']);
 ### Checking Permissions
 ```php
 // Check if user has specific permission
-if ($user->can('create posts')) {
-    // User can create posts
+if ($user->can('create pages')) {
+    // User can create pages
 }
 
 // Check if user has any of the permissions
-if ($user->hasAnyPermission(['create posts', 'edit posts'])) {
-    // User can create or edit posts
+if ($user->hasAnyPermission(['create pages', 'edit pages'])) {
+    // User can create or edit pages
 }
 
 // Check if user has all permissions
-if ($user->hasAllPermissions(['create posts', 'edit posts'])) {
-    // User can create AND edit posts
+if ($user->hasAllPermissions(['create pages', 'edit pages'])) {
+    // User can create AND edit pages
 }
 ```
 
@@ -123,8 +123,8 @@ Route::middleware(['permission:manage users'])->group(function () {
 });
 
 // Protect routes with multiple permissions
-Route::middleware(['permission:create posts|edit posts'])->group(function () {
-    Route::resource('posts', PostController::class);
+Route::middleware(['permission:create pages|edit pages'])->group(function () {
+    Route::resource('pages', PageController::class);
 });
 ```
 
@@ -148,34 +148,34 @@ class EnsureUserHasRole
 
 ### Permission Checking in Controllers
 ```php
-class PostController extends Controller
+class PageController extends Controller
 {
     public function store(Request $request)
     {
         // Check permission before action
-        if (!$request->user()->can('create posts')) {
-            abort(403, 'You do not have permission to create posts.');
+        if (!$request->user()->can('create pages')) {
+            abort(403, 'You do not have permission to create pages.');
         }
 
-        // Create post logic
-        $post = Post::create($request->validated());
+        // Create page logic
+        $page = Page::create($request->validated());
 
-        return redirect()->route('posts.show', $post);
+        return redirect()->route('pages.show', $page);
     }
 
-    public function update(Request $request, Post $post)
+    public function update(Request $request, Page $page)
     {
         $user = $request->user();
 
-        // Check if user can edit any post or only their own
-        if (!$user->can('edit posts') && 
-            (!$user->can('edit own posts') || $post->user_id !== $user->id)) {
-            abort(403, 'You do not have permission to edit this post.');
+        // Check if user can edit any page or only their own
+        if (!$user->can('edit pages') && 
+            (!$user->can('edit own pages') || $page->user_id !== $user->id)) {
+            abort(403, 'You do not have permission to edit this page.');
         }
 
-        $post->update($request->validated());
+        $page->update($request->validated());
 
-        return redirect()->route('posts.show', $post);
+        return redirect()->route('pages.show', $page);
     }
 }
 ```
@@ -210,27 +210,27 @@ interface PostActionsProps {
   post: Post;
 }
 
-function PostActions({ post }: PostActionsProps) {
+function PageActions({ page }: PageActionsProps) {
   const { auth } = usePage<SharedData>().props;
   const { user } = auth;
 
   return (
     <div className="flex gap-2">
-      {user.can('edit posts') && (
-        <Link href={`/posts/${post.id}/edit`}>
-          <Button>Edit Post</Button>
+      {user.can('edit pages') && (
+        <Link href={`/pages/${page.id}/edit`}>
+          <Button>Edit Page</Button>
         </Link>
       )}
       
-      {(user.can('delete posts') || 
-        (user.can('delete own posts') && post.user_id === user.id)) && (
-        <Button variant="destructive" onClick={() => deletePost(post.id)}>
-          Delete Post
+      {(user.can('delete pages') || 
+        (user.can('delete own pages') && page.user_id === user.id)) && (
+        <Button variant="destructive" onClick={() => deletePage(page.id)}>
+          Delete Page
         </Button>
       )}
       
       {user.hasRole('Admin') && (
-        <Button variant="outline" onClick={() => moderatePost(post.id)}>
+        <Button variant="outline" onClick={() => moderatePage(page.id)}>
           Moderate
         </Button>
       )}
@@ -242,19 +242,19 @@ function PostActions({ post }: PostActionsProps) {
 ### Conditional Rendering Patterns
 ```typescript
 // Show/hide based on permissions
-{user.can('create posts') && <CreatePostButton />}
+{user.can('create pages') && <CreatePageButton />}
 
 // Show different content based on roles
 {user.hasRole('Admin') ? <AdminPanel /> : <UserPanel />}
 
 // Multiple permission check
-{user.hasAnyPermission(['create posts', 'edit posts']) && (
+{user.hasAnyPermission(['create pages', 'edit pages']) && (
   <ContentManagementPanel />
 )}
 
 // Complex permission logic
-{user.can('delete posts') || 
- (user.can('delete own posts') && post.author_id === user.id) ? (
+{user.can('delete pages') || 
+ (user.can('delete own pages') && page.author_id === user.id) ? (
   <DeleteButton />
 ) : null}
 ```
@@ -296,12 +296,12 @@ function AdminPanel() {
 ### Dynamic Permission Checking
 ```php
 // Check permissions based on context
-public function updatePost(Request $request, Post $post)
+public function updatePage(Request $request, Page $page)
 {
     $user = $request->user();
     
-    // Determine required permission based on post status
-    $requiredPermission = $post->is_published ? 'edit published posts' : 'edit posts';
+    // Determine required permission based on page status
+    $requiredPermission = $page->is_published ? 'edit published pages' : 'edit pages';
     
     if (!$user->can($requiredPermission)) {
         abort(403, 'Insufficient permissions.');
@@ -324,13 +324,13 @@ $superAdmin->givePermissionTo(Permission::all());
 // Admin gets most permissions except system-level
 $admin->givePermissionTo([
     'view users', 'create users', 'edit users', 'delete users',
-    'view posts', 'create posts', 'edit posts', 'delete posts',
+    'view pages', 'create pages', 'edit pages', 'delete pages',
     // ... other permissions
 ]);
 
 // Editor gets content-related permissions
 $editor->givePermissionTo([
-    'view posts', 'create posts', 'edit posts', 'publish posts'
+    'view pages', 'create pages', 'edit pages', 'publish pages'
 ]);
 ```
 
@@ -341,10 +341,10 @@ class User extends Authenticatable
 {
     use HasRoles;
 
-    public function canManagePost(Post $post): bool
+    public function canManagePage(Page $page): bool
     {
-        return $this->can('manage all posts') || 
-               ($this->can('manage own posts') && $post->user_id === $this->id);
+        return $this->can('manage all pages') || 
+               ($this->can('manage own pages') && $page->user_id === $this->id);
     }
 
     public function canAccessAdminPanel(): bool
@@ -363,52 +363,52 @@ class UserPermissionTest extends TestCase
 {
     use RefreshDatabase, WithRoles;
 
-    public function test_user_can_edit_own_posts()
+    public function test_user_can_edit_own_pages()
     {
         $user = $this->createAuthor();
-        $post = Post::factory()->create(['user_id' => $user->id]);
+        $page = Page::factory()->create(['user_id' => $user->id]);
 
-        $this->assertTrue($user->can('edit own posts'));
-        $this->assertTrue($user->canManagePost($post));
+        $this->assertTrue($user->can('edit own pages'));
+        $this->assertTrue($user->canManagePage($page));
     }
 
-    public function test_user_cannot_edit_others_posts()
+    public function test_user_cannot_edit_others_pages()
     {
         $user = $this->createAuthor();
-        $otherPost = Post::factory()->create();
+        $otherPage = Page::factory()->create();
 
-        $this->assertFalse($user->canManagePost($otherPost));
+        $this->assertFalse($user->canManagePage($otherPage));
     }
 }
 ```
 
 ### Feature Testing with Permissions
 ```php
-class PostManagementTest extends TestCase
+class PageManagementTest extends TestCase
 {
     use RefreshDatabase, WithRoles;
 
-    public function test_editor_can_create_posts()
+    public function test_editor_can_create_pages()
     {
         $editor = $this->createEditor();
 
         $response = $this->actingAs($editor)
-            ->post('/posts', [
-                'title' => 'Test Post',
+            ->post('/pages', [
+                'title' => 'Test Page',
                 'content' => 'Test content'
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('posts', ['title' => 'Test Post']);
+        $this->assertDatabaseHas('pages', ['title' => 'Test Page']);
     }
 
-    public function test_subscriber_cannot_create_posts()
+    public function test_subscriber_cannot_create_pages()
     {
         $subscriber = $this->createSubscriber();
 
         $response = $this->actingAs($subscriber)
-            ->post('/posts', [
-                'title' => 'Test Post',
+            ->post('/pages', [
+                'title' => 'Test Page',
                 'content' => 'Test content'
             ]);
 
@@ -426,7 +426,7 @@ $users = User::with(['roles.permissions', 'permissions'])->get();
 
 // Check permissions without additional queries
 foreach ($users as $user) {
-    if ($user->can('create posts')) {
+    if ($user->can('create pages')) {
         // Permission check uses loaded data
     }
 }
@@ -452,7 +452,7 @@ CREATE INDEX idx_role_has_permissions_role_id ON role_has_permissions(role_id);
 
 ### 1. Permission Naming
 - Use consistent naming conventions: `action resource`
-- Be specific: `edit own posts` vs `edit posts`
+- Be specific: `edit own pages` vs `edit pages`
 - Use lowercase with spaces: `manage user roles`
 
 ### 2. Role Design
@@ -478,4 +478,4 @@ CREATE INDEX idx_role_has_permissions_role_id ON role_has_permissions(role_id);
 ## Related Documentation
 - [Authentication Overview](../authentication/README.md)
 - [API Documentation](../authentication/api.md)
-- [Testing Guide](../testing/authentication-tests.md) 
+- [Testing Guide](../testing/authentication-tests.md)

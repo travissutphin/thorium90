@@ -26,7 +26,7 @@ POST /login
     "name": "John Doe",
     "email": "user@example.com",
     "roles": ["Admin"],
-    "permissions": ["view-dashboard", "create-posts"],
+    "permissions": ["view-dashboard", "create pages"],
     "is_admin": true,
     "is_content_creator": true
   }
@@ -830,4 +830,4 @@ user = user_response.json()['data']
 
 ---
 
-**Need help with the API?** Check our [Developer Guide](Developer-Guide) or [Contact Support](Support) for assistance. 
+**Need help with the API?** Check our [Developer Guide](Developer-Guide) or [Contact Support](Support) for assistance.

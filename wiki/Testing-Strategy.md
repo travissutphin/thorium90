@@ -1,933 +1,539 @@
 # Testing Strategy
 
-This document outlines the comprehensive testing strategy for the Thorium90 Multi-Role User Authentication system, including regression testing procedures, order of operations, and integration with development workflows.
+## Overview
 
-## Table of Contents
-
-1. [Testing Philosophy](#testing-philosophy)
-2. [Test Categories](#test-categories)
-3. [Regression Testing Workflow](#regression-testing-workflow)
-4. [Order of Operations](#order-of-operations)
-5. [When to Test](#when-to-test)
-6. [Automated Testing Scripts](#automated-testing-scripts)
-7. [CI/CD Integration](#cicd-integration)
-8. [Performance Testing](#performance-testing)
-9. [Security Testing](#security-testing)
-10. [Test Data Management](#test-data-management)
+This document outlines the comprehensive testing strategy for the Thorium90 application, including unit tests, feature tests, integration tests, and regression testing procedures.
 
 ## Testing Philosophy
 
-Our testing strategy follows these core principles:
+Our testing approach follows these principles:
+- **Test-Driven Development (TDD)** where appropriate
+- **Comprehensive Coverage** for critical paths
+- **Regression Prevention** through automated testing
+- **Continuous Integration** with automated test runs
+- **Performance Monitoring** for key operations
 
-1. **Test Early, Test Often**: Catch issues before they reach production
-2. **Automated First**: Automate repetitive tests to save time
-3. **Comprehensive Coverage**: Test all authentication components
-4. **Real-World Scenarios**: Test actual user workflows
-5. **Performance Aware**: Monitor and test performance impacts
-6. **Security Focused**: Prioritize security testing
+## Test Structure
+
+```
+tests/
+├── Feature/
+│   ├── Admin/
+│   │   ├── UserRoleManagementTest.php
+│   │   ├── SettingsManagementTest.php
+│   │   └── RoleControllerTest.php
+│   ├── Auth/
+│   │   ├── AuthenticationTest.php
+│   │   ├── EmailVerificationTest.php
+│   │   ├── PasswordConfirmationTest.php
+│   │   ├── PasswordResetTest.php
+│   │   ├── PasswordUpdateTest.php
+│   │   └── RegistrationTest.php
+│   ├── Content/
+│   │   ├── PageManagementTest.php
+│   │   ├── PageSEOTest.php
+│   │   └── SitemapTest.php
+│   ├── Settings/
+│   │   └── SettingsAccessTest.php
+│   ├── DashboardTest.php
+│   ├── MiddlewareTest.php
+│   ├── ResendEmailTest.php
+│   ├── RoleBasedAccessTest.php
+│   ├── SanctumApiTest.php
+│   └── SocialLoginTest.php
+├── Unit/
+│   ├── Models/
+│   │   ├── UserTest.php
+│   │   ├── PageTest.php
+│   │   └── SettingTest.php
+│   └── Services/
+│       └── SEOServiceTest.php
+└── Traits/
+    └── WithRoles.php
+```
 
 ## Test Categories
 
 ### 1. Unit Tests
-**Purpose**: Test individual components in isolation
-
-**Scope**:
+Test individual components in isolation:
 - Model methods and relationships
+- Service classes
 - Helper functions
-- Custom validation rules
-- Action classes (Fortify actions)
-
-**Location**: `tests/Unit/`
-
-**Example**:
-```php
-public function test_user_can_have_multiple_roles()
-{
-    $user = User::factory()->create();
-    $user->assignRole(['Admin', 'Editor']);
-    
-    $this->assertTrue($user->hasRole('Admin'));
-    $this->assertTrue($user->hasRole('Editor'));
-    $this->assertCount(2, $user->roles);
-}
-```
+- Data transformations
 
 ### 2. Feature Tests
-**Purpose**: Test complete features and user workflows
-
-**Scope**:
-- Authentication flows (login, registration, 2FA)
-- API endpoints
-- Middleware functionality
+Test complete features end-to-end:
+- Authentication flows
 - Role and permission management
-- Social login integration
-
-**Location**: `tests/Feature/`
-
-**Structure**:
-```
-tests/Feature/
-├── Auth/                    # Authentication tests
-│   ├── LoginTest.php
-│   ├── RegistrationTest.php
-│   ├── PasswordResetTest.php
-│   └── EmailVerificationTest.php
-├── Admin/                   # Admin functionality
-│   ├── UserManagementTest.php
-│   └── RoleManagementTest.php
-├── TwoFactorAuthenticationTest.php
-├── SocialLoginTest.php
-├── SanctumApiTest.php
-├── MiddlewareTest.php
-├── RoleBasedAccessTest.php
-└── UIPermissionTest.php
-```
+- Content management (Pages CMS)
+- Settings management
+- API endpoints
 
 ### 3. Integration Tests
-**Purpose**: Test how components work together
-
-**Scope**:
-- Fortify + Sanctum integration
-- Socialite + Permission system
-- Frontend + Backend data sharing
-- Complete authentication workflows
-
-**Example**:
-```php
-public function test_social_user_can_enable_2fa_and_use_api()
-{
-    // 1. Create user via social login
-    $this->mockSocialiteUser();
-    $this->get('/auth/google/callback');
-    
-    // 2. Enable 2FA
-    $this->actingAs($user)->post('/user/two-factor-authentication');
-    
-    // 3. Create API token
-    $response = $this->post('/api/tokens', ['name' => 'test-token']);
-    
-    // 4. Use token to access API
-    $this->withToken($response->json('token'))
-        ->get('/api/user')
-        ->assertOk();
-}
-```
+Test interactions between components:
+- Database transactions
+- External service integrations
+- Cache operations
+- Queue jobs
 
 ### 4. Browser Tests (Dusk)
-**Purpose**: Test JavaScript interactions and full user experience
-
-**Scope**:
+Test JavaScript-heavy interactions:
 - React component interactions
-- Permission-based UI rendering
-- 2FA QR code scanning simulation
-- Social login flows
+- Real-time updates
+- Complex UI workflows
+- File uploads
 
-**Example**:
-```php
-public function test_admin_can_manage_roles_via_ui()
-{
-    $this->browse(function (Browser $browser) {
-        $browser->loginAs($this->createAdmin())
-            ->visit('/admin/roles')
-            ->click('@create-role-button')
-            ->type('name', 'New Role')
-            ->check('permissions[]', 'view dashboard')
-            ->press('Create Role')
-            ->assertSee('Role created successfully');
-    });
-}
-```
+## Order of Operations for Testing
 
-## Regression Testing Workflow
+### Phase 1: Foundation Tests
+Run these tests first as they verify core functionality:
 
-### Overview
-Regression testing ensures that new changes don't break existing functionality. Our automated regression test suite runs through all critical paths.
-
-### Workflow Diagram
-```
-┌─────────────────┐
-│ 1. Environment  │
-│    Setup        │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 2. Database     │
-│    Validation   │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 3. Core Auth    │
-│    Tests        │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 4. API Tests    │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 5. Social Login │
-│    Tests        │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 6. Permission   │
-│    Tests        │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 7. Frontend     │
-│    Integration  │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 8. Performance  │
-│    Validation   │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ 9. Report       │
-│    Generation   │
-└─────────────────┘
-```
-
-## Order of Operations
-
-### Phase 1: Environment Setup (30 seconds)
 ```bash
-# Clear all caches
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
+# 1. Database and Migration Tests
+php artisan test tests/Feature/DatabaseTest.php
 
-# Fresh database
-php artisan migrate:fresh --seed
-
-# Verify environment
-php artisan about
-```
-
-**What to Check**:
-- Laravel version (should be 12.x)
-- PHP version (should be 8.2+)
-- Database connection
-- Cache drivers
-- Queue configuration
-
-### Phase 2: Database Integrity (1 minute)
-```bash
-# Run database tests
-php artisan test tests/Feature/DatabaseIntegrityTest.php
-```
-
-**What to Verify**:
-- All migrations run successfully
-- Seeders create expected data:
-  - 5 roles (Super Admin, Admin, Editor, Author, Subscriber)
-  - 22+ permissions
-  - Role-permission relationships
-- Foreign key constraints are proper
-- Indexes are created
-
-### Phase 3: Core Authentication - Fortify (3-5 minutes)
-```bash
-# Run Fortify tests
+# 2. Authentication Tests
 php artisan test tests/Feature/Auth/
-php artisan test tests/Feature/TwoFactorAuthenticationTest.php
-```
 
-**Test Coverage**:
-1. **Registration**:
-   - User can register
-   - Validation rules work
-   - Default role assigned
-   - Email verification sent
-
-2. **Login**:
-   - Valid credentials work
-   - Invalid credentials rejected
-   - Remember me functionality
-   - Rate limiting active
-
-3. **Two-Factor Authentication**:
-   - 2FA can be enabled
-   - QR code generated
-   - TOTP codes work
-   - Recovery codes function
-   - Role-based 2FA enforcement
-
-4. **Password Management**:
-   - Password reset flow
-   - Password complexity rules
-   - Password update functionality
-
-### Phase 4: API Authentication - Sanctum (2-3 minutes)
-```bash
-# Run Sanctum tests
-php artisan test tests/Feature/SanctumApiTest.php
-```
-
-**Test Coverage**:
-1. **Token Management**:
-   - Token creation
-   - Token authentication
-   - Token revocation
-   - Token abilities
-
-2. **API Access**:
-   - Authenticated endpoints
-   - Role-based API access
-   - Permission checking
-   - CSRF protection
-
-### Phase 5: Social Authentication - Socialite (2-3 minutes)
-```bash
-# Run Socialite tests
-php artisan test tests/Feature/SocialLoginTest.php
-```
-
-**Test Coverage**:
-1. **OAuth Flows**:
-   - Provider redirects
-   - Callback handling
-   - User creation
-   - Existing user linking
-
-2. **Provider Testing**:
-   - Google
-   - GitHub
-   - Facebook
-   - LinkedIn
-   - Twitter/X
-   - GitLab
-
-### Phase 6: Authorization - Permissions (2-3 minutes)
-```bash
-# Run permission tests
-php artisan test tests/Feature/RoleBasedAccessTest.php
+# 3. Middleware Tests
 php artisan test tests/Feature/MiddlewareTest.php
 ```
 
-**Test Coverage**:
-1. **Role Management**:
-   - Role assignment
-   - Role removal
-   - Multiple roles
-   - Role hierarchy
+### Phase 2: Permission System Tests
+Verify the role and permission system:
 
-2. **Permission Checking**:
-   - Direct permissions
-   - Role-based permissions
-   - Permission inheritance
-   - Wildcard permissions
-
-3. **Middleware**:
-   - Route protection
-   - Unauthorized access
-   - Multiple middleware
-
-### Phase 7: Frontend Integration (1-2 minutes)
 ```bash
-# Run frontend integration tests
-php artisan test tests/Feature/UIPermissionTest.php
+# 4. Role-Based Access Tests
+php artisan test tests/Feature/RoleBasedAccessTest.php
+
+# 5. Admin Role Management Tests
+php artisan test tests/Feature/Admin/UserRoleManagementTest.php
+
+# 6. Permission Middleware Tests
+php artisan test tests/Feature/PermissionMiddlewareTest.php
 ```
 
-**Test Coverage**:
-1. **Data Sharing**:
-   - User data in props
-   - Permission arrays
-   - Computed properties
-   - Helper functions
+### Phase 3: Feature Tests
+Test specific application features:
 
-2. **Inertia.js**:
-   - Page components receive data
-   - Shared data structure
-   - Authentication state
-
-### Phase 8: Performance Validation (1-2 minutes)
 ```bash
-# Run performance tests
-php artisan test tests/Feature/PerformanceTest.php --filter=authentication
+# 7. Dashboard Tests
+php artisan test tests/Feature/DashboardTest.php
+
+# 8. Settings Management Tests
+php artisan test tests/Feature/Settings/
+
+# 9. Content Management Tests
+php artisan test tests/Feature/Content/
 ```
 
-**Benchmarks**:
-- Login response: < 200ms
-- Permission check: < 10ms
-- Role loading: < 100ms
-- API token validation: < 50ms
+### Phase 4: API Tests
+Test API endpoints and integrations:
 
-### Phase 9: Security Testing (2-3 minutes)
 ```bash
-# Run security tests
-php artisan test tests/Feature/SecurityTest.php
+# 10. Sanctum API Tests
+php artisan test tests/Feature/SanctumApiTest.php
+
+# 11. Social Login Tests
+php artisan test tests/Feature/SocialLoginTest.php
 ```
 
-**Test Coverage**:
-- SQL injection prevention
-- XSS protection
-- CSRF validation
-- Rate limiting
-- Password security
-- Token security
+### Phase 5: Full Regression Suite
+Run complete test suite:
 
-## When to Test
-
-### 1. During Development
-
-**Every Code Change**:
 ```bash
-# Quick test for current feature
-php artisan test --filter=FeatureName
-
-# Run related tests
-php artisan test tests/Feature/Auth/ --parallel
-```
-
-**Before Commits**:
-```bash
-# Run full test suite
+# Run all tests
 php artisan test
 
-# With coverage
-php artisan test --coverage --min=80
+# Or with coverage
+php artisan test --coverage
 ```
 
-### 2. Pre-Deployment
+## Regression Testing Procedures
 
-**Staging Deployment**:
-```bash
-# Full regression test
-./regression-test.sh
+### When to Run Regression Tests
 
-# Performance tests
-php artisan test tests/Feature/PerformanceTest.php
+1. **Before Every Deployment**
+   - Run full test suite
+   - Check code coverage (minimum 80%)
+   - Verify no breaking changes
 
-# Security audit
-php artisan test tests/Feature/SecurityTest.php
+2. **After Major Changes**
+   - Database schema changes
+   - Authentication system updates
+   - Permission structure modifications
+   - Route changes
+
+3. **During Development**
+   - Run related tests after each change
+   - Full suite before committing
+   - Continuous integration on push
+
+### Regression Test Checklist
+
+#### Authentication System
+- [ ] User registration works
+- [ ] Login/logout functions properly
+- [ ] Password reset flow completes
+- [ ] Email verification sends and confirms
+- [ ] Two-factor authentication enables/disables
+- [ ] Social login integrations work
+
+#### Permission System
+- [ ] All roles have correct permissions
+- [ ] Permission checks work in controllers
+- [ ] Middleware blocks unauthorized access
+- [ ] Frontend shows/hides based on permissions
+- [ ] Role assignment works correctly
+
+#### Content Management (Pages)
+- [ ] Pages can be created with all fields
+- [ ] SEO metadata saves correctly
+- [ ] Schema markup generates properly
+- [ ] Sitemap includes published pages
+- [ ] Soft delete and restore work
+- [ ] Publishing workflow functions
+
+#### Settings Management
+- [ ] Settings load correctly
+- [ ] Updates persist to database
+- [ ] Cache clears on update
+- [ ] Import/export functions work
+- [ ] Category filtering works
+
+#### API Functionality
+- [ ] API authentication works
+- [ ] Rate limiting applies correctly
+- [ ] CORS headers set properly
+- [ ] JSON responses formatted correctly
+- [ ] Error handling returns proper codes
+
+## Test Data Management
+
+### Factories
+Use factories for consistent test data:
+
+```php
+// User Factory
+User::factory()->create([
+    'name' => 'Test User',
+    'email' => 'test@example.com',
+]);
+
+// Page Factory
+Page::factory()->published()->create();
+Page::factory()->draft()->count(5)->create();
 ```
 
-**Production Deployment**:
-```bash
-# Smoke tests after deployment
-php artisan test tests/Feature/SmokeTest.php
+### Seeders for Testing
+Special seeders for test environments:
 
-# Critical path validation
-php artisan test --group=critical
-```
-
-### 3. Scheduled Testing
-
-**Daily**:
-- Run full test suite on CI/CD
-- Check for deprecated features
-- Validate external integrations
-
-**Weekly**:
-- Full regression testing
-- Performance benchmarking
-- Security scanning
-
-**Monthly**:
-- Dependency updates testing
-- Browser compatibility testing
-- Load testing
-
-## Automated Testing Scripts
-
-### Windows: `regression-test.bat`
-```batch
-@echo off
-echo ========================================
-echo Multi-Role Auth System - Regression Test
-echo ========================================
-
-REM Environment setup
-call :setup_environment
-if %errorlevel% neq 0 exit /b 1
-
-REM Run test phases
-call :run_database_tests
-call :run_auth_tests
-call :run_api_tests
-call :run_permission_tests
-call :run_integration_tests
-
-REM Generate report
-call :generate_report
-
-exit /b 0
-```
-
-### Linux/Mac: `regression-test.sh`
-```bash
-#!/bin/bash
-
-# Colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-# Test execution with timing
-run_test_suite() {
-    local suite=$1
-    local start=$(date +%s)
-    
-    echo -e "${YELLOW}Running $suite tests...${NC}"
-    php artisan test $suite
-    
-    local end=$(date +%s)
-    local duration=$((end - start))
-    echo -e "${GREEN}$suite completed in ${duration}s${NC}"
+```php
+// TestDataSeeder.php
+class TestDataSeeder extends Seeder
+{
+    public function run()
+    {
+        // Create test users with each role
+        $this->createTestUsers();
+        
+        // Create sample pages
+        $this->createSamplePages();
+        
+        // Set up test settings
+        $this->createTestSettings();
+    }
 }
+```
 
-# Main execution
-main() {
-    # Setup
-    setup_environment
+### Database Transactions
+Use database transactions to keep tests isolated:
+
+```php
+use RefreshDatabase;  // Migrations run for each test
+// or
+use DatabaseTransactions;  // Rollback after each test
+```
+
+## Writing Effective Tests
+
+### Test Structure Template
+
+```php
+class PageManagementTest extends TestCase
+{
+    use RefreshDatabase, WithRoles;
     
-    # Run tests in order
-    run_test_suite "tests/Feature/DatabaseIntegrityTest.php"
-    run_test_suite "tests/Feature/Auth"
-    run_test_suite "tests/Feature/TwoFactorAuthenticationTest.php"
-    run_test_suite "tests/Feature/SanctumApiTest.php"
-    run_test_suite "tests/Feature/SocialLoginTest.php"
-    run_test_suite "tests/Feature/RoleBasedAccessTest.php"
-    run_test_suite "tests/Feature/MiddlewareTest.php"
-    run_test_suite "tests/Feature/UIPermissionTest.php"
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RoleSeeder::class);
+        $this->seed(PermissionSeeder::class);
+    }
     
-    # Generate report
-    generate_report
+    /** @test */
+    public function admin_can_create_page_with_seo_data()
+    {
+        // Arrange
+        $admin = $this->createUserWithRole('Admin');
+        $pageData = [
+            'title' => 'Test Page',
+            'slug' => 'test-page',
+            'meta_title' => 'SEO Title',
+        ];
+        
+        // Act
+        $response = $this->actingAs($admin)
+            ->post('/content/pages', $pageData);
+        
+        // Assert
+        $response->assertRedirect('/content/pages');
+        $this->assertDatabaseHas('pages', [
+            'slug' => 'test-page',
+        ]);
+    }
 }
-
-main "$@"
 ```
 
-### Quick Validation Script
+### Testing Best Practices
+
+1. **Test One Thing**: Each test should verify a single behavior
+2. **Use Descriptive Names**: Test names should explain what they test
+3. **Follow AAA Pattern**: Arrange, Act, Assert
+4. **Keep Tests Independent**: No test should depend on another
+5. **Use Factories**: Don't hardcode test data
+6. **Mock External Services**: Don't make real API calls in tests
+7. **Test Edge Cases**: Include boundary conditions and error paths
+
+## Performance Testing
+
+### Load Testing
+Use Laravel's built-in tools or external services:
+
 ```bash
-#!/bin/bash
-# quick-test.sh - For rapid validation during development
-
-php artisan test --parallel --stop-on-failure \
-    tests/Feature/Auth/LoginTest.php \
-    tests/Feature/RoleBasedAccessTest.php \
-    tests/Feature/SanctumApiTest.php
+# Using Artillery for load testing
+artillery quick --count 100 --num 10 http://localhost:8000/api/pages
 ```
 
-## CI/CD Integration
+### Query Optimization Tests
+Monitor database queries in tests:
 
-### GitHub Actions
+```php
+/** @test */
+public function pages_index_uses_eager_loading()
+{
+    DB::enableQueryLog();
+    
+    $this->get('/content/pages');
+    
+    $queries = DB::getQueryLog();
+    $this->assertLessThan(5, count($queries), 'Too many queries executed');
+}
+```
+
+## Continuous Integration
+
+### GitHub Actions Workflow
+
 ```yaml
-name: Authentication System Tests
+name: Tests
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: testing
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        ports:
-          - 3306:3306
-
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
     
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
-        extensions: mbstring, dom, fileinfo, mysql
-        coverage: xdebug
-
-    - name: Install Dependencies
-      run: |
-        composer install --no-interaction --prefer-dist
-        npm ci
-        npm run build
-
-    - name: Setup Environment
-      run: |
-        cp .env.example .env
-        php artisan key:generate
-        php artisan migrate --seed
-
-    - name: Run Tests
-      run: |
-        php artisan test --coverage --min=80
         
-    - name: Run Security Tests
-      run: php artisan test tests/Feature/SecurityTest.php
+    - name: Install Dependencies
+      run: composer install
       
-    - name: Performance Tests
-      run: php artisan test tests/Feature/PerformanceTest.php
+    - name: Generate key
+      run: php artisan key:generate
+      
+    - name: Run Tests
+      run: php artisan test --parallel
+      
+    - name: Generate Coverage Report
+      run: php artisan test --coverage-html coverage
       
     - name: Upload Coverage
-      uses: codecov/codecov-action@v3
+      uses: actions/upload-artifact@v2
       with:
-        file: ./coverage.xml
-        
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: tests/_output
+        name: coverage
+        path: coverage
 ```
 
-### GitLab CI
-```yaml
-stages:
-  - build
-  - test
-  - security
-  - deploy
+## Test Coverage Requirements
 
-variables:
-  MYSQL_ROOT_PASSWORD: password
-  MYSQL_DATABASE: testing
-  DB_HOST: mysql
+### Minimum Coverage Targets
+- **Overall**: 80%
+- **Controllers**: 90%
+- **Models**: 85%
+- **Services**: 95%
+- **Middleware**: 100%
 
-test:auth:
-  stage: test
-  image: php:8.2
-  services:
-    - mysql:8.0
-  script:
-    - composer install
-    - php artisan migrate --seed
-    - php artisan test tests/Feature/Auth/
-  artifacts:
-    reports:
-      junit: tests/_output/junit.xml
+### Generating Coverage Reports
 
-test:api:
-  stage: test
-  script:
-    - php artisan test tests/Feature/SanctumApiTest.php
-    
-test:permissions:
-  stage: test
-  script:
-    - php artisan test tests/Feature/RoleBasedAccessTest.php
+```bash
+# HTML Report
+php artisan test --coverage-html coverage
 
-security:scan:
-  stage: security
-  script:
-    - php artisan test tests/Feature/SecurityTest.php
-    - ./vendor/bin/security-checker security:check
+# Console Report
+php artisan test --coverage
+
+# Clover XML (for CI tools)
+php artisan test --coverage-clover coverage.xml
 ```
 
-## Performance Testing
-
-### Load Testing with Artillery
-```yaml
-# load-test.yml
-config:
-  target: "http://localhost:8000"
-  phases:
-    - duration: 60
-      arrivalRate: 10
-      name: "Warm up"
-    - duration: 300
-      arrivalRate: 50
-      name: "Sustained load"
-
-scenarios:
-  - name: "User Login Flow"
-    flow:
-      - get:
-          url: "/login"
-      - post:
-          url: "/login"
-          json:
-            email: "test@example.com"
-            password: "password"
-      - get:
-          url: "/dashboard"
-          
-  - name: "API Token Usage"
-    flow:
-      - post:
-          url: "/api/tokens"
-          json:
-            email: "api@example.com"
-            password: "password"
-          capture:
-            - json: "$.token"
-              as: "token"
-      - get:
-          url: "/api/user"
-          headers:
-            Authorization: "Bearer {{ token }}"
-```
-
-### Performance Benchmarks
-```php
-// tests/Feature/PerformanceTest.php
-public function test_authentication_performance_benchmarks()
-{
-    $start = microtime(true);
-    
-    // Test login performance
-    $response = $this->post('/login', [
-        'email' => 'test@example.com',
-        'password' => 'password',
-    ]);
-    
-    $loginTime = (microtime(true) - $start) * 1000;
-    $this->assertLessThan(200, $loginTime, 'Login took too long');
-    
-    // Test permission check performance
-    $user = User::find(1);
-    $start = microtime(true);
-    
-    for ($i = 0; $i < 100; $i++) {
-        $user->can('create posts');
-    }
-    
-    $permissionTime = ((microtime(true) - $start) * 1000) / 100;
-    $this->assertLessThan(10, $permissionTime, 'Permission check too slow');
-}
-```
-
-## Security Testing
-
-### Security Test Suite
-```php
-// tests/Feature/SecurityTest.php
-class SecurityTest extends TestCase
-{
-    public function test_sql_injection_prevention()
-    {
-        $maliciousInput = "admin' OR '1'='1";
-        
-        $response = $this->post('/login', [
-            'email' => $maliciousInput,
-            'password' => 'password',
-        ]);
-        
-        $response->assertSessionHasErrors('email');
-        $this->assertDatabaseMissing('users', ['email' => $maliciousInput]);
-    }
-    
-    public function test_xss_prevention()
-    {
-        $user = User::factory()->create([
-            'name' => '<script>alert("XSS")</script>',
-        ]);
-        
-        $response = $this->actingAs($user)->get('/dashboard');
-        
-        $response->assertDontSee('<script>alert("XSS")</script>', false);
-        $response->assertSee('&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;');
-    }
-    
-    public function test_csrf_protection()
-    {
-        $user = User::factory()->create();
-        
-        // Without CSRF token
-        $response = $this->actingAs($user)
-            ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post('/user/profile-information', [
-                'name' => 'New Name',
-                'email' => 'new@example.com',
-            ]);
-            
-        $response->assertStatus(419); // CSRF token mismatch
-    }
-    
-    public function test_rate_limiting()
-    {
-        for ($i = 0; $i < 6; $i++) {
-            $response = $this->post('/login', [
-                'email' => 'test@example.com',
-                'password' => 'wrong-password',
-            ]);
-        }
-        
-        $response->assertStatus(429); // Too Many Requests
-    }
-}
-```
-
-### Security Checklist
-- [ ] Input validation on all forms
-- [ ] SQL injection prevention via Eloquent
-- [ ] XSS protection in Blade templates
-- [ ] CSRF tokens on all POST requests
-- [ ] Rate limiting on authentication endpoints
-- [ ] Secure password hashing (bcrypt/argon2)
-- [ ] HTTPS enforcement in production
-- [ ] Security headers configured
-- [ ] Session security settings
-- [ ] API token expiration
-
-## Test Data Management
-
-### Factories
-```php
-// database/factories/UserFactory.php
-public function withRole(string $role): static
-{
-    return $this->afterCreating(function (User $user) use ($role) {
-        $user->assignRole($role);
-    });
-}
-
-public function withPermissions(array $permissions): static
-{
-    return $this->afterCreating(function (User $user) use ($permissions) {
-        $user->givePermissionTo($permissions);
-    });
-}
-
-public function with2FA(): static
-{
-    return $this->state(function (array $attributes) {
-        return [
-            'two_factor_secret' => encrypt('secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['code1', 'code2'])),
-            'two_factor_confirmed_at' => now(),
-        ];
-    });
-}
-```
-
-### Test Helpers
-```php
-// tests/TestCase.php
-protected function createAdmin(): User
-{
-    return User::factory()
-        ->withRole('Admin')
-        ->with2FA()
-        ->create();
-}
-
-protected function createApiUser(): User
-{
-    $user = User::factory()->withRole('Subscriber')->create();
-    $user->tokens()->create([
-        'name' => 'test-token',
-        'token' => hash('sha256', 'test-token'),
-        'abilities' => ['*'],
-    ]);
-    
-    return $user;
-}
-
-protected function mockSocialiteUser(array $attributes = []): void
-{
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn($attributes['id'] ?? '123456');
-    $socialiteUser->shouldReceive('getEmail')->andReturn($attributes['email'] ?? 'test@example.com');
-    $socialiteUser->shouldReceive('getName')->andReturn($attributes['name'] ?? 'Test User');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn($attributes['avatar'] ?? 'https://example.com/avatar.jpg');
-    
-    Socialite::shouldReceive('driver->user')->andReturn($socialiteUser);
-}
-```
-
-### Database Seeders for Testing
-```php
-// database/seeders/TestingSeeder.php
-class TestingSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // Create users for each role
-        $roles = ['Super Admin', 'Admin', 'Editor', 'Author', 'Subscriber'];
-        
-        foreach ($roles as $role) {
-            User::factory()
-                ->withRole($role)
-                ->create([
-                    'email' => strtolower(str_replace(' ', '', $role)) . '@example.com',
-                    'password' => bcrypt('password'),
-                ]);
-        }
-        
-        // Create users with various permission combinations
-        User::factory()
-            ->withPermissions(['create posts', 'edit posts'])
-            ->create(['email' => 'content.creator@example.com']);
-            
-        // Create social login users
-        User::factory()->create([
-            'email' => 'social@example.com',
-            'provider' => 'google',
-            'provider_id' => 'google123',
-        ]);
-        
-        // Create API users with tokens
-        $apiUser = User::factory()->create(['email' => 'api@example.com']);
-        $apiUser->createToken('test-token', ['read', 'write']);
-    }
-}
-```
-
-## Troubleshooting Test Failures
+## Debugging Failed Tests
 
 ### Common Issues and Solutions
 
-1. **Database Connection Errors**
-   ```bash
-   # Check database configuration
-   php artisan config:clear
-   php artisan migrate:fresh --seed
-   ```
+#### 1. Permission Denied Errors
+```php
+// Solution: Ensure roles and permissions are seeded
+$this->seed([RoleSeeder::class, PermissionSeeder::class]);
+```
 
-2. **Permission Cache Issues**
-   ```bash
-   # Clear permission cache
-   php artisan permission:cache-reset
-   php artisan cache:clear
-   ```
+#### 2. Route Not Found
+```php
+// Solution: Check route definitions and middleware
+$this->withoutMiddleware(); // Skip middleware for testing
+```
 
-3. **Failed Assertions**
-   ```php
-   // Add debugging
-   $response->dump(); // See full response
-   $response->dumpHeaders(); // Check headers
-   $response->dumpSession(); // Check session data
-   ```
+#### 3. Database Connection Issues
+```php
+// Solution: Use separate testing database
+// In .env.testing
+DB_CONNECTION=sqlite
+DB_DATABASE=:memory:
+```
 
-4. **Timing Issues**
-   ```php
-   // Add waits for async operations
-   $this->artisan('queue:work --once');
-   sleep(1); // Give time for background jobs
-   ```
+#### 4. Failed Assertions
+```php
+// Use dd() to debug
+$response = $this->get('/pages');
+dd($response->content()); // Inspect response
+```
 
-5. **Social Login Mock Failures**
-   ```php
-   // Ensure Socialite is properly mocked
-   $this->beforeApplicationDestroyed(function () {
-       Mockery::close();
-   });
-   ```
+## Test Utilities
 
-## Related Documentation
+### Custom Test Helpers
 
-- [Authentication Architecture](Authentication-Architecture.md) - Component overview
-- [Developer Guide](Developer-Guide.md) - Implementation details
-- [TESTING.md](../TESTING.md) - Quick testing reference
-- [Troubleshooting](Troubleshooting.md) - Common issues
+```php
+// tests/Traits/WithRoles.php
+trait WithRoles
+{
+    protected function createUserWithRole(string $role): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole($role);
+        return $user;
+    }
+    
+    protected function actingAsRole(string $role)
+    {
+        return $this->actingAs($this->createUserWithRole($role));
+    }
+}
+```
+
+### Test Commands
+
+```bash
+# Run specific test file
+php artisan test tests/Feature/PageManagementTest.php
+
+# Run specific test method
+php artisan test --filter test_admin_can_create_page
+
+# Run tests in parallel
+php artisan test --parallel
+
+# Stop on first failure
+php artisan test --stop-on-failure
+
+# Run only unit tests
+php artisan test --testsuite=Unit
+
+# Run with verbose output
+php artisan test -v
+```
+
+## Monitoring Test Health
+
+### Metrics to Track
+1. **Test Execution Time**: Keep under 5 minutes for full suite
+2. **Flaky Tests**: Identify and fix intermittent failures
+3. **Coverage Trends**: Ensure coverage doesn't decrease
+4. **Test Count**: Track growth of test suite
+5. **Failure Rate**: Monitor test stability
+
+### Test Quality Indicators
+- Tests run quickly (< 100ms per test average)
+- No flaky tests (100% consistent results)
+- High coverage with meaningful assertions
+- Clear test names and documentation
+- Regular test maintenance and updates
+
+## Quick Reference Commands
+
+```bash
+# Initial setup
+composer install
+cp .env.example .env.testing
+php artisan key:generate --env=testing
+
+# Database setup
+php artisan migrate --env=testing
+php artisan db:seed --env=testing
+
+# Run tests
+php artisan test                    # Run all tests
+php artisan test --parallel         # Run in parallel
+php artisan test --coverage         # With coverage
+php artisan test --profile          # Show slow tests
+
+# Specific suites
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+
+# Debugging
+php artisan test --stop-on-failure  # Stop on first failure
+php artisan test -v                 # Verbose output
+php artisan test --filter=keyword   # Run matching tests
+
+# Coverage reports
+php artisan test --coverage-html reports/
+php artisan test --coverage-text
+```
+
+## Troubleshooting Guide
+
+### Problem: Tests fail locally but pass in CI
+**Solution**: Check environment differences, ensure same PHP version, database type, and dependencies.
+
+### Problem: Slow test execution
+**Solution**: Use in-memory SQLite, run in parallel, mock external services, optimize factories.
+
+### Problem: Inconsistent test results
+**Solution**: Check for shared state, use RefreshDatabase trait, ensure proper tearDown, avoid time-dependent tests.
+
+### Problem: Cannot reproduce production bugs
+**Solution**: Add integration tests, use production-like data, test with same configurations, add logging.
+
+## Next Steps
+
+1. **Set up CI/CD pipeline** with automated testing
+2. **Implement browser testing** with Laravel Dusk
+3. **Add performance benchmarks** to tests
+4. **Create test documentation** for new developers
+5. **Establish code review process** including test review

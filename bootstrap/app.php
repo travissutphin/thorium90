@@ -38,8 +38,8 @@ use Illuminate\Support\Facades\Route;
  *     Route::get('/admin', [AdminController::class, 'index']);
  * });
  * 
- * Route::middleware(['auth', 'permission:create-posts'])->group(function () {
- *     Route::post('/posts', [PostController::class, 'store']);
+ * Route::middleware(['auth', 'permission:create-pages'])->group(function () {
+ *     Route::post('/pages', [PageController::class, 'store']);
  * });
  * 
  * Route::middleware(['auth', 'role.any:Admin,Editor'])->group(function () {

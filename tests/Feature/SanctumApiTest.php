@@ -209,7 +209,7 @@ class SanctumApiTest extends TestCase
         $editor = $this->createUserWithRole('Editor');
         Sanctum::actingAs($editor);
 
-        $response = $this->getJson('/api/content/posts');
+        $response = $this->getJson('/api/content/pages');
         
         $response->assertOk()
             ->assertJsonStructure([
@@ -228,7 +228,7 @@ class SanctumApiTest extends TestCase
         $author = $this->createUserWithRole('Author');
         Sanctum::actingAs($author);
 
-        $response = $this->getJson('/api/author/my-posts');
+        $response = $this->getJson('/api/author/my-pages');
         
         $response->assertOk()
             ->assertJsonStructure([
@@ -252,11 +252,11 @@ class SanctumApiTest extends TestCase
         $response->assertForbidden();
 
         // Test content endpoints
-        $response = $this->getJson('/api/content/posts');
+        $response = $this->getJson('/api/content/pages');
         $response->assertForbidden();
 
         // Test author endpoints
-        $response = $this->getJson('/api/author/my-posts');
+        $response = $this->getJson('/api/author/my-pages');
         $response->assertForbidden();
     }
 
@@ -311,8 +311,8 @@ class SanctumApiTest extends TestCase
 
         // Verify permissions include Editor-specific permissions
         $permissions = $response->json('permissions');
-        $this->assertContains('create posts', $permissions);
-        $this->assertContains('edit posts', $permissions);
+        $this->assertContains('create pages', $permissions);
+        $this->assertContains('edit pages', $permissions);
     }
 
     /** @test */

@@ -63,17 +63,30 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])->prefix('a
 // Content Management Routes - require content creator roles
 Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin,Editor,Author'])->prefix('content')->name('content.')->group(function () {
     
-    // Posts Management
-    Route::middleware('permission:view posts')->group(function () {
-        Route::get('/posts', function () {
-            return Inertia::render('content/posts/index');
-        })->name('posts.index');
+    // Pages Management - Specific routes MUST come before general routes
+    Route::middleware('permission:create pages')->group(function () {
+        Route::get('/pages/create', [App\Http\Controllers\PageController::class, 'create'])->name('pages.create');
+        Route::post('/pages', [App\Http\Controllers\PageController::class, 'store'])->name('pages.store');
     });
 
-    Route::middleware('permission:create posts')->group(function () {
-        Route::get('/posts/create', function () {
-            return Inertia::render('content/posts/create');
-        })->name('posts.create');
+    Route::middleware('permission:view pages')->group(function () {
+        Route::get('/pages', [App\Http\Controllers\PageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
+    });
+
+    Route::middleware('permission:edit pages')->group(function () {
+        Route::get('/pages/{page}/edit', [App\Http\Controllers\PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{page}', [App\Http\Controllers\PageController::class, 'update'])->name('pages.update');
+        Route::post('/pages/bulk-action', [App\Http\Controllers\PageController::class, 'bulkAction'])->name('pages.bulk-action');
+    });
+
+    Route::middleware('permission:delete pages')->group(function () {
+        Route::delete('/pages/{page}', [App\Http\Controllers\PageController::class, 'destroy'])->name('pages.destroy');
+    });
+
+    Route::middleware('permission:publish pages')->group(function () {
+        Route::patch('/pages/{page}/publish', [App\Http\Controllers\PageController::class, 'publish'])->name('pages.publish');
+        Route::patch('/pages/{page}/unpublish', [App\Http\Controllers\PageController::class, 'unpublish'])->name('pages.unpublish');
     });
 
     // Media Management

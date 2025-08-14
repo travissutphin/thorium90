@@ -1,21 +1,27 @@
 <?php
 
+use App\Http\Controllers\PageController;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
 })->name('home');
 
-Route::middleware(['auth', 'verified', 'permission:view dashboard'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-    
-    Route::get('api-demo', function () {
-        return Inertia::render('api-demo');
-    })->name('api-demo');
-});
+Route::get('/dashboard', function () {
+    return Inertia::render('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-require __DIR__.'/settings.php';
+// Public page routes
+Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name('pages.show');
+
+// SEO Routes
+Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
+
 require __DIR__.'/auth.php';

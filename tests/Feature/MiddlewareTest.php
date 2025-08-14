@@ -114,7 +114,7 @@ class MiddlewareTest extends TestCase
         $request->setUserResolver(fn() => $author);
 
         $middleware = new EnsureUserHasAnyPermission();
-        $response = $middleware->handle($request, fn() => new Response('OK'), 'manage roles', 'create posts', 'edit users');
+        $response = $middleware->handle($request, fn() => new Response('OK'), 'manage roles', 'create pages', 'edit users');
 
         $this->assertEquals('OK', $response->getContent());
     }
@@ -126,7 +126,7 @@ class MiddlewareTest extends TestCase
         $request->setUserResolver(fn() => $subscriber);
 
         $middleware = new EnsureUserHasAnyPermission();
-        $response = $middleware->handle($request, fn() => new Response('OK'), 'manage roles', 'create posts', 'edit users');
+        $response = $middleware->handle($request, fn() => new Response('OK'), 'manage roles', 'create pages', 'edit users');
 
         $this->assertEquals(403, $response->getStatusCode());
     }
@@ -200,11 +200,11 @@ class MiddlewareTest extends TestCase
         // Editor should have permissions from their role
         $editorPermissions = [
             'view dashboard',
-            'view posts',
-            'create posts',
-            'edit posts',
-            'delete posts',
-            'publish posts',
+            'view pages',
+            'create pages',
+            'edit pages',
+            'delete pages',
+            'publish pages',
         ];
 
         foreach ($editorPermissions as $permission) {

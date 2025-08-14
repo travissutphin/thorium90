@@ -172,9 +172,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Content management routes (Editor and above)
     Route::middleware(['role.any:Super Admin,Admin,Editor'])->prefix('content')->group(function () {
         
-        Route::get('/posts', function (Request $request) {
+        Route::get('/pages', function (Request $request) {
             return response()->json([
-                'message' => 'Content posts endpoint',
+                'message' => 'Content pages endpoint',
                 'user_roles' => $request->user()->roles->pluck('name'),
                 'access_level' => 'Editor+'
             ]);
@@ -184,9 +184,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Author routes (Author and above)
     Route::middleware(['role.any:Super Admin,Admin,Editor,Author'])->prefix('author')->group(function () {
         
-        Route::get('/my-posts', function (Request $request) {
+        Route::get('/my-pages', function (Request $request) {
             return response()->json([
-                'message' => 'Author posts endpoint',
+                'message' => 'Author pages endpoint',
                 'user_roles' => $request->user()->roles->pluck('name'),
                 'access_level' => 'Author+'
             ]);
