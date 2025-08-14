@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type Page } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save, FileText, Globe, Search, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { FormEventHandler, useEffect } from 'react';
@@ -22,27 +22,28 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/content/pages',
     },
     {
-        title: 'Create Page',
-        href: '/content/pages/create',
+        title: 'Edit Page',
+        href: '#',
     },
 ];
 
 interface Props {
+    page: Page;
     schemaTypes: Record<string, string>;
 }
 
-export default function CreatePage({ schemaTypes }: Props) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        title: '',
-        slug: '',
-        content: '',
-        excerpt: '',
-        status: 'draft' as 'draft' | 'published' | 'private',
-        is_featured: false as boolean,
-        meta_title: '',
-        meta_description: '',
-        meta_keywords: '',
-        schema_type: 'WebPage',
+export default function EditPage({ page, schemaTypes }: Props) {
+    const { data, setData, put, processing, errors } = useForm({
+        title: page.title || '',
+        slug: page.slug || '',
+        content: page.content || '',
+        excerpt: page.excerpt || '',
+        status: page.status || 'draft',
+        is_featured: page.is_featured || false,
+        meta_title: page.meta_title || '',
+        meta_description: page.meta_description || '',
+        meta_keywords: page.meta_keywords || '',
+        schema_type: page.schema_type || 'WebPage',
     });
 
     const { 
@@ -51,13 +52,11 @@ export default function CreatePage({ schemaTypes }: Props) {
         checkSlug, 
         generateSlug, 
         clearValidation 
-    } = useSlugValidation();
+    } = useSlugValidation({ excludeId: page.id });
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('content.pages.store'), {
-            onSuccess: () => reset(),
-        });
+        put(route('content.pages.update', page.id));
     };
 
     const handleTitleChange = (title: string) => {
@@ -68,7 +67,7 @@ export default function CreatePage({ schemaTypes }: Props) {
         setData('slug', newSlug);
         
         // Check slug availability
-        if (newSlug) {
+        if (newSlug && newSlug !== page.slug) {
             checkSlug(newSlug, (result) => {
                 if (!result.available && result.suggestion) {
                     // Auto-use the suggested unique slug
@@ -79,8 +78,8 @@ export default function CreatePage({ schemaTypes }: Props) {
             clearValidation();
         }
         
-        // Auto-update meta title if it's empty
-        if (!data.meta_title) {
+        // Auto-update meta title if it matches the original or is empty
+        if (!data.meta_title || data.meta_title === page.title) {
             setData('meta_title', title);
         }
     };
@@ -89,7 +88,7 @@ export default function CreatePage({ schemaTypes }: Props) {
         setData('slug', slug);
         
         // Validate the manually entered slug
-        if (slug) {
+        if (slug && slug !== page.slug) {
             checkSlug(slug);
         } else {
             clearValidation();
@@ -103,22 +102,30 @@ export default function CreatePage({ schemaTypes }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Page" />
+            <Head title={`Edit ${page.title}`} />
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 overflow-x-auto">
                 
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Create New Page</h1>
-                        <p className="text-muted-foreground">Create a new page for your website</p>
+                        <h1 className="text-2xl font-bold tracking-tight">Edit Page</h1>
+                        <p className="text-muted-foreground">Update your page content and settings</p>
                     </div>
                     
-                    <Button variant="outline" asChild>
-                        <Link href={route('content.pages.index')}>
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Pages
-                        </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href={route('content.pages.show', page.id)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                View Page
+                            </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href={route('content.pages.index')}>
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Back to Pages
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -302,6 +309,25 @@ export default function CreatePage({ schemaTypes }: Props) {
                                             Separate keywords with commas
                                         </p>
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="schema_type">Schema Type</Label>
+                                        <Select value={data.schema_type} onValueChange={(value) => setData('schema_type', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select schema type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.entries(schemaTypes).map(([value, label]) => (
+                                                    <SelectItem key={value} value={value}>
+                                                        {label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Schema.org markup type for structured data
+                                        </p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -347,8 +373,19 @@ export default function CreatePage({ schemaTypes }: Props) {
                                         <Switch
                                             id="is_featured"
                                             checked={data.is_featured}
-                                            onCheckedChange={(checked) => setData('is_featured', !!checked)}
+                                            onCheckedChange={(checked) => setData('is_featured', checked as boolean)}
                                         />
+                                    </div>
+
+                                    {page.published_at && (
+                                        <div className="text-sm text-muted-foreground">
+                                            <p>Published: {new Date(page.published_at).toLocaleDateString()}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="text-sm text-muted-foreground">
+                                        <p>Created: {new Date(page.created_at).toLocaleDateString()}</p>
+                                        <p>Last updated: {new Date(page.updated_at).toLocaleDateString()}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -359,7 +396,7 @@ export default function CreatePage({ schemaTypes }: Props) {
                                     <div className="space-y-4">
                                         <Button type="submit" className="w-full" disabled={processing}>
                                             <Save className="h-4 w-4 mr-2" />
-                                            {processing ? 'Creating...' : 'Create Page'}
+                                            {processing ? 'Updating...' : 'Update Page'}
                                         </Button>
                                         
                                         <Button type="button" variant="outline" className="w-full" asChild>
@@ -367,6 +404,24 @@ export default function CreatePage({ schemaTypes }: Props) {
                                                 Cancel
                                             </Link>
                                         </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Page Info */}
+                            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+                                <CardContent className="pt-6">
+                                    <div className="flex items-start gap-3">
+                                        <FileText className="h-5 w-5 text-green-600 mt-0.5" />
+                                        <div>
+                                            <h3 className="font-semibold text-green-900 dark:text-green-100">Page Info</h3>
+                                            <div className="text-sm text-green-700 dark:text-green-300 mt-2 space-y-1">
+                                                <p>Author: {page.user.name}</p>
+                                                <p>Status: {page.status}</p>
+                                                {page.is_featured && <p>✨ Featured page</p>}
+                                                <p>URL: /pages/{page.slug}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

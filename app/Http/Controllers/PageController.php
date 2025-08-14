@@ -126,8 +126,17 @@ class PageController extends Controller
 
         $page->load('user');
 
+        // Explicitly include computed properties and ensure all data is properly serialized
+        $pageData = $page->toArray();
+        $pageData['reading_time'] = $page->reading_time;
+        $pageData['url'] = $page->url;
+        $pageData['full_meta_title'] = $page->full_meta_title;
+        
+        // Ensure user relationship is properly included
+        $pageData['user'] = $page->user->only(['id', 'name']);
+
         return Inertia::render('content/pages/show', [
-            'page' => $page,
+            'page' => $pageData,
             'schemaData' => $page->schema_data,
         ]);
     }
@@ -304,6 +313,57 @@ class PageController extends Controller
 
         return response()->view('sitemap.pages', compact('pages'))
                         ->header('Content-Type', 'application/xml');
+    }
+
+    /**
+     * Check if a slug is available.
+     */
+    public function checkSlug(Request $request)
+    {
+        $slug = $request->input('slug');
+        $excludeId = $request->input('exclude_id');
+        
+        if (empty($slug)) {
+            return response()->json(['available' => false, 'message' => 'Slug cannot be empty']);
+        }
+        
+        // Generate proper slug format
+        $formattedSlug = Str::slug($slug);
+        
+        if (empty($formattedSlug)) {
+            return response()->json(['available' => false, 'message' => 'Invalid slug format']);
+        }
+        
+        // Check if slug exists (excluding current page if editing)
+        $query = Page::where('slug', $formattedSlug);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        
+        $exists = $query->exists();
+        
+        if ($exists) {
+            // Generate unique slug suggestion
+            $originalSlug = $formattedSlug;
+            $counter = 1;
+            while (Page::where('slug', $formattedSlug)->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))->exists()) {
+                $formattedSlug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+            
+            return response()->json([
+                'available' => false,
+                'message' => 'Slug already exists',
+                'suggestion' => $formattedSlug,
+                'formatted' => $formattedSlug
+            ]);
+        }
+        
+        return response()->json([
+            'available' => true,
+            'message' => 'Slug is available',
+            'formatted' => $formattedSlug
+        ]);
     }
 
     /**

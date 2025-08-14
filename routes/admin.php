@@ -89,6 +89,11 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin,Editor,Author
         Route::patch('/pages/{page}/unpublish', [App\Http\Controllers\PageController::class, 'unpublish'])->name('pages.unpublish');
     });
 
+    // Slug validation API
+    Route::middleware('permission:create pages')->group(function () {
+        Route::post('/pages/check-slug', [App\Http\Controllers\PageController::class, 'checkSlug'])->name('pages.check-slug');
+    });
+
     // Media Management
     Route::middleware('permission:upload media')->group(function () {
         Route::get('/media', function () {
