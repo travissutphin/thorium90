@@ -1,0 +1,26 @@
+  develop[m
+  main[m
+* [32mmanagement/pages[m
+  [31mremotes/composer/1.1[m
+  [31mremotes/composer/2.6[m
+  [31mremotes/composer/3.6[m
+  [31mremotes/composer/4.2[m
+  [31mremotes/composer/4.3[m
+  [31mremotes/composer/5.4[m
+  [31mremotes/composer/master[m
+  [31mremotes/origin/1.0.x[m
+  [31mremotes/origin/1.x[m
+  [31mremotes/origin/2.x[m
+  [31mremotes/origin/2.x-retry-on-act[m
+  [31mremotes/origin/3.x[m
+  [31mremotes/origin/4.x[m
+  [31mremotes/origin/HEAD[m -> origin/3.x
+  [31mremotes/origin/Lctrs-fix/exception-thrown-on-null-mime-type[m
+  [31mremotes/origin/develop[m
+  [31mremotes/origin/feature/3.x/has-directory[m
+  [31mremotes/origin/feature/close-sftp-and-ftp-connections[m
+  [31mremotes/origin/feature/copy-without-visibility[m
+  [31mremotes/origin/feature/prevent-same-path-copy-and-move[m
+  [31mremotes/origin/feature/tighten-typehint-for-filesystem-writer-visibility[m
+  [31mremotes/origin/gh-pages[m
+  [31mremotes/origin/main[m
