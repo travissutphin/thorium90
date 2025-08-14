@@ -11,17 +11,19 @@ interface Page {
     title: string;
     slug: string;
     content: string;
-    excerpt: string;
+    excerpt?: string;
     status: 'draft' | 'published' | 'private';
     is_featured: boolean;
-    meta_title: string;
-    meta_description: string;
-    meta_keywords: string;
-    schema_type: string;
+    meta_title?: string;
+    meta_description?: string;
+    meta_keywords?: string;
+    schema_type?: string;
     published_at: string | null;
     created_at: string;
     updated_at: string;
     reading_time: number;
+    url?: string;
+    full_meta_title?: string;
     user: {
         id: number;
         name: string;
@@ -34,8 +36,33 @@ interface Props {
 }
 
 export default function ShowPage({ page, schemaData }: Props) {
-    const { auth } = usePage<{ auth: { user: { id: number; can: (permission: string) => boolean } } }>().props;
+    const { auth } = usePage<{ auth: { user: any } }>().props;
     const user = auth?.user;
+
+    // Add error boundary for missing page data
+    if (!page) {
+        return (
+            <AppLayout breadcrumbs={[]}>
+                <Head title="Page Not Found" />
+                <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-6">
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="text-center">
+                                <h1 className="text-2xl font-bold text-destructive">Page Not Found</h1>
+                                <p className="text-muted-foreground mt-2">The requested page could not be loaded.</p>
+                                <Button asChild className="mt-4">
+                                    <Link href="/content/pages">
+                                        <ArrowLeft className="h-4 w-4 mr-2" />
+                                        Back to Pages
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -47,14 +74,14 @@ export default function ShowPage({ page, schemaData }: Props) {
             href: '/content/pages',
         },
         {
-            title: page.title,
+            title: page.title || 'Untitled Page',
             href: `/content/pages/${page.id}`,
         },
     ];
 
     const canEdit = user && (
-        user.can('edit pages') || 
-        (user.can('edit own pages') && page.user.id === user.id)
+        user.permission_names?.includes('edit pages') || 
+        (user.permission_names?.includes('edit own pages') && page.user?.id === user.id)
     );
 
     const getStatusColor = (status: string) => {

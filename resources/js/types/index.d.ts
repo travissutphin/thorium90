@@ -63,6 +63,53 @@ export interface NavItem {
     roles?: string[];
 }
 
+export interface Page {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    excerpt?: string;
+    status: 'draft' | 'published' | 'private';
+    is_featured: boolean;
+    meta_title?: string;
+    meta_description?: string;
+    meta_keywords?: string;
+    schema_type: string;
+    schema_data?: any;
+    user_id: number;
+    user: User;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedData<T> {
+    data: T[];
+    current_page: number;
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+}
+
+export interface PageStats {
+    total: number;
+    published: number;
+    drafts: number;
+    featured: number;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
