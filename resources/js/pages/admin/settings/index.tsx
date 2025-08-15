@@ -460,7 +460,7 @@ export default function AdminSettingsIndex({ settings, categories, stats }: Prop
         <AdminLayout>
             <Head title="System Settings" />
 
-            <div className="space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>

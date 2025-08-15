@@ -23,6 +23,11 @@ class Page extends Model
         'meta_keywords',
         'schema_type',
         'schema_data',
+        'template',
+        'layout',
+        'theme',
+        'blocks',
+        'template_config',
         'user_id',
         'published_at',
     ];
@@ -30,6 +35,8 @@ class Page extends Model
     protected $casts = [
         'is_featured' => 'boolean',
         'schema_data' => 'array',
+        'blocks' => 'array',
+        'template_config' => 'array',
         'published_at' => 'datetime',
     ];
 

@@ -1,0 +1,260 @@
+/* Template System Core Styles */
+
+/* Theme Provider */
+.theme-provider {
+    font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
+    color: var(--theme-text, #111827);
+    background-color: var(--theme-background, #ffffff);
+}
+
+/* Layout Styles */
+.default-layout {
+    max-width: 896px; /* 4xl */
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.sidebar-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .sidebar-layout {
+        grid-template-columns: 3fr 1fr;
+    }
+}
+
+.full-width-layout {
+    width: 100%;
+}
+
+/* Block Styles */
+.hero-block {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-block .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.content-block {
+    padding: 2rem 0;
+}
+
+.content-block .content-header {
+    margin-bottom: 2rem;
+}
+
+.content-block .content-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--theme-text-secondary, #6b7280);
+    margin-bottom: 1rem;
+}
+
+.content-block .content-body {
+    line-height: 1.7;
+}
+
+/* Prose styles for content */
+.content-body.prose {
+    max-width: none;
+}
+
+.content-body.prose h1,
+.content-body.prose h2,
+.content-body.prose h3,
+.content-body.prose h4,
+.content-body.prose h5,
+.content-body.prose h6 {
+    font-family: var(--theme-heading-font-family, var(--theme-font-family, 'Inter, system-ui, sans-serif'));
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.content-body.prose h1 {
+    font-size: 2.25rem;
+}
+
+.content-body.prose h2 {
+    font-size: 1.875rem;
+}
+
+.content-body.prose h3 {
+    font-size: 1.5rem;
+}
+
+.content-body.prose h4 {
+    font-size: 1.25rem;
+}
+
+.content-body.prose p {
+    margin-bottom: 1.5rem;
+}
+
+.content-body.prose ul,
+.content-body.prose ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.content-body.prose li {
+    margin-bottom: 0.5rem;
+}
+
+.content-body.prose a {
+    color: var(--theme-primary, #3b82f6);
+    text-decoration: underline;
+}
+
+.content-body.prose a:hover {
+    text-decoration: none;
+}
+
+.content-body.prose blockquote {
+    border-left: 4px solid var(--theme-primary, #3b82f6);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--theme-text-secondary, #6b7280);
+}
+
+.content-body.prose code {
+    background-color: var(--theme-surface, #f9fafb);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.content-body.prose pre {
+    background-color: var(--theme-surface, #f9fafb);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.content-body.prose pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.content-body.prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+.content-body.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+}
+
+.content-body.prose th,
+.content-body.prose td {
+    border: 1px solid var(--theme-text-secondary, #6b7280);
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.content-body.prose th {
+    background-color: var(--theme-surface, #f9fafb);
+    font-weight: 600;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .default-layout {
+        padding: 0.5rem;
+    }
+    
+    .sidebar-layout {
+        padding: 0.5rem;
+        gap: 1rem;
+    }
+    
+    .hero-block .container {
+        padding: 0 0.5rem;
+    }
+    
+    .content-block {
+        padding: 1rem 0;
+    }
+    
+    .content-body.prose h1 {
+        font-size: 1.875rem;
+    }
+    
+    .content-body.prose h2 {
+        font-size: 1.5rem;
+    }
+    
+    .content-body.prose h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .theme-provider {
+        --theme-background: #111827;
+        --theme-surface: #1f2937;
+        --theme-text: #f9fafb;
+        --theme-text-secondary: #9ca3af;
+    }
+    
+    .content-body.prose code {
+        background-color: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .content-body.prose pre {
+        background-color: #1f2937;
+    }
+    
+    .content-body.prose th {
+        background-color: #1f2937;
+    }
+    
+    .content-body.prose th,
+    .content-body.prose td {
+        border-color: #4b5563;
+    }
+}
+
+/* Print styles */
+@media print {
+    .hero-block {
+        background-image: none !important;
+        color: #000 !important;
+    }
+    
+    .content-body.prose a {
+        color: #000 !important;
+        text-decoration: underline !important;
+    }
+    
+    .content-body.prose a:after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #666;
+    }
+}

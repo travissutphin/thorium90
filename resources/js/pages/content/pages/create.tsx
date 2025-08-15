@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
@@ -43,6 +43,11 @@ export default function CreatePage({ schemaTypes }: Props) {
         meta_description: '',
         meta_keywords: '',
         schema_type: 'WebPage',
+        template: 'core-page',
+        layout: 'default',
+        theme: 'default',
+        blocks: [] as any[],
+        template_config: {} as Record<string, any>,
     });
 
     const { 
@@ -349,6 +354,133 @@ export default function CreatePage({ schemaTypes }: Props) {
                                             checked={data.is_featured}
                                             onCheckedChange={(checked) => setData('is_featured', !!checked)}
                                         />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Template Settings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <FileText className="h-5 w-5" />
+                                        Template Settings
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Choose how your page will be displayed on the public frontend
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="template">Page Template</Label>
+                                        <Select value={data.template} onValueChange={(value) => setData('template', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select template" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Core Templates</SelectLabel>
+                                                    <SelectItem value="core-page">Core Page (Default)</SelectItem>
+                                                </SelectGroup>
+                                                <SelectGroup>
+                                                    <SelectLabel>Client Templates</SelectLabel>
+                                                    <SelectItem value="client-home">Home Page Template</SelectItem>
+                                                    <SelectItem value="client-about">About Page Template</SelectItem>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.template && (
+                                            <p className="text-sm text-destructive">{errors.template}</p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground">
+                                            Template file: resources/js/templates/public/{data.template?.replace('client-', '') || 'core-page'}.tsx
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="layout">Layout</Label>
+                                        <Select value={data.layout} onValueChange={(value) => setData('layout', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select layout" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="default">Default Layout</SelectItem>
+                                                <SelectItem value="sidebar">Sidebar Layout</SelectItem>
+                                                <SelectItem value="full-width">Full Width Layout</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.layout && (
+                                            <p className="text-sm text-destructive">{errors.layout}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="theme">Theme</Label>
+                                        <Select value={data.theme} onValueChange={(value) => setData('theme', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select theme" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="default">Default Theme</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.theme && (
+                                            <p className="text-sm text-destructive">{errors.theme}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="custom_class">Custom CSS Classes</Label>
+                                        <Input
+                                            id="custom_class"
+                                            type="text"
+                                            value={data.template_config?.custom_class || ''}
+                                            onChange={(e) => setData('template_config', {
+                                                ...data.template_config,
+                                                custom_class: e.target.value
+                                            })}
+                                            placeholder="e.g., dark-theme, special-layout"
+                                            className={errors.template_config?.custom_class ? 'border-destructive' : ''}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Add custom CSS classes to the page wrapper
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="page_scripts">Page-Specific Scripts</Label>
+                                        <Textarea
+                                            id="page_scripts"
+                                            value={data.template_config?.page_scripts || ''}
+                                            onChange={(e) => setData('template_config', {
+                                                ...data.template_config,
+                                                page_scripts: e.target.value
+                                            })}
+                                            placeholder="Add any page-specific JavaScript here"
+                                            rows={4}
+                                            className={errors.template_config?.page_scripts ? 'border-destructive' : ''}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            JavaScript code will be executed on this page only
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="schema_type">Schema Type</Label>
+                                        <Select value={data.schema_type} onValueChange={(value) => setData('schema_type', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select schema type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.entries(schemaTypes).map(([value, label]) => (
+                                                    <SelectItem key={value} value={value}>
+                                                        {label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.schema_type && (
+                                            <p className="text-sm text-destructive">{errors.schema_type}</p>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

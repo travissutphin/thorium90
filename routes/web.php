@@ -19,7 +19,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Public page routes
-Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name('pages.show');
+Route::get('/pages/{page:slug}', [App\Http\Controllers\PublicPageController::class, 'show'])->name('pages.show');
 
 // SEO Routes
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');

@@ -82,6 +82,11 @@ class PageController extends Controller
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:255',
             'schema_type' => 'nullable|string|in:WebPage,Article,BlogPosting,NewsArticle',
+            'template' => 'nullable|string|max:100',
+            'layout' => 'nullable|string|max:100',
+            'theme' => 'nullable|string|max:100',
+            'blocks' => 'nullable|array',
+            'template_config' => 'nullable|array',
         ]);
 
         // Generate slug if not provided
@@ -182,6 +187,11 @@ class PageController extends Controller
             'meta_description' => 'nullable|string|max:160',
             'meta_keywords' => 'nullable|string|max:255',
             'schema_type' => 'nullable|string|in:WebPage,Article,BlogPosting,NewsArticle',
+            'template' => 'nullable|string|max:100',
+            'layout' => 'nullable|string|max:100',
+            'theme' => 'nullable|string|max:100',
+            'blocks' => 'nullable|array',
+            'template_config' => 'nullable|array',
         ]);
 
         // Generate slug if not provided
