@@ -5,15 +5,15 @@
         <div class="max-w-4xl mx-auto text-center">
             <div class="animate-fade-in">
                 <h1 class="hero-title text-4xl md:text-6xl font-bold mb-6 text-gray-900">
-                    <span class="gradient-text">Coming Soon</span>
+                    <span class="gradient-text">Contact</span>
                 </h1>
             </div>
             
             <div class="animate-fade-in animate-delay-1">
                 <p class="hero-subtitle text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                    Success!! Thorium90 is the ultimate Laravel 12 boilerplate - a production-ready CMS framework designed for agencies and developers who build custom solutions for clients. <br /> Ship faster, scale smarter.
+                   <br /><br /> 
                 </p>
-            </div>
+            </div>         
         </div>
     </div>
 </section>

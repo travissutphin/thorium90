@@ -64,6 +64,9 @@ function setMobileMenuOpen(open) {
             mobileMenu.classList.add('open');
             menuIcon.classList.add('hidden');
             closeIcon.classList.remove('hidden');
+            // Ensure background is applied
+            mobileMenu.style.background = 'rgba(0, 0, 0, 0.9)';
+            mobileMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
         } else {
             mobileMenu.classList.remove('open');
             menuIcon.classList.remove('hidden');
@@ -73,6 +76,13 @@ function setMobileMenuOpen(open) {
 }
 
 function initializeMobileMenu() {
+    // Ensure mobile menu has proper background on initialization
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenu) {
+        mobileMenu.style.background = 'rgba(0, 0, 0, 0.9)';
+        mobileMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+    }
+    
     // Close mobile menu when clicking outside
     document.addEventListener('click', function(event) {
         const mobileMenu = document.getElementById('mobile-menu');

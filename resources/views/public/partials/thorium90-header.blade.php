@@ -4,11 +4,11 @@
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <!-- Thorium90 Logo -->
-                <div class="w-10- h-15 rounded-lg flex items-center justify-center">
+                <div class="h-12 rounded-lg flex items-center justify-center">
                     <a href="/"><img 
                         src="/images/logos/header.png" 
                         alt="Thorium90 Logo" 
-                        class="w-100 h-15 rounded-lg"
+                        class="h-12 w-auto rounded-lg"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                     /></a>
                 </div>
@@ -16,11 +16,10 @@
             
             <!-- Desktop Navigation -->
             <div class="hidden md:flex items-center space-x-8">
-                <a href="/features" class="text-gray-700 hover:text-gray-900 font-medium transition">Features</a>
-                <a href="/plugins" class="text-gray-700 hover:text-gray-900 font-medium transition">Plugins</a>
-                <a href="/team" class="text-gray-700 hover:text-gray-900 font-medium transition">Team</a>
-                <a href="/showcase" class="text-gray-700 hover:text-gray-900 font-medium transition">Showcase</a>
-				<a href="/contact" class="text-gray-700 hover:text-gray-900 font-medium transition">Contact</a>
+                <a href="/about" class="text-gray-700 hover:text-gray-900 font-medium transition">About Us</a>
+                <a href="/our-team" class="text-gray-700 hover:text-gray-900 font-medium transition">Our Team</a>
+                <a href="/contact" class="text-gray-700 hover:text-gray-900 font-medium transition">Contact Us</a>
+				<a href="/login" class="block text-white hover:text-gray-300 font-medium">Admin</a>
                 <button 
                     onclick="toggleDarkMode()"
                     class="theme-toggle"
@@ -32,9 +31,6 @@
                     <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                     </svg>
-                </button>
-                <button class="btn-primary px-6 py-2 rounded-lg">
-                    View Demo
                 </button>
             </div>
             
@@ -67,16 +63,27 @@
         </div>
         
         <!-- Mobile Navigation -->
-        <div id="mobile-menu" class="mobile-menu md:hidden fixed inset-y-0 right-0 w-64 bg-white shadow-xl">
-            <div class="p-6 pt-16 space-y-6">
-                <a href="about" class="block text-gray-700 hover:text-gray-900 font-medium">About</a>
-                <a href="team" class="block text-gray-700 hover:text-gray-900 font-medium">Team</a>
-                <a href="#packages" class="block text-gray-700 hover:text-gray-900 font-medium"></a>
-                <a href="#showcase" class="block text-gray-700 hover:text-gray-900 font-medium"></a>
-                <div class="pt-4 border-t border-gray-200">
+        <div id="mobile-menu" class="mobile-menu md:hidden bg-black bg-opacity-90 shadow-xl">
+            <!-- Close Button -->
+            <div class="flex justify-end p-4">
+                <button 
+                    onclick="setMobileMenuOpen(false)"
+                    class="p-2 text-white hover:text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+                    aria-label="Close menu"
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 pb-6 space-y-6">
+                <a href="/about" class="block text-white hover:text-gray-300 font-medium">About Us</a>
+                <a href="/our-team" class="block text-white hover:text-gray-300 font-medium">Our Team</a>
+                <a href="/contact" class="block text-white hover:text-gray-300 font-medium">Contact Us</a>
+                <div class="pt-4 border-t border-gray-600">
                     <button 
                         onclick="toggleDarkMode()"
-                        class="flex items-center space-x-3 text-gray-700 hover:text-gray-900 font-medium w-full"
+                        class="flex items-center space-x-3 text-white hover:text-gray-300 font-medium w-full"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
@@ -84,9 +91,9 @@
                         <span id="dark-mode-text">Dark Mode</span>
                     </button>
                 </div>
-                <button class="btn-primary w-full py-3 rounded-lg">
-                    View Demo
-                </button>
+                <a href="login"><button class="btn-primary w-full py-3 rounded-lg">
+                   Admin
+                </button></a>
             </div>
         </div>
     </nav>

@@ -98,7 +98,13 @@
 }
 
 .dark .mobile-menu {
-    background-color: #1a1a2e;
+    background: #000000 !important;
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    z-index: 60;
+}
+
+.dark .mobile-menu::before {
+    background: #000000 !important;
 }
 
 .dark .btn-secondary {
@@ -212,10 +218,31 @@
 .mobile-menu {
     transform: translateX(100%);
     transition: transform 0.3s ease;
+    background: #000000 !important;
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    z-index: 60;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 75%;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .mobile-menu.open {
     transform: translateX(0);
+}
+
+/* Ensure background renders in all scenarios */
+.mobile-menu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000000;
+    z-index: -1;
 }
 
 @media (max-width: 768px) {
