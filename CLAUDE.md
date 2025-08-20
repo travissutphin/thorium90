@@ -97,3 +97,41 @@
 - "How maintainable is this solution?"
 - "What are the security implications?"
 - "How does this fit the overall architecture?"
+
+## Boilerplate Change Management
+
+### When Making Changes to Thorium90
+This project serves as a boilerplate for client projects. Follow these rules:
+
+**For New Features:**
+```bash
+git checkout -b feature/feature-name
+# Develop and test
+git push -u origin feature/feature-name
+# Create PR, then merge to main
+```
+
+**For Releases:**
+```bash
+git checkout -b release/v1.X.X
+# Test thoroughly
+git tag -a v1.X.X -m "Release notes"
+git push origin v1.X.X
+```
+
+**Version Guidelines:**
+- **Patch (v1.0.1)**: Bug fixes, security patches
+- **Minor (v1.1.0)**: New features, backward compatible  
+- **Major (v2.0.0)**: Breaking changes, framework upgrades
+
+**Always Test:**
+- Run `php artisan test` before commits
+- Test setup wizard: `php artisan thorium90:setup --interactive`
+- Test clean install: `composer create-project thorium90/boilerplate test-install`
+
+**Client Compatibility:**
+- Maintain backward compatibility for minor versions
+- Provide migration guides for major versions
+- Update CHANGELOG.md with every release
+
+See `/docs/development/BOILERPLATE-WORKFLOW.md` for complete workflow.
