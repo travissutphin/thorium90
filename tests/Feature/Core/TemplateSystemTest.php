@@ -15,10 +15,7 @@ class TemplateSystemTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([
-            \Database\Seeders\RoleSeeder::class,
-            \Database\Seeders\PermissionSeeder::class,
-        ]);
+        $this->createRolesAndPermissions();
     }
 
     /** @test */

@@ -170,19 +170,24 @@ class Page extends Model
             }
         }
 
-        // Generate default schema data using the service
-        $schemaService = app(SchemaValidationService::class);
-        
-        $pageData = [
-            'title' => $this->title,
-            'content' => $this->content,
-            'excerpt' => $this->excerpt,
-            'meta_description' => $this->meta_description,
-            'published_at' => $this->published_at,
-            'updated_at' => $this->updated_at,
+        // Always generate schema data if we have a schema_type
+        if (empty($this->schema_type)) {
+            return null;
+        }
+
+        // Generate default schema data directly (bypass service for now)
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => $this->schema_type,
+            'name' => $this->title,
+            'description' => $this->meta_description ?? $this->excerpt,
         ];
 
-        $schema = $schemaService->generateDefaultSchemaData($this->schema_type ?: 'WebPage', $pageData);
+        // Add Article-specific properties
+        if (in_array($this->schema_type, ['Article', 'BlogPosting', 'NewsArticle'])) {
+            $schema['headline'] = $this->title;
+            $schema['articleBody'] = strip_tags($this->content ?? '');
+        }
         
         return $this->enhanceSchemaData($schema);
     }

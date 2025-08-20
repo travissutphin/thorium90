@@ -25,9 +25,22 @@
     <meta property="twitter:image" content="{{ asset('images/og-image.jpg') }}">
 
     <!-- JSON-LD Schema Markup -->
-    @if($page->schema_data)
+    @php
+        $schemaData = $page->schema_data;
+        // Fallback schema if none generated
+        if (!$schemaData && $page->schema_type) {
+            $schemaData = [
+                '@context' => 'https://schema.org',
+                '@type' => $page->schema_type,
+                'name' => $page->title,
+                'headline' => $page->title,
+                'description' => $page->meta_description ?? $page->excerpt,
+            ];
+        }
+    @endphp
+    @if($schemaData)
     <script type="application/ld+json">
-    {!! json_encode($page->schema_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    {!! json_encode($schemaData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
     @endif
 
@@ -129,6 +142,17 @@
                                         <span>{{ $page->reading_time }} min read</span>
                                     @endif
                                 </div>
+                                
+                                @if($page->topics && is_array($page->topics) && count($page->topics) > 0)
+                                    <div class="mt-6 flex items-center justify-center flex-wrap gap-2">
+                                        <span class="text-sm font-medium text-gray-500">Topics:</span>
+                                        @foreach($page->topics as $topic)
+                                            <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full">
+                                                {{ $topic }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </header>
                             
                             <section itemprop="articleBody" class="prose prose-lg max-w-none">
