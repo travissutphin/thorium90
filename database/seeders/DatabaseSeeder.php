@@ -55,9 +55,10 @@ class DatabaseSeeder extends Seeder
         ]);
         $subscriber->assignRole('Subscriber');
 
-        // Seed homepage after users are created
+        // Seed pages after users are created
         $this->call([
             HomePageSeeder::class,
+            Thorium90DefaultPagesSeeder::class,
         ]);
     }
 }

@@ -22,88 +22,78 @@ class Thorium90DefaultPagesSeeder extends Seeder
             return;
         }
 
+        // Only create the 9 required pages for a clean installation
         $pages = [
-            // Core Business Pages
+            // 1. Home Page (handled separately by HomePageSeeder)
+            
+            // 2. About Page
             [
-                'title' => 'About Thorium90',
+                'title' => 'About Us',
                 'slug' => 'about',
                 'content' => $this->getAboutContent(),
-                'excerpt' => 'Learn about Thorium90\'s mission to revolutionize content management with AI-driven solutions.',
+                'excerpt' => 'Learn about our company, mission, and values.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => 'About Thorium90 - AI-Driven Content Management',
-                'meta_description' => 'Discover how Thorium90 combines artificial intelligence with human expertise to deliver powerful content management solutions.',
-                'meta_keywords' => 'about thorium90, AI content management, company information',
-                'schema_type' => 'WebPage',
+                'meta_title' => 'About Us',
+                'meta_description' => 'Learn about our company, our mission, and the team behind our success.',
+                'meta_keywords' => 'about us, company, mission, values, team',
+                'schema_type' => 'AboutPage',
                 'layout' => 'default',
                 'topics' => ['Company', 'About'],
-                'keywords' => ['AI', 'content management', 'innovation'],
+                'keywords' => ['about', 'company', 'mission', 'values'],
                 'content_type' => 'page',
                 'published_at' => Carbon::now(),
             ],
-            [
-                'title' => 'Features & Capabilities',
-                'slug' => 'features',
-                'content' => $this->getFeaturesContent(),
-                'excerpt' => 'Explore Thorium90\'s comprehensive features designed to streamline your content management workflow.',
-                'status' => 'published',
-                'is_featured' => true,
-                'meta_title' => 'Features - Thorium90 Content Management Platform',
-                'meta_description' => 'Discover powerful features including AEO optimization, schema validation, and AI-driven content tools.',
-                'meta_keywords' => 'thorium90 features, CMS features, AEO optimization',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Features', 'Product'],
-                'keywords' => ['features', 'AEO', 'schema validation', 'content tools'],
-                'content_type' => 'page',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Pricing Plans',
-                'slug' => 'pricing',
-                'content' => $this->getPricingContent(),
-                'excerpt' => 'Choose the perfect Thorium90 plan for your content management needs with transparent pricing.',
-                'status' => 'published',
-                'is_featured' => true,
-                'meta_title' => 'Pricing Plans - Thorium90',
-                'meta_description' => 'Explore Thorium90 pricing plans designed for businesses of all sizes. Start with our free trial.',
-                'meta_keywords' => 'thorium90 pricing, CMS pricing, content management cost',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Pricing', 'Plans'],
-                'keywords' => ['pricing', 'plans', 'subscription', 'free trial'],
-                'content_type' => 'page',
-                'published_at' => Carbon::now(),
-            ],
+            
+            // 3. Contact Page
             [
                 'title' => 'Contact Us',
                 'slug' => 'contact',
                 'content' => $this->getContactContent(),
-                'excerpt' => 'Get in touch with the Thorium90 team for support, sales inquiries, or partnership opportunities.',
+                'excerpt' => 'Get in touch with our team. We\'d love to hear from you.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => 'Contact Thorium90 - Get in Touch',
-                'meta_description' => 'Contact Thorium90 for support, sales inquiries, or partnership opportunities. Multiple ways to reach us.',
-                'meta_keywords' => 'contact thorium90, support, sales inquiry',
-                'schema_type' => 'WebPage',
-                'layout' => 'sidebar',
+                'meta_title' => 'Contact Us',
+                'meta_description' => 'Get in touch with our team. Contact information, office locations, and contact form.',
+                'meta_keywords' => 'contact, contact us, get in touch, support',
+                'schema_type' => 'ContactPage',
+                'layout' => 'default',
                 'topics' => ['Contact', 'Support'],
-                'keywords' => ['contact', 'support', 'sales'],
+                'keywords' => ['contact', 'support', 'get in touch'],
                 'content_type' => 'page',
                 'published_at' => Carbon::now(),
             ],
-
-            // Legal & Compliance Pages
+            
+            // 4. Coming Soon Page
+            [
+                'title' => 'Coming Soon',
+                'slug' => 'coming-soon',
+                'content' => $this->getComingSoonContent(),
+                'excerpt' => 'Exciting new features and updates are coming soon.',
+                'status' => 'published',
+                'is_featured' => false,
+                'meta_title' => 'Coming Soon',
+                'meta_description' => 'Exciting new features and updates are coming soon. Stay tuned for the latest developments.',
+                'meta_keywords' => 'coming soon, new features, updates, announcements',
+                'schema_type' => 'WebPage',
+                'layout' => 'default',
+                'topics' => ['Coming Soon', 'Updates'],
+                'keywords' => ['coming soon', 'updates', 'announcements'],
+                'content_type' => 'page',
+                'published_at' => Carbon::now(),
+            ],
+            
+            // 5. Privacy Policy
             [
                 'title' => 'Privacy Policy',
                 'slug' => 'privacy-policy',
                 'content' => $this->getPrivacyPolicyContent(),
-                'excerpt' => 'Learn how Thorium90 protects your privacy and handles your personal information.',
+                'excerpt' => 'Our privacy policy explains how we collect, use, and protect your information.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => 'Privacy Policy - Thorium90',
-                'meta_description' => 'Read Thorium90\'s privacy policy to understand how we collect, use, and protect your personal information.',
-                'meta_keywords' => 'privacy policy, data protection, personal information',
+                'meta_title' => 'Privacy Policy',
+                'meta_description' => 'Learn how we collect, use, and protect your personal information.',
+                'meta_keywords' => 'privacy policy, data protection, privacy, GDPR',
                 'schema_type' => 'WebPage',
                 'layout' => 'default',
                 'topics' => ['Legal', 'Privacy'],
@@ -111,68 +101,36 @@ class Thorium90DefaultPagesSeeder extends Seeder
                 'content_type' => 'legal',
                 'published_at' => Carbon::now(),
             ],
+            
+            // 6. Terms and Conditions
             [
-                'title' => 'Terms of Service',
-                'slug' => 'terms-of-service',
-                'content' => $this->getTermsOfServiceContent(),
-                'excerpt' => 'Review the terms and conditions for using Thorium90\'s content management platform.',
+                'title' => 'Terms and Conditions',
+                'slug' => 'terms-and-conditions',
+                'content' => $this->getTermsAndConditionsContent(),
+                'excerpt' => 'Terms and conditions for using our website and services.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => 'Terms of Service - Thorium90',
-                'meta_description' => 'Read Thorium90\'s terms of service and user agreement for our content management platform.',
-                'meta_keywords' => 'terms of service, user agreement, terms and conditions',
+                'meta_title' => 'Terms and Conditions',
+                'meta_description' => 'Read our terms and conditions for using our website and services.',
+                'meta_keywords' => 'terms, conditions, terms of service, legal',
                 'schema_type' => 'WebPage',
                 'layout' => 'default',
                 'topics' => ['Legal', 'Terms'],
-                'keywords' => ['terms', 'agreement', 'conditions'],
+                'keywords' => ['terms', 'conditions', 'legal'],
                 'content_type' => 'legal',
                 'published_at' => Carbon::now(),
             ],
-            [
-                'title' => 'Cookie Policy',
-                'slug' => 'cookie-policy',
-                'content' => $this->getCookiePolicyContent(),
-                'excerpt' => 'Learn about how Thorium90 uses cookies to improve your browsing experience.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Cookie Policy - Thorium90',
-                'meta_description' => 'Understand how Thorium90 uses cookies and how you can manage your cookie preferences.',
-                'meta_keywords' => 'cookie policy, cookies, tracking, preferences',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Legal', 'Cookies'],
-                'keywords' => ['cookies', 'tracking', 'privacy'],
-                'content_type' => 'legal',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Refund Policy',
-                'slug' => 'refund-policy',
-                'content' => $this->getRefundPolicyContent(),
-                'excerpt' => 'Learn about Thorium90\'s refund policy and how to request a refund if needed.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Refund Policy - Thorium90',
-                'meta_description' => 'Review Thorium90\'s refund policy and learn how to request a refund for our services.',
-                'meta_keywords' => 'refund policy, money back guarantee, cancellation',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Legal', 'Refunds'],
-                'keywords' => ['refund', 'cancellation', 'money back'],
-                'content_type' => 'legal',
-                'published_at' => Carbon::now(),
-            ],
-
-            // Support & Help Pages
+            
+            // 7. FAQ
             [
                 'title' => 'Frequently Asked Questions',
                 'slug' => 'faq',
                 'content' => $this->getFAQContent(),
-                'excerpt' => 'Find answers to common questions about Thorium90\'s content management platform.',
+                'excerpt' => 'Find answers to commonly asked questions.',
                 'status' => 'published',
                 'is_featured' => true,
-                'meta_title' => 'FAQ - Thorium90 Frequently Asked Questions',
-                'meta_description' => 'Get answers to frequently asked questions about Thorium90\'s features, pricing, and support.',
+                'meta_title' => 'FAQ - Frequently Asked Questions',
+                'meta_description' => 'Find answers to frequently asked questions about our products and services.',
                 'meta_keywords' => 'FAQ, frequently asked questions, help, support',
                 'schema_type' => 'FAQPage',
                 'layout' => 'default',
@@ -182,155 +140,36 @@ class Thorium90DefaultPagesSeeder extends Seeder
                 'content_type' => 'support',
                 'published_at' => Carbon::now(),
             ],
+            
+            // 8. Our Team
             [
-                'title' => 'Help Center',
-                'slug' => 'help-center',
-                'content' => $this->getHelpCenterContent(),
-                'excerpt' => 'Access comprehensive guides and tutorials to get the most out of Thorium90.',
+                'title' => 'Our Team',
+                'slug' => 'our-team',
+                'content' => $this->getOurTeamContent(),
+                'excerpt' => 'Meet the talented individuals who make our company successful.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => 'Help Center - Thorium90 Support',
-                'meta_description' => 'Access guides, tutorials, and documentation to help you use Thorium90 effectively.',
-                'meta_keywords' => 'help center, guides, tutorials, documentation',
-                'schema_type' => 'WebPage',
+                'meta_title' => 'Our Team',
+                'meta_description' => 'Meet our team of dedicated professionals who are passionate about what they do.',
+                'meta_keywords' => 'team, staff, employees, about team, company team',
+                'schema_type' => 'AboutPage',
                 'layout' => 'default',
-                'topics' => ['Support', 'Help'],
-                'keywords' => ['help', 'guides', 'tutorials', 'documentation'],
-                'content_type' => 'support',
+                'topics' => ['Team', 'Company'],
+                'keywords' => ['team', 'staff', 'employees', 'people'],
+                'content_type' => 'page',
                 'published_at' => Carbon::now(),
             ],
-            [
-                'title' => 'Documentation',
-                'slug' => 'documentation',
-                'content' => $this->getDocumentationContent(),
-                'excerpt' => 'Technical documentation and developer resources for Thorium90.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Documentation - Thorium90 Developer Resources',
-                'meta_description' => 'Access technical documentation, API references, and developer resources for Thorium90.',
-                'meta_keywords' => 'documentation, API, developer resources, technical docs',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Documentation', 'Development'],
-                'keywords' => ['documentation', 'API', 'developers', 'technical'],
-                'content_type' => 'documentation',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Customer Support',
-                'slug' => 'support',
-                'content' => $this->getSupportContent(),
-                'excerpt' => 'Get help from our dedicated customer support team whenever you need assistance.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Customer Support - Thorium90',
-                'meta_description' => 'Get help from Thorium90\'s customer support team. Multiple support channels available.',
-                'meta_keywords' => 'customer support, help desk, technical support',
-                'schema_type' => 'WebPage',
-                'layout' => 'sidebar',
-                'topics' => ['Support', 'Customer Service'],
-                'keywords' => ['support', 'help', 'customer service'],
-                'content_type' => 'support',
-                'published_at' => Carbon::now(),
-            ],
-
-            // Content & Marketing Pages
-            [
-                'title' => 'Blog',
-                'slug' => 'blog',
-                'content' => $this->getBlogContent(),
-                'excerpt' => 'Stay updated with the latest news, tips, and insights from the Thorium90 team.',
-                'status' => 'published',
-                'is_featured' => true,
-                'meta_title' => 'Blog - Thorium90 News and Insights',
-                'meta_description' => 'Read the latest blog posts from Thorium90 covering content management, AI, and industry insights.',
-                'meta_keywords' => 'thorium90 blog, content management blog, AI insights',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Blog', 'Content'],
-                'keywords' => ['blog', 'news', 'insights', 'updates'],
-                'content_type' => 'blog',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Case Studies',
-                'slug' => 'case-studies',
-                'content' => $this->getCaseStudiesContent(),
-                'excerpt' => 'Discover how businesses have transformed their content management with Thorium90.',
-                'status' => 'published',
-                'is_featured' => true,
-                'meta_title' => 'Case Studies - Thorium90 Success Stories',
-                'meta_description' => 'Read customer success stories and case studies showcasing Thorium90\'s impact on businesses.',
-                'meta_keywords' => 'case studies, success stories, customer testimonials',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Case Studies', 'Success Stories'],
-                'keywords' => ['case studies', 'success', 'testimonials', 'customers'],
-                'content_type' => 'marketing',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Resources',
-                'slug' => 'resources',
-                'content' => $this->getResourcesContent(),
-                'excerpt' => 'Access valuable resources including guides, templates, and tools for content management.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Resources - Thorium90 Tools and Guides',
-                'meta_description' => 'Access free resources including guides, templates, and tools for effective content management.',
-                'meta_keywords' => 'resources, guides, templates, tools, downloads',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Resources', 'Tools'],
-                'keywords' => ['resources', 'guides', 'templates', 'tools'],
-                'content_type' => 'resource',
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'News & Announcements',
-                'slug' => 'news',
-                'content' => $this->getNewsContent(),
-                'excerpt' => 'Stay informed about Thorium90 product updates, new features, and company news.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'News - Thorium90 Updates and Announcements',
-                'meta_description' => 'Get the latest news and announcements from Thorium90 including product updates and features.',
-                'meta_keywords' => 'thorium90 news, announcements, updates, features',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['News', 'Announcements'],
-                'keywords' => ['news', 'announcements', 'updates', 'features'],
-                'content_type' => 'news',
-                'published_at' => Carbon::now(),
-            ],
-
-            // Technical Pages
-            [
-                'title' => 'Sitemap',
-                'slug' => 'sitemap',
-                'content' => $this->getSitemapContent(),
-                'excerpt' => 'Navigate through all pages and sections of the Thorium90 website.',
-                'status' => 'published',
-                'is_featured' => false,
-                'meta_title' => 'Sitemap - Thorium90 Website Navigation',
-                'meta_description' => 'Browse the complete sitemap of Thorium90 website with links to all pages and sections.',
-                'meta_keywords' => 'sitemap, website navigation, site structure',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Navigation', 'Sitemap'],
-                'keywords' => ['sitemap', 'navigation', 'website structure'],
-                'content_type' => 'utility',
-                'published_at' => Carbon::now(),
-            ],
+            
+            // 9. 404 Error Page
             [
                 'title' => 'Page Not Found',
-                'slug' => '404-error',
+                'slug' => '404',
                 'content' => $this->get404Content(),
                 'excerpt' => 'Sorry, the page you are looking for could not be found.',
                 'status' => 'published',
                 'is_featured' => false,
-                'meta_title' => '404 - Page Not Found | Thorium90',
-                'meta_description' => 'The page you are looking for could not be found. Return to Thorium90 homepage or browse our content.',
+                'meta_title' => '404 - Page Not Found',
+                'meta_description' => 'The page you are looking for could not be found. Return to our homepage or browse our content.',
                 'meta_keywords' => '404, page not found, error',
                 'schema_type' => 'WebPage',
                 'layout' => 'default',
@@ -338,23 +177,6 @@ class Thorium90DefaultPagesSeeder extends Seeder
                 'keywords' => ['404', 'error', 'not found'],
                 'content_type' => 'utility',
                 'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Coming Soon',
-                'slug' => 'coming-soon',
-                'content' => $this->getComingSoonContent(),
-                'excerpt' => 'Exciting new features and capabilities are coming soon to Thorium90.',
-                'status' => 'draft',
-                'is_featured' => false,
-                'meta_title' => 'Coming Soon - New Features | Thorium90',
-                'meta_description' => 'Exciting new features and capabilities are coming soon to Thorium90. Stay tuned for updates.',
-                'meta_keywords' => 'coming soon, new features, updates, roadmap',
-                'schema_type' => 'WebPage',
-                'layout' => 'default',
-                'topics' => ['Coming Soon', 'Features'],
-                'keywords' => ['coming soon', 'new features', 'roadmap'],
-                'content_type' => 'utility',
-                'published_at' => null,
             ],
         ];
 
@@ -378,31 +200,32 @@ class Thorium90DefaultPagesSeeder extends Seeder
     private function getAboutContent(): string
     {
         return '
-        <div class="container">
+        <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <h1>About Thorium90</h1>
-                
-                <div class="prose prose-lg">
-                    <p class="lead">At Thorium90, we believe that content management should be both powerful and intuitive. Our mission is to revolutionize how businesses create, manage, and optimize their digital content through the perfect blend of artificial intelligence and human expertise.</p>
+                <div class="prose prose-lg mx-auto">
+                    <p class="text-xl text-gray-600 mb-8">We are passionate about creating innovative solutions that make a difference in people\'s lives and businesses.</p>
                     
                     <h2>Our Story</h2>
-                    <p>Founded with the vision of making content management accessible to everyone, Thorium90 emerged from the recognition that traditional CMS platforms often fall short of modern needs. We saw an opportunity to create something better—a platform that not only manages content but actively helps optimize it for search engines and AI-powered discovery.</p>
+                    <p>Founded with a vision to provide exceptional service and innovative solutions, our company has grown from a small startup to a trusted partner for businesses worldwide. We believe in the power of technology to transform industries and improve lives.</p>
                     
-                    <h2>What Makes Us Different</h2>
+                    <h2>Our Mission</h2>
+                    <p>To deliver cutting-edge solutions that empower businesses to achieve their goals while maintaining the highest standards of quality, integrity, and customer service.</p>
+                    
+                    <h2>What We Do</h2>
                     <ul>
-                        <li><strong>AI-Driven Optimization:</strong> Our platform automatically optimizes your content for both traditional search engines and modern AI answer engines.</li>
-                        <li><strong>Human Verification:</strong> While AI powers our recommendations, human expertise ensures accuracy and quality.</li>
-                        <li><strong>AEO Innovation:</strong> We\'re pioneers in Answer Engine Optimization (AEO), preparing your content for the future of search.</li>
-                        <li><strong>Developer-Friendly:</strong> Built with modern technologies and clean APIs for seamless integration.</li>
+                        <li><strong>Innovation:</strong> We stay at the forefront of technology to provide the most advanced solutions.</li>
+                        <li><strong>Quality:</strong> Every product and service we deliver meets our rigorous quality standards.</li>
+                        <li><strong>Customer Focus:</strong> Our customers are at the center of everything we do.</li>
+                        <li><strong>Integrity:</strong> We conduct business with honesty, transparency, and ethical practices.</li>
                     </ul>
                     
                     <h2>Our Values</h2>
-                    <p>We\'re committed to transparency, innovation, and putting our users first. Every feature we build is designed to save you time while improving your content\'s performance across all digital channels.</p>
+                    <p>We are guided by core values that shape our culture, drive our decisions, and define our relationships with customers, partners, and each other.</p>
                     
-                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg mt-8">
-                        <h3>Ready to Transform Your Content Management?</h3>
-                        <p>Join thousands of businesses who trust Thorium90 to power their digital content strategy.</p>
-                        <a href="/contact" class="btn btn-primary">Get Started Today</a>
+                    <div class="bg-blue-50 p-6 rounded-lg mt-8">
+                        <h3 class="text-xl font-semibold mb-4">Ready to Learn More?</h3>
+                        <p class="mb-4">Discover how we can help your business succeed and grow.</p>
+                        <a href="/contact" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">Get in Touch</a>
                     </div>
                 </div>
             </div>
@@ -1290,117 +1113,54 @@ class Thorium90DefaultPagesSeeder extends Seeder
     private function getFAQContent(): string
     {
         return '
-        <div class="container">
+        <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <h1>Frequently Asked Questions</h1>
-                
-                <div class="prose prose-lg">
-                    <p class="lead">Find answers to common questions about Thorium90\'s content management platform, features, and services.</p>
+                <div class="prose prose-lg mx-auto">
+                    <p class="text-xl text-gray-600 mb-8">Find answers to commonly asked questions about our products and services.</p>
                     
-                    <div class="faq-categories">
-                        <h2>Getting Started</h2>
-                        
-                        <div class="faq-item">
-                            <h3>What is Thorium90?</h3>
-                            <p>Thorium90 is an AI-driven content management platform that helps businesses create, manage, and optimize their digital content. Our platform combines advanced AEO (Answer Engine Optimization) features with traditional CMS functionality to prepare your content for both current and future search technologies.</p>
+                    <div class="space-y-8">
+                        <div class="faq-section">
+                            <h2 class="text-2xl font-semibold mb-6">General Questions</h2>
+                            
+                            <div class="space-y-4">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold mb-3">What services do you offer?</h3>
+                                    <p class="text-gray-600">We provide comprehensive solutions tailored to meet your business needs, including consulting, implementation, and ongoing support services.</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold mb-3">How do I get started?</h3>
+                                    <p class="text-gray-600">Getting started is easy! Simply contact us through our contact form or give us a call. We\'ll schedule a consultation to discuss your needs and provide a customized solution.</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold mb-3">Do you provide support?</h3>
+                                    <p class="text-gray-600">Yes, we offer comprehensive support to all our clients. Our support team is available during business hours and we provide various support channels to assist you.</p>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="faq-item">
-                            <h3>How do I get started with Thorium90?</h3>
-                            <p>Getting started is easy! Sign up for our 14-day free trial—no credit card required. You\'ll have access to all features and can explore the platform with sample content. Our onboarding wizard will guide you through the setup process.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Do I need technical knowledge to use Thorium90?</h3>
-                            <p>Not at all! Thorium90 is designed for users of all technical levels. Our intuitive interface makes content creation and management simple, while our AI-powered tools handle the complex optimization automatically. We also provide comprehensive documentation and support.</p>
+                        <div class="faq-section">
+                            <h2 class="text-2xl font-semibold mb-6">Pricing & Billing</h2>
+                            
+                            <div class="space-y-4">
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold mb-3">How is pricing determined?</h3>
+                                    <p class="text-gray-600">Our pricing is based on the scope and complexity of your project. We provide transparent, competitive pricing with no hidden fees. Contact us for a detailed quote.</p>
+                                </div>
+                                
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold mb-3">What payment methods do you accept?</h3>
+                                    <p class="text-gray-600">We accept various payment methods including credit cards, bank transfers, and other secure payment options. Payment terms will be discussed during the proposal phase.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="faq-categories">
-                        <h2>Features & Functionality</h2>
-                        
-                        <div class="faq-item">
-                            <h3>What is AEO (Answer Engine Optimization)?</h3>
-                            <p>AEO is optimization for AI-powered answer engines like ChatGPT, Perplexity, and Google\'s Bard. Unlike traditional SEO that focuses on ranking web pages, AEO optimizes content to be selected and cited by AI systems when answering user questions.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>How does schema validation work?</h3>
-                            <p>Our platform automatically generates and validates Schema.org markup for your content. You can preview the JSON-LD output in real-time, test it with Google\'s Rich Results tools, and ensure compliance with structured data standards.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Can I import content from my existing CMS?</h3>
-                            <p>Yes! We support content migration from popular platforms including WordPress, Drupal, and Contentful. Our migration tools preserve your content structure, metadata, and media files. Contact our support team for assistance with large migrations.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Is there an API available?</h3>
-                            <p>Absolutely! Our RESTful API provides full access to all platform features. You can manage content, retrieve analytics, and integrate with external systems. API access is available on Professional and Enterprise plans.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-categories">
-                        <h2>Pricing & Plans</h2>
-                        
-                        <div class="faq-item">
-                            <h3>What\'s included in the free trial?</h3>
-                            <p>The 14-day free trial includes full access to all Thorium90 features: unlimited pages, AEO optimization tools, schema validation, analytics dashboard, and email support. No credit card is required to start.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Can I change my plan anytime?</h3>
-                            <p>Yes, you can upgrade or downgrade your plan at any time. Upgrades take effect immediately, while downgrades take effect at your next billing cycle. We\'ll help you transition smoothly between plans.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Are there any setup fees or hidden costs?</h3>
-                            <p>No setup fees, ever! Our pricing is transparent with no hidden costs. What you see on our pricing page is exactly what you pay. Additional storage or premium integrations may have separate fees, which are clearly disclosed.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-categories">
-                        <h2>Security & Privacy</h2>
-                        
-                        <div class="faq-item">
-                            <h3>How secure is my data?</h3>
-                            <p>Security is our top priority. We use enterprise-grade encryption for data in transit and at rest, perform regular security audits, and maintain SOC 2 compliance. Your data is backed up daily across multiple geographic locations.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Do you sell my data to third parties?</h3>
-                            <p>Never. We do not sell, rent, or share your personal data or content with third parties for marketing purposes. Your content belongs to you, and we only use it to provide and improve our services as outlined in our Privacy Policy.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Can I export my data if I cancel?</h3>
-                            <p>Yes! You can export all your content, media files, and metadata at any time through our data export tools. After cancellation, you have 30 days to download your data before it\'s permanently deleted.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="faq-categories">
-                        <h2>Support & Training</h2>
-                        
-                        <div class="faq-item">
-                            <h3>What support options are available?</h3>
-                            <p>We offer multiple support channels: email support for all users, priority support for Professional plans, and 24/7 phone support for Enterprise customers. Our help center includes extensive documentation, tutorials, and troubleshooting guides.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>Do you provide training for my team?</h3>
-                            <p>Yes! Enterprise customers receive complimentary onboarding sessions and team training. We also offer webinars, video tutorials, and best practice guides to help your team get the most out of Thorium90.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h3>How quickly do you respond to support requests?</h3>
-                            <p>We respond to support requests within 24 hours for standard plans, 4 hours for Professional plans, and 1 hour for Enterprise plans during business hours. Critical issues receive priority attention regardless of plan level.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg mt-8">
-                        <h3>Still Have Questions?</h3>
-                        <p>Can\'t find the answer you\'re looking for? Our support team is here to help.</p>
-                        <a href="/contact" class="btn btn-primary">Contact Support</a>
+                    <div class="bg-blue-50 p-6 rounded-lg mt-8 text-center">
+                        <h3 class="text-xl font-semibold mb-4">Still Have Questions?</h3>
+                        <p class="text-gray-600 mb-4">Can\'t find the answer you\'re looking for? We\'re here to help.</p>
+                        <a href="/contact" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">Contact Us</a>
                     </div>
                 </div>
             </div>
@@ -1412,28 +1172,28 @@ class Thorium90DefaultPagesSeeder extends Seeder
         return [
             [
                 'id' => '1',
-                'question' => 'What is Thorium90?',
-                'answer' => 'Thorium90 is an AI-driven content management platform that helps businesses create, manage, and optimize their digital content. Our platform combines advanced AEO (Answer Engine Optimization) features with traditional CMS functionality to prepare your content for both current and future search technologies.'
+                'question' => 'What services do you offer?',
+                'answer' => 'We provide comprehensive solutions tailored to meet your business needs, including consulting, implementation, and ongoing support services.'
             ],
             [
-                'id' => '2',
-                'question' => 'How do I get started with Thorium90?',
-                'answer' => 'Getting started is easy! Sign up for our 14-day free trial—no credit card required. You\'ll have access to all features and can explore the platform with sample content. Our onboarding wizard will guide you through the setup process.'
+                'id' => '2', 
+                'question' => 'How do I get started?',
+                'answer' => 'Getting started is easy! Simply contact us through our contact form or give us a call. We\'ll schedule a consultation to discuss your needs and provide a customized solution.'
             ],
             [
                 'id' => '3',
-                'question' => 'What is AEO (Answer Engine Optimization)?',
-                'answer' => 'AEO is optimization for AI-powered answer engines like ChatGPT, Perplexity, and Google\'s Bard. Unlike traditional SEO that focuses on ranking web pages, AEO optimizes content to be selected and cited by AI systems when answering user questions.'
+                'question' => 'Do you provide support?',
+                'answer' => 'Yes, we offer comprehensive support to all our clients. Our support team is available during business hours and we provide various support channels to assist you.'
             ],
             [
                 'id' => '4',
-                'question' => 'What\'s included in the free trial?',
-                'answer' => 'The 14-day free trial includes full access to all Thorium90 features: unlimited pages, AEO optimization tools, schema validation, analytics dashboard, and email support. No credit card is required to start.'
+                'question' => 'How is pricing determined?',
+                'answer' => 'Our pricing is based on the scope and complexity of your project. We provide transparent, competitive pricing with no hidden fees. Contact us for a detailed quote.'
             ],
             [
                 'id' => '5',
-                'question' => 'How secure is my data?',
-                'answer' => 'Security is our top priority. We use enterprise-grade encryption for data in transit and at rest, perform regular security audits, and maintain SOC 2 compliance. Your data is backed up daily across multiple geographic locations.'
+                'question' => 'What payment methods do you accept?',
+                'answer' => 'We accept various payment methods including credit cards, bank transfers, and other secure payment options. Payment terms will be discussed during the proposal phase.'
             ]
         ];
     }
@@ -1584,14 +1344,155 @@ class Thorium90DefaultPagesSeeder extends Seeder
         </div>';
     }
 
-    // Placeholder methods for remaining content (these would be fully implemented)
-    private function getDocumentationContent(): string { return '<div class="container"><h1>Documentation</h1><p>Technical documentation and developer resources...</p></div>'; }
-    private function getSupportContent(): string { return '<div class="container"><h1>Customer Support</h1><p>Get help from our support team...</p></div>'; }
-    private function getBlogContent(): string { return '<div class="container"><h1>Blog</h1><p>Latest news and insights...</p></div>'; }
-    private function getCaseStudiesContent(): string { return '<div class="container"><h1>Case Studies</h1><p>Customer success stories...</p></div>'; }
-    private function getResourcesContent(): string { return '<div class="container"><h1>Resources</h1><p>Valuable resources and tools...</p></div>'; }
-    private function getNewsContent(): string { return '<div class="container"><h1>News</h1><p>Latest news and announcements...</p></div>'; }
-    private function getSitemapContent(): string { return '<div class="container"><h1>Sitemap</h1><p>Site navigation and structure...</p></div>'; }
-    private function get404Content(): string { return '<div class="container"><h1>Page Not Found</h1><p>Sorry, the page you are looking for could not be found...</p></div>'; }
-    private function getComingSoonContent(): string { return '<div class="container"><h1>Coming Soon</h1><p>Exciting new features are coming soon...</p></div>'; }
+    private function getTermsAndConditionsContent(): string
+    {
+        return '
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="prose prose-lg mx-auto">
+                    <p><em>Last updated: ' . date('F j, Y') . '</em></p>
+                    
+                    <p class="text-xl text-gray-600 mb-8">These terms and conditions outline the rules and regulations for the use of our website and services.</p>
+                    
+                    <h2>1. Terms</h2>
+                    <p>By accessing this website, we assume you accept these terms and conditions in full. Do not continue to use this website if you do not accept all of the terms and conditions stated on this page.</p>
+                    
+                    <h2>2. Use License</h2>
+                    <p>Permission is granted to temporarily use our website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+                    <ul>
+                        <li>Modify or copy the materials</li>
+                        <li>Use the materials for any commercial purpose or for any public display</li>
+                        <li>Attempt to reverse engineer any software contained on our website</li>
+                        <li>Remove any copyright or other proprietary notations from the materials</li>
+                    </ul>
+                    
+                    <h2>3. Disclaimer</h2>
+                    <p>The materials on our website are provided on an \'as is\' basis. To the fullest extent permitted by law, we exclude all representations, warranties and conditions relating to our website and the use of this website.</p>
+                    
+                    <h2>4. Limitations</h2>
+                    <p>In no event shall our company or its suppliers be liable for any damages arising out of the use or inability to use the materials on our website, even if we have been notified orally or in writing of the possibility of such damage.</p>
+                    
+                    <h2>5. Contact Information</h2>
+                    <p>If you have any questions about these Terms and Conditions, please contact us through our contact page.</p>
+                </div>
+            </div>
+        </div>';
+    }
+
+    private function getOurTeamContent(): string
+    {
+        return '
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <p class="text-xl text-gray-600">Meet the passionate individuals who drive our success and make our vision a reality.</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                    <div class="text-center">
+                        <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <span class="text-3xl text-gray-500">👤</span>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">John Smith</h3>
+                        <p class="text-blue-600 mb-3">Chief Executive Officer</p>
+                        <p class="text-gray-600 text-sm">John brings over 15 years of industry experience and leads our strategic vision with passion and expertise.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <span class="text-3xl text-gray-500">👤</span>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Sarah Johnson</h3>
+                        <p class="text-blue-600 mb-3">Chief Technology Officer</p>
+                        <p class="text-gray-600 text-sm">Sarah oversees our technical direction and ensures we stay at the cutting edge of innovation.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <span class="text-3xl text-gray-500">👤</span>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Michael Davis</h3>
+                        <p class="text-blue-600 mb-3">Head of Operations</p>
+                        <p class="text-gray-600 text-sm">Michael ensures smooth operations and exceptional service delivery across all our projects.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 p-8 rounded-lg text-center">
+                    <h2 class="text-2xl font-semibold mb-4">Join Our Team</h2>
+                    <p class="text-gray-600 mb-6">We\'re always looking for talented individuals who share our passion for innovation and excellence.</p>
+                    <a href="/contact" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">View Open Positions</a>
+                </div>
+            </div>
+        </div>';
+    }
+
+    private function get404Content(): string
+    {
+        return '
+        <div class="container mx-auto px-4 py-16">
+            <div class="max-w-2xl mx-auto text-center">
+                <div class="mb-8">
+                    <h1 class="text-9xl font-bold text-gray-200 mb-4">404</h1>
+                    <h2 class="text-3xl font-semibold text-gray-800 mb-4">Page Not Found</h2>
+                    <p class="text-xl text-gray-600 mb-8">Sorry, the page you are looking for could not be found. It might have been moved, deleted, or you entered the wrong URL.</p>
+                </div>
+                
+                <div class="space-y-4 mb-8">
+                    <a href="/" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors mr-4">Go Home</a>
+                    <a href="/contact" class="inline-block border border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">Contact Us</a>
+                </div>
+                
+                <div class="text-left max-w-md mx-auto">
+                    <h3 class="text-lg font-semibold mb-4">Popular Pages:</h3>
+                    <ul class="space-y-2 text-blue-600">
+                        <li><a href="/about" class="hover:underline">About Us</a></li>
+                        <li><a href="/contact" class="hover:underline">Contact Us</a></li>
+                        <li><a href="/faq" class="hover:underline">FAQ</a></li>
+                        <li><a href="/our-team" class="hover:underline">Our Team</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>';
+    }
+
+    private function getComingSoonContent(): string
+    {
+        return '
+        <div class="container mx-auto px-4 py-16">
+            <div class="max-w-3xl mx-auto text-center">
+                <div class="mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-6">Something Exciting is Coming Soon!</h2>
+                    <p class="text-xl text-gray-600 mb-8">We\'re working hard to bring you something amazing. Stay tuned for updates and announcements.</p>
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-8 rounded-lg mb-12">
+                    <h3 class="text-2xl font-semibold mb-4">Get Notified</h3>
+                    <p class="text-gray-600 mb-6">Be the first to know when we launch. Enter your email to stay updated.</p>
+                    
+                    <form class="max-w-md mx-auto flex gap-2">
+                        <input type="email" placeholder="Enter your email" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">Notify Me</button>
+                    </form>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6 text-left">
+                    <div class="text-center">
+                        <div class="text-3xl mb-3">🚀</div>
+                        <h4 class="font-semibold mb-2">Innovation</h4>
+                        <p class="text-sm text-gray-600">Cutting-edge features designed to enhance your experience.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-3">⚡</div>
+                        <h4 class="font-semibold mb-2">Performance</h4>
+                        <p class="text-sm text-gray-600">Lightning-fast performance that exceeds expectations.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-3">🎯</div>
+                        <h4 class="font-semibold mb-2">Precision</h4>
+                        <p class="text-sm text-gray-600">Carefully crafted solutions tailored to your needs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>';
+    }
 }

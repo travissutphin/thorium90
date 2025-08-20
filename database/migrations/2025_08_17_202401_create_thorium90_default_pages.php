@@ -33,12 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Clear the default pages (keep custom ones that might be added later)
+        // Clear the 9 default pages created by this migration
         DB::statement('DELETE FROM pages WHERE slug IN (
-            "about", "features", "pricing", "contact", "privacy-policy", 
-            "terms-of-service", "cookie-policy", "refund-policy", "faq", 
-            "help-center", "documentation", "support", "blog", "case-studies", 
-            "resources", "news", "sitemap", "404-error", "coming-soon"
+            "about", "contact", "coming-soon", "privacy-policy", 
+            "terms-and-conditions", "faq", "our-team", "404"
         )');
     }
 };

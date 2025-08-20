@@ -64,7 +64,25 @@ class PublicPageController extends Controller
         // Load user relationship for SEO and structured data
         $page->load('user');
 
-        // Use the Thorium90 template based on React design
+        // Use the unified template system
         return view('public.layouts.thorium90-template', compact('page'));
     }
+
+    /**
+     * Show page by slug for clean URL routing
+     */
+    public function showBySlug($slug)
+    {
+        $page = Page::where('slug', $slug)
+                    ->where('status', 'published')
+                    ->first();
+
+        if (!$page) {
+            abort(404);
+        }
+
+        return $this->show($page);
+    }
+
+
 }

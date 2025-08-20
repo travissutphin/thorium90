@@ -107,8 +107,12 @@
 				@include('public.pages.about-page')
                 @break			
 
-			@case('team')
+			@case('our-team')
 				@include('public.pages.team-page')
+				@break
+
+			@case('contact')
+				@include('public.pages.contact-page')
 				@break
 				
             @default
