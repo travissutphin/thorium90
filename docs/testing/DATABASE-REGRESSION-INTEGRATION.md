@@ -48,7 +48,7 @@ Group 7: Database Security & Integrity (New)
 #### **Implementation:**
 ```bash
 # Single command for complete system validation
-./regression-test-enhanced.bat
+./scripts/regression-test-enhanced.bat
 
 # Runs all 7 groups including database tests
 # Total time: 5-8 minutes for complete validation
@@ -68,7 +68,7 @@ Group 7: Database Security & Integrity (New)
 php artisan test tests/Database/
 
 # Application regression testing  
-./regression-test-enhanced.bat
+./scripts/regression-test-enhanced.bat
 
 # Combined validation
 ./database-regression-full.bat

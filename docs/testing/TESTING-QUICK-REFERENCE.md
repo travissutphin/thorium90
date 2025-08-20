@@ -5,10 +5,10 @@
 ### Enhanced System (Recommended)
 ```batch
 # Windows - Essential tests (3-5 min)
-regression-test-enhanced.bat --quick
+scripts/regression-test-enhanced.bat --quick
 
 # Windows - Full comprehensive test (8-12 min)
-regression-test-enhanced.bat
+scripts/regression-test-enhanced.bat
 
 # Linux/Mac - Essential tests (3-5 min)
 ./regression-test-enhanced.sh --quick
@@ -20,7 +20,7 @@ regression-test-enhanced.bat
 ### Legacy System
 ```batch
 # Windows - Full regression test
-regression-test.bat
+scripts/regression-test.bat
 
 # Linux/Mac - Full regression test
 ./regression-test.sh

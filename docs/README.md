@@ -1,55 +1,82 @@
-# Documentation Index
+# Thorium90 Documentation
 
-This directory contains all project documentation organized by category.
+Welcome to the complete documentation for Thorium90 Multi-Role User Authentication system.
 
-## Directory Structure
+## Getting Started
 
-### `/authentication/`
-Authentication system documentation including API guides, deployment instructions, and troubleshooting.
+- [Installation Guide](installation.md) - System setup and requirements
+- [Developer Onboarding](developer-onboarding.md) - New developer setup guide
+- [Contributing Guide](contributing.md) - How to contribute to the project
 
-### `/development/`
-Development-related documentation and project phase summaries.
-- **`/phases/`** - Development phase summaries (PHASE1-PHASE6)
-- `frontend-integration.md` - Frontend integration guide
-- `permissions-guide.md` - Permissions system guide
+## Core Features
 
-### `/qa/`
-Quality Assurance documentation and summaries.
-- **`/summaries/`** - QA summary reports and priority fixes documentation
+### Authentication System
+- [Authentication Overview](authentication/README.md) - Complete authentication system guide
+- [API Documentation](authentication/api.md) - API endpoints and usage
+- [Fortify Integration](authentication/fortify-integration.md) - Laravel Fortify setup
+- [Social Login](authentication/social-login.md) - OAuth provider integration
+- [Troubleshooting](authentication/troubleshooting.md) - Authentication troubleshooting
+- [Email Configuration](authentication/email-configuration.md) - Email setup for auth
 
-### `/testing/`
-Testing documentation and guides.
-- `TESTING.md` - Main testing documentation
-- `TESTING-QUICK-REFERENCE.md` - Quick reference for testing
-- `authentication-tests.md` - Authentication testing guide
-- `fortify-testing.md` - Fortify testing documentation
+### Content Management
+- [Pages CMS Guide](features/cms/pages-guide.md) - Content management system
+- [Template System](features/templates.md) - Page template management
+- [Schema Validation](features/schema-validation.md) - Data validation system
+- [Hybrid Feature System](features/hybrid-system.md) - Feature flag system
+- [Soft Delete Guide](features/soft-delete.md) - Soft deletion implementation
 
-### Root Level
-- `admin-settings.md` - Admin settings documentation
+## Development
 
-## Quick Navigation
+### Development Workflow
+- [Development Guide](development/frontend-integration.md) - Frontend integration patterns
+- [Permissions Guide](development/permissions-guide.md) - Role and permission management
+- [AI Development Guide](ai-development-guide.md) - AI-assisted development practices
 
-### For Developers
-- **[Development Workflow](../wiki/Development-Workflow)** - **REQUIRED: Consistency process for all tasks**
-- **[AI Development Guide](ai-development-guide.md)** - **REQUIRED: AI developer consistency process**
-- **[Developer Onboarding](developer-onboarding.md)** - **REQUIRED: New developer setup and consistency process**
-- [Development Phases](development/phases/) - Project development history
-- [Frontend Integration](development/frontend-integration.md)
-- [Permissions Guide](development/permissions-guide.md)
+### Testing
+- [Testing Strategy](testing/TESTING.md) - Complete testing approach
+- [Authentication Tests](testing/authentication-tests.md) - Auth-specific testing
+- [Database Testing](testing/DATABASE-TESTING-STRATEGY.md) - Database test strategies
+- [Regression Testing](testing/ENHANCED-REGRESSION-TESTING.md) - Automated regression tests
 
-### For QA/Testing
-- [QA Summaries](qa/summaries/) - Quality assurance reports
-- [Testing Guide](testing/TESTING.md)
-- [Testing Quick Reference](testing/TESTING-QUICK-REFERENCE.md)
+### Architecture
+- [Template System](template-system.md) - Template architecture overview
+- [Database Schema](database-schema.md) - Complete database structure
+- [Workflow Monitoring](workflow-monitoring.md) - Development workflow tracking
 
-### For System Administration
-- [Authentication System](authentication/)
-- [Admin Settings](admin-settings.md)
+## User Guides
 
-## Essential Documentation
+- [User Guide](guides/user/README.md) - End-user documentation
+- [FAQ](faq.md) - Frequently asked questions
+- [Support](support.md) - Getting help and support
 
-### **Required Reading (Start Here)**
-1. **[Development Workflow](../wiki/Development-Workflow)** - **MANDATORY: Consistency process**
-2. **[System Overview](../wiki/Home)** - Understanding the system goals
-3. **[Developer Guide](../wiki/Developer-Guide)** - Technical implementation details
-4. **[Testing Strategy](../wiki/Testing-Strategy)** - Testing procedures and standards
+## API Reference
+
+- [API Reference](api/README.md) - Complete API documentation
+
+## Project Phases
+
+Development has been completed in phases:
+
+- [Phase 1 Summary](development/phases/PHASE1_SUMMARY.md) - Initial setup
+- [Phase 2 Summary](development/phases/PHASE2_SUMMARY.md) - Authentication
+- [Phase 3 Summary](development/phases/PHASE3_SUMMARY.md) - Authorization  
+- [Phase 4 Summary](development/phases/PHASE4_SUMMARY.md) - Frontend
+- [Phase 5 Summary](development/phases/PHASE5_SUMMARY.md) - Testing
+- [Phase 6 Summary](development/phases/PHASE6_SUMMARY.md) - Deployment
+
+## QA Documentation
+
+- [Complete QA Summary](qa/summaries/QA_COMPLETE_SUMMARY.md) - Full QA overview
+- [Final QA Summary](qa/summaries/QA_FINAL_COMPLETE_SUMMARY.md) - Final testing results
+- [High Priority Fixes](qa/summaries/QA_HIGH_PRIORITY_FIXES_SUMMARY.md) - Critical issues resolved
+- [Medium/Low Priority Fixes](qa/summaries/QA_MEDIUM_LOW_PRIORITY_FIXES_SUMMARY.md) - Additional fixes
+
+## Integration Guides
+
+- [AEO Integration Plan](aeo-integration-plan.md) - Advanced Email Operations
+- [Inertia API Integration](inertia-api-integration-solution.md) - Frontend/Backend integration
+- [Comprehensive Regression Testing](comprehensive-regression-testing-strategy.md) - Testing strategies
+
+---
+
+This documentation is actively maintained. For questions or improvements, see our [Contributing Guide](contributing.md).

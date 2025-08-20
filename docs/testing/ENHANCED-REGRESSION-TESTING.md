@@ -9,13 +9,13 @@ The Enhanced Regression Testing System provides comprehensive, grouped testing f
 ### Windows
 ```batch
 # Full regression test
-regression-test-enhanced.bat
+scripts/regression-test-enhanced.bat
 
 # Quick mode (essential tests only)
-regression-test-enhanced.bat --quick
+scripts/regression-test-enhanced.bat --quick
 
 # Help
-regression-test-enhanced.bat --help
+scripts/regression-test-enhanced.bat --help
 ```
 
 ### Linux/Mac

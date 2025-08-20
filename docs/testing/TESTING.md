@@ -20,7 +20,7 @@ This document provides comprehensive guidance for testing the Multi-Role User Au
 ### For Windows Users
 ```bash
 # Run the automated regression test
-regression-test.bat
+scripts/regression-test.bat
 
 # Or run specific test suites
 php artisan test tests/Feature/Auth/
@@ -154,10 +154,10 @@ php artisan tinker
 
 ## Automated Testing Scripts
 
-### Windows Script (`regression-test.bat`)
+### Windows Script (`scripts/regression-test.bat`)
 ```batch
 # Full regression test
-regression-test.bat
+scripts/regression-test.bat
 
 # Features:
 - Environment verification

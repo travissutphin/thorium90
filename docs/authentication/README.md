@@ -151,6 +151,49 @@ interface AuthUser {
 - Minimal re-renders with React optimization
 - Efficient permission checking functions
 
+## Quick Reference
+
+### Common Permission Checks
+
+```php
+// Backend (PHP)
+$user->hasRole('Admin');
+$user->can('create posts');
+$user->hasAnyRole(['Admin', 'Editor']);
+$user->hasPermissionTo('manage users');
+
+// Frontend (React/TypeScript)
+auth.user.hasRole('Admin')
+auth.user.can('create posts')
+auth.user.is_admin
+auth.user.role_names.includes('Editor')
+```
+
+### Middleware Usage
+
+```php
+// Single role
+Route::middleware(['auth', 'role:Admin'])->group(...);
+
+// Multiple roles (OR)
+Route::middleware(['auth', 'role:Admin,Editor'])->group(...);
+
+// Single permission
+Route::middleware(['auth', 'permission:create posts'])->group(...);
+```
+
+### Environment Variables
+```env
+# Session
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+# Social Login (example for Google)
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URL=http://localhost:8000/auth/google/callback
+```
+
 ## Related Documentation
 - [API Documentation](api.md)
 - [Troubleshooting Guide](troubleshooting.md)
