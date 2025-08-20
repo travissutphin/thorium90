@@ -5,23 +5,16 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-})->name('home');
+Route::get('/', [App\Http\Controllers\PublicPageController::class, 'index'])->name('home.show');
 
 Route::get('/dashboard', function () {
     return Inertia::render('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// Public page routes
-Route::get('/pages/{page:slug}', [App\Http\Controllers\PublicPageController::class, 'show'])->name('pages.show');
+})->middleware(['auth', 'verified', 'ensure.2fa'])->name('dashboard');
 
 // SEO Routes
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 
 require __DIR__.'/auth.php';
+
+// Public page routes (placed at end to act as catch-all)
+Route::get('/{page:slug}', [App\Http\Controllers\PublicPageController::class, 'show'])->name('pages.show');

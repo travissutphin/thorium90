@@ -74,7 +74,7 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin,Editor,Author
         Route::get('/pages/{page}', [App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
     });
 
-    Route::middleware('permission:edit pages')->group(function () {
+    Route::middleware('permission:edit pages,edit own pages')->group(function () {
         Route::get('/pages/{page}/edit', [App\Http\Controllers\PageController::class, 'edit'])->name('pages.edit');
         Route::put('/pages/{page}', [App\Http\Controllers\PageController::class, 'update'])->name('pages.update');
         Route::post('/pages/bulk-action', [App\Http\Controllers\PageController::class, 'bulkAction'])->name('pages.bulk-action');

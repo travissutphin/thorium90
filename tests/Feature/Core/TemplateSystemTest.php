@@ -38,7 +38,7 @@ class TemplateSystemTest extends TestCase
             'theme' => 'default'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee($page->title);
@@ -61,7 +61,7 @@ class TemplateSystemTest extends TestCase
             'layout' => 'sidebar'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee($page->title);
@@ -84,7 +84,7 @@ class TemplateSystemTest extends TestCase
             'layout' => 'full-width'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee($page->title);
@@ -106,7 +106,7 @@ class TemplateSystemTest extends TestCase
             'template' => 'non-existent-template'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee($page->title);
@@ -130,7 +130,7 @@ class TemplateSystemTest extends TestCase
             'meta_keywords' => 'seo, testing, meta'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee('Custom SEO Title', false);
@@ -153,7 +153,7 @@ class TemplateSystemTest extends TestCase
             'schema_type' => 'Article'
         ]);
 
-        $response = $this->get("/pages/{$page->slug}");
+        $response = $this->get("/{$page->slug}");
 
         $response->assertStatus(200);
         $response->assertSee('application/ld+json', false);
