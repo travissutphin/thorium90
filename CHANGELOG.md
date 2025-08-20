@@ -5,6 +5,25 @@ All notable changes to Thorium90 Boilerplate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-08-20
+
+### Fixed
+- 🔧 **Login Page Display Issue** - Resolved blank page error by correcting route references
+  - Fixed auth layout components referencing non-existent 'home' route  
+  - Updated route calls from `route('home')` to `route('home.show')` across all auth layouts
+  - Added comprehensive login diagnostics test suite with 11 tests
+  - Login system confirmed fully functional with all security measures active
+- 📊 **Route Navigation** - Auth layouts now properly link to homepage
+- 🧪 **Test Coverage** - Added LoginDiagnosticsTest.php for authentication system validation
+
+### Security
+- ✅ All existing security measures confirmed working:
+  - Rate limiting (5 attempts before lockout)
+  - CSRF protection on all forms
+  - Session regeneration on login
+  - Password hashing with bcrypt
+  - Remember token implementation
+
 ## [1.0.0] - 2024-01-20
 
 ### Added
