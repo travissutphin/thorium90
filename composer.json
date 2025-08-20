@@ -1,11 +1,17 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/react-starter-kit",
+    "name": "thorium90/boilerplate",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Production-ready Laravel boilerplate with AEO integration, multi-role authentication, CMS, and rapid deployment tools.",
     "keywords": [
         "laravel",
-        "framework"
+        "boilerplate",
+        "cms",
+        "auth",
+        "aeo",
+        "seo",
+        "thorium90",
+        "starter-kit"
     ],
     "license": "MIT",
     "require": {
@@ -58,7 +64,7 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan thorium90:setup --interactive"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -72,6 +78,19 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "setup": [
+            "@php artisan thorium90:setup --interactive"
+        ],
+        "fresh-install": [
+            "@php artisan migrate:fresh --seed",
+            "@npm run build"
+        ],
+        "rebrand": [
+            "@php artisan thorium90:rebrand"
+        ],
+        "generate-docs": [
+            "@php artisan thorium90:docs"
         ]
     },
     "extra": {

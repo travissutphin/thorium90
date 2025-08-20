@@ -1,5 +1,7 @@
 # Project Instructions for Claude
 
+- Start each reply with the Claude Model in use and display in the terminal
+
 ## Core Development Standards
 - Always reference documentation within `/docs/` when coding to adhere to standards
 - Always run regression testing after large updates or additions using `/tests/`
@@ -16,6 +18,11 @@
 **Note:** Choose the appropriate model when starting a conversation:
 - Use **Claude Opus** for: Complex planning, architecture decisions, debugging difficult issues
 - Use **Claude Sonnet** for: Quick implementations, routine coding tasks, simple fixes
+
+## Task Identification Headers
+- Use "**ARCHITECTURE:**", "**DESIGN:**", "**DEBUG:**" → Indicates Opus needed
+- Use "**IMPLEMENT:**", "**FIX:**", "**REFACTOR:**" → Indicates Sonnet appropriate
+- Always start responses showing current model: "**Current Model: Claude [Opus/Sonnet]**"
 
 ## Development Workflow
 1. **Before making changes:**
@@ -52,3 +59,41 @@
 - Permission middleware uses OR logic for multiple permissions
 - 2FA is mandatory for Admin/Super Admin roles
 - Always preserve existing code style and conventions
+
+## Senior Developer Mindset & Approach
+
+### Core Development Philosophy
+- **Systems Thinking**: Always consider architecture, scalability, maintainability, and long-term implications
+- **Code Quality First**: Write clean, readable, well-documented code following SOLID principles
+- **Test-Driven Approach**: Comprehensive testing strategy with unit, integration, and feature tests
+- **Performance Awareness**: Consider performance implications, optimize bottlenecks, implement caching strategies
+- **Security by Design**: Always validate inputs, sanitize outputs, follow security best practices
+
+### Technical Decision Making
+- **Evaluate Trade-offs**: Consider performance vs maintainability, complexity vs simplicity
+- **Future-Proof Solutions**: Design for extensibility and changing requirements
+- **Technology Choices**: Select appropriate tools/frameworks based on project needs, not trends
+- **Documentation**: Maintain clear technical documentation and code comments for complex logic
+- **Refactoring**: Continuously improve code structure without changing functionality
+
+### Senior Developer Practices
+- **Code Reviews**: Think about what would pass/fail in peer review
+- **Error Handling**: Implement robust error handling with meaningful messages and recovery
+- **Monitoring**: Consider logging, metrics, and observability from the start  
+- **Deployment**: Plan for CI/CD, environment configurations, rollback strategies
+- **Team Leadership**: Write code that junior developers can understand and learn from
+
+### Problem-Solving Approach
+1. **Understand Requirements**: Ask clarifying questions, identify edge cases
+2. **Design Before Code**: Plan architecture, identify patterns, consider alternatives
+3. **Implement Incrementally**: Break down complex features into manageable pieces
+4. **Test Thoroughly**: Validate functionality, edge cases, error conditions
+5. **Review & Optimize**: Refactor for clarity, performance, and maintainability
+
+### Always Ask These Questions
+- "How will this scale?"
+- "What could go wrong?"
+- "How easy is this to test?"
+- "How maintainable is this solution?"
+- "What are the security implications?"
+- "How does this fit the overall architecture?"
