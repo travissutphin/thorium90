@@ -302,4 +302,59 @@ class PageSEOTest extends TestCase
                    $page->published_at <= now();
         }));
     }
+
+    /** @test */
+    public function public_page_renders_schema_markup_when_schema_data_exists()
+    {
+        // Create a published page with schema data
+        $page = Page::factory()->published()->create([
+            'title' => 'Test Article Page',
+            'slug' => 'test-article-page',
+            'content' => 'This is test article content for schema markup testing.',
+            'schema_type' => 'Article',
+            'schema_data' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Article',
+                'headline' => 'Custom Article Headline',
+                'articleBody' => 'Custom article body content',
+                'name' => 'Custom Name for Article'
+            ]
+        ]);
+
+        // Make request to public page
+        $response = $this->get("/{$page->slug}");
+
+        $response->assertOk();
+        
+        // Check that JSON-LD schema markup is present
+        $response->assertSee('<script type="application/ld+json">', false);
+        $response->assertSee('"@context": "https://schema.org"', false);
+        $response->assertSee('"@type": "Article"', false);
+        $response->assertSee('"headline": "Custom Article Headline"', false);
+        $response->assertSee('"name": "Custom Name for Article"', false);
+    }
+
+    /** @test */
+    public function public_page_renders_default_schema_markup_when_no_custom_schema_data()
+    {
+        // Create a published page without custom schema data
+        $page = Page::factory()->published()->create([
+            'title' => 'Test Page Default Schema',
+            'slug' => 'test-page-default-schema',
+            'content' => 'This page uses default schema data.',
+            'schema_type' => 'WebPage',
+            'schema_data' => null
+        ]);
+
+        // Make request to public page
+        $response = $this->get("/{$page->slug}");
+
+        $response->assertOk();
+        
+        // Check that JSON-LD schema markup IS present (auto-generated from page data)
+        $response->assertSee('<script type="application/ld+json">', false);
+        $response->assertSee('"@context": "https://schema.org"', false);
+        $response->assertSee('"@type": "WebPage"', false);
+        $response->assertSee('"name": "Test Page Default Schema"', false);
+    }
 }

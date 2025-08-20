@@ -1,2 +1,53 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /register
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Disallow build assets (allow CSS/JS but not source maps)
+Disallow: /build/*.map
+
+# Allow important files
+Allow: /build/*.css
+Allow: /build/*.js
+Allow: /images/
+Allow: /favicon.ico
+Allow: /sitemap.xml
+
+# Special instructions for different crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# For AI crawlers (AEO/GEO optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Crawl delay (be respectful)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: http://127.0.0.1:8000/sitemap.xml

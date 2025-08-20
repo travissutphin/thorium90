@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Shield, ShieldCheck, Key, Download, RefreshCw, QrCode } from 'lucide-react';
+import ApiClient from '@/lib/api-client';
 
 interface TwoFactorStatus {
     two_factor_enabled: boolean;
@@ -68,8 +69,7 @@ export default function TwoFactorAuthentication() {
 
     const loadStatus = async () => {
         try {
-            const response = await fetch('/user/two-factor-authentication');
-            const data = await response.json();
+            const data = await ApiClient.get<TwoFactorStatus>('/user/two-factor-authentication');
             setStatus(data);
         } catch (err) {
             setError('Failed to load two-factor authentication status.');
@@ -82,23 +82,10 @@ export default function TwoFactorAuthentication() {
         setSuccess(null);
 
         try {
-            const response = await fetch('/user/two-factor-authentication', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setSuccess(data.message);
-                await loadStatus();
-                await loadQRCode();
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to enable two-factor authentication.');
-            }
+            const data = await ApiClient.post('/user/two-factor-authentication');
+            setSuccess(data.message || 'Two-factor authentication enabled successfully.');
+            await loadStatus();
+            await loadQRCode();
         } catch (err) {
             setError('An error occurred while enabling two-factor authentication.');
         } finally {
@@ -116,25 +103,12 @@ export default function TwoFactorAuthentication() {
         setSuccess(null);
 
         try {
-            const response = await fetch('/user/two-factor-authentication', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setSuccess(data.message);
-                setQrCode(null);
-                setRecoveryCodes([]);
-                setShowRecoveryCodes(false);
-                await loadStatus();
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to disable two-factor authentication.');
-            }
+            const data = await ApiClient.delete('/user/two-factor-authentication');
+            setSuccess(data.message || 'Two-factor authentication disabled successfully.');
+            setQrCode(null);
+            setRecoveryCodes([]);
+            setShowRecoveryCodes(false);
+            await loadStatus();
         } catch (err) {
             setError('An error occurred while disabling two-factor authentication.');
         } finally {
@@ -144,11 +118,8 @@ export default function TwoFactorAuthentication() {
 
     const loadQRCode = async () => {
         try {
-            const response = await fetch('/user/two-factor-authentication/qr-code');
-            if (response.ok) {
-                const data = await response.json();
-                setQrCode(data);
-            }
+            const data = await ApiClient.get<QRCodeData>('/user/two-factor-authentication/qr-code');
+            setQrCode(data);
         } catch (err) {
             setError('Failed to load QR code.');
         }
@@ -156,12 +127,9 @@ export default function TwoFactorAuthentication() {
 
     const loadRecoveryCodes = async () => {
         try {
-            const response = await fetch('/user/two-factor-authentication/recovery-codes');
-            if (response.ok) {
-                const data = await response.json();
-                setRecoveryCodes(data.recovery_codes);
-                setShowRecoveryCodes(true);
-            }
+            const data = await ApiClient.get<RecoveryCodesData>('/user/two-factor-authentication/recovery-codes');
+            setRecoveryCodes(data.recovery_codes);
+            setShowRecoveryCodes(true);
         } catch (err) {
             setError('Failed to load recovery codes.');
         }
@@ -174,20 +142,10 @@ export default function TwoFactorAuthentication() {
 
         setLoading(true);
         try {
-            const response = await fetch('/user/two-factor-authentication/recovery-codes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setRecoveryCodes(data.recovery_codes);
-                setShowRecoveryCodes(true);
-                setSuccess(data.message);
-            }
+            const data = await ApiClient.post<RecoveryCodesData>('/user/two-factor-authentication/recovery-codes');
+            setRecoveryCodes(data.recovery_codes);
+            setShowRecoveryCodes(true);
+            setSuccess(data.message || 'New recovery codes generated successfully.');
         } catch (err) {
             setError('Failed to generate new recovery codes.');
         } finally {
@@ -205,25 +163,11 @@ export default function TwoFactorAuthentication() {
         setError(null);
 
         try {
-            const response = await fetch('/user/two-factor-authentication/confirm', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ code: confirmationCode }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setSuccess(data.message);
-                setConfirmationCode('');
-                await loadStatus();
-                await loadRecoveryCodes();
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Invalid verification code.');
-            }
+            const data = await ApiClient.post('/user/two-factor-authentication/confirm', { code: confirmationCode });
+            setSuccess(data.message || 'Two-factor authentication confirmed successfully.');
+            setConfirmationCode('');
+            await loadStatus();
+            await loadRecoveryCodes();
         } catch (err) {
             setError('An error occurred while confirming two-factor authentication.');
         } finally {

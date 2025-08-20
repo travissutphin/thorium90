@@ -54,5 +54,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'subscriber@example.com',
         ]);
         $subscriber->assignRole('Subscriber');
+
+        // Seed homepage after users are created
+        $this->call([
+            HomePageSeeder::class,
+        ]);
     }
 }

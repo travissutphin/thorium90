@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserHasAnyPermission;
 use App\Http\Middleware\EnsureUserHasAnyRole;
 use App\Http\Middleware\EnsureUserHasPermission;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\EnsureTwoFactorAuthentication;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -86,6 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsureUserHasPermission::class, // Check for specific permission(s)
             'role.any' => EnsureUserHasAnyRole::class,    // Check for any of multiple roles
             'permission.any' => EnsureUserHasAnyPermission::class, // Check for any of multiple permissions
+            'ensure.2fa' => EnsureTwoFactorAuthentication::class, // Two-factor authentication enforcement
             'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class, // Password confirmation for sensitive operations
         ]);
     })

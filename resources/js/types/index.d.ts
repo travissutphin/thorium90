@@ -63,6 +63,80 @@ export interface NavItem {
     roles?: string[];
 }
 
+// Schema.org Type Definitions
+export interface BaseSchema {
+    '@context': 'https://schema.org';
+    '@type': string;
+    name?: string;
+    description?: string;
+    url?: string;
+    datePublished?: string;
+    dateModified?: string;
+    author?: {
+        '@type': 'Person';
+        name: string;
+    };
+    publisher?: {
+        '@type': 'Organization';
+        name: string;
+        url: string;
+    };
+}
+
+export interface WebPageSchema extends BaseSchema {
+    '@type': 'WebPage';
+    mainEntityOfPage?: string;
+    breadcrumb?: string;
+    primaryImageOfPage?: string;
+}
+
+export interface ArticleSchema extends BaseSchema {
+    '@type': 'Article';
+    headline: string;
+    articleBody: string;
+    wordCount?: number;
+    articleSection?: string;
+    keywords?: string;
+    inLanguage?: string;
+}
+
+export interface BlogPostingSchema extends ArticleSchema {
+    '@type': 'BlogPosting';
+    blogCategory?: string;
+    tags?: string[];
+}
+
+export interface NewsArticleSchema extends ArticleSchema {
+    '@type': 'NewsArticle';
+    dateline?: string;
+    printColumn?: string;
+    printEdition?: string;
+    printPage?: string;
+    printSection?: string;
+}
+
+export interface FAQPageSchema extends BaseSchema {
+    '@type': 'FAQPage';
+    mainEntity: Array<{
+        '@type': 'Question';
+        name: string;
+        acceptedAnswer: {
+            '@type': 'Answer';
+            text: string;
+        };
+    }>;
+}
+
+export type SchemaData = WebPageSchema | ArticleSchema | BlogPostingSchema | NewsArticleSchema | FAQPageSchema;
+
+export type SchemaType = 'WebPage' | 'Article' | 'BlogPosting' | 'NewsArticle' | 'FAQPage';
+
+export interface SchemaTypeConfig {
+    value: SchemaType;
+    label: string;
+    description?: string;
+}
+
 export interface Page {
     id: number;
     title: string;
@@ -74,13 +148,26 @@ export interface Page {
     meta_title?: string;
     meta_description?: string;
     meta_keywords?: string;
-    schema_type: string;
-    schema_data?: any;
+    schema_type: SchemaType;
+    schema_data?: SchemaData;
+    // AEO Enhancement fields
+    topics?: string[];
+    keywords?: string[];
+    faq_data?: FAQItem[];
+    reading_time?: number;
+    content_type?: string;
+    content_score?: number;
     user_id: number;
     user: User;
     published_at?: string;
     created_at: string;
     updated_at: string;
+}
+
+export interface FAQItem {
+    id: string;
+    question: string;
+    answer: string;
 }
 
 export interface PaginatedData<T> {

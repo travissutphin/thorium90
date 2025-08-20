@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Services\SchemaValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -34,7 +35,8 @@ class PageController extends Controller
             $query->where('user_id', Auth::id());
         }
 
-        $pages = $query->orderBy('created_at', 'desc')
+        $pages = $query->orderByRaw("slug = 'home' DESC") // Home page first
+                      ->orderBy('created_at', 'desc')
                       ->paginate(15)
                       ->withQueryString();
 
@@ -55,23 +57,26 @@ class PageController extends Controller
     /**
      * Show the form for creating a new page.
      */
-    public function create()
+    public function create(SchemaValidationService $schemaService)
     {
         $this->authorize('create pages');
 
         return Inertia::render('content/pages/create', [
-            'schemaTypes' => $this->getSchemaTypes(),
+            'schemaTypes' => $schemaService->getAvailableTypes(),
         ]);
     }
 
     /**
      * Store a newly created page in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, SchemaValidationService $schemaService)
     {
         $this->authorize('create pages');
 
-        $validated = $request->validate([
+        // Get available schema types for validation
+        $availableTypes = collect($schemaService->getAvailableTypes())->pluck('value')->toArray();
+        
+        $baseValidation = [
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:pages,slug',
             'content' => 'nullable|string',
@@ -81,17 +86,47 @@ class PageController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:255',
-            'schema_type' => 'nullable|string|in:WebPage,Article,BlogPosting,NewsArticle',
+            'schema_type' => 'nullable|string|in:' . implode(',', $availableTypes),
             'template' => 'nullable|string|max:100',
             'layout' => 'nullable|string|max:100',
             'theme' => 'nullable|string|max:100',
             'blocks' => 'nullable|array',
             'template_config' => 'nullable|array',
-        ]);
+            'schema_data' => 'nullable|array',
+            // AEO Enhancement fields
+            'topics' => 'nullable|array|max:5',
+            'topics.*' => 'string|max:100',
+            'keywords' => 'nullable|array|max:20',
+            'keywords.*' => 'string|max:50',
+            'faq_data' => 'nullable|array|max:50',
+            'faq_data.*.question' => 'required_with:faq_data|string|max:255',
+            'faq_data.*.answer' => 'required_with:faq_data|string|max:2000',
+            'content_type' => 'nullable|string|max:50',
+        ];
+
+        // Add schema-specific validation rules only if schema_data is provided
+        $schemaType = $request->input('schema_type', 'WebPage');
+        $validationRules = $baseValidation;
+        
+        // Only apply schema validation if schema_data is provided
+        if ($request->has('schema_data') && !empty($request->input('schema_data'))) {
+            $schemaValidationRules = $schemaService->getValidationRulesForRequest($schemaType);
+            $validationRules = array_merge($validationRules, $schemaValidationRules);
+        }
+
+        $validated = $request->validate($validationRules);
 
         // Generate slug if not provided
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['title']);
+        }
+
+        // Special handling for home page slug
+        if ($validated['slug'] === 'home') {
+            $existingHome = Page::where('slug', 'home')->first();
+            if ($existingHome) {
+                return back()->withErrors(['slug' => 'Only one home page is allowed. Please edit the existing home page instead.'])->withInput();
+            }
         }
 
         // Ensure slug is unique
@@ -149,7 +184,7 @@ class PageController extends Controller
     /**
      * Show the form for editing the specified page.
      */
-    public function edit(Page $page)
+    public function edit(Page $page, SchemaValidationService $schemaService)
     {
         // Check permissions
         if ($page->user_id === Auth::id()) {
@@ -160,14 +195,14 @@ class PageController extends Controller
 
         return Inertia::render('content/pages/edit', [
             'page' => $page,
-            'schemaTypes' => $this->getSchemaTypes(),
+            'schemaTypes' => $schemaService->getAvailableTypes(),
         ]);
     }
 
     /**
      * Update the specified page in storage.
      */
-    public function update(Request $request, Page $page)
+    public function update(Request $request, Page $page, SchemaValidationService $schemaService)
     {
         // Check permissions
         if ($page->user_id === Auth::id()) {
@@ -176,7 +211,10 @@ class PageController extends Controller
             $this->authorize('edit pages');
         }
 
-        $validated = $request->validate([
+        // Get available schema types for validation
+        $availableTypes = collect($schemaService->getAvailableTypes())->pluck('value')->toArray();
+        
+        $baseValidation = [
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:pages,slug,' . $page->id,
             'content' => 'required|string',
@@ -186,17 +224,47 @@ class PageController extends Controller
             'meta_title' => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
             'meta_keywords' => 'nullable|string|max:255',
-            'schema_type' => 'nullable|string|in:WebPage,Article,BlogPosting,NewsArticle',
+            'schema_type' => 'nullable|string|in:' . implode(',', $availableTypes),
             'template' => 'nullable|string|max:100',
             'layout' => 'nullable|string|max:100',
             'theme' => 'nullable|string|max:100',
             'blocks' => 'nullable|array',
             'template_config' => 'nullable|array',
-        ]);
+            'schema_data' => 'nullable|array',
+            // AEO Enhancement fields
+            'topics' => 'nullable|array|max:5',
+            'topics.*' => 'string|max:100',
+            'keywords' => 'nullable|array|max:20',
+            'keywords.*' => 'string|max:50',
+            'faq_data' => 'nullable|array|max:50',
+            'faq_data.*.question' => 'required_with:faq_data|string|max:255',
+            'faq_data.*.answer' => 'required_with:faq_data|string|max:2000',
+            'content_type' => 'nullable|string|max:50',
+        ];
+
+        // Add schema-specific validation rules only if schema_data is provided
+        $schemaType = $request->input('schema_type', $page->schema_type ?? 'WebPage');
+        $validationRules = $baseValidation;
+        
+        // Only apply schema validation if schema_data is provided
+        if ($request->has('schema_data') && !empty($request->input('schema_data'))) {
+            $schemaValidationRules = $schemaService->getValidationRulesForRequest($schemaType);
+            $validationRules = array_merge($validationRules, $schemaValidationRules);
+        }
+
+        $validated = $request->validate($validationRules);
 
         // Generate slug if not provided
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['title']);
+        }
+
+        // Special handling for home page slug
+        if ($validated['slug'] === 'home' && $page->slug !== 'home') {
+            $existingHome = Page::where('slug', 'home')->where('id', '!=', $page->id)->first();
+            if ($existingHome) {
+                return back()->withErrors(['slug' => 'Only one home page is allowed. Please edit the existing home page instead.'])->withInput();
+            }
         }
 
         // Ensure slug is unique (excluding current page)
@@ -376,16 +444,4 @@ class PageController extends Controller
         ]);
     }
 
-    /**
-     * Get available schema types.
-     */
-    private function getSchemaTypes()
-    {
-        return [
-            'WebPage' => 'Web Page (Default)',
-            'Article' => 'Article',
-            'BlogPosting' => 'Blog Post',
-            'NewsArticle' => 'News Article',
-        ];
-    }
 }

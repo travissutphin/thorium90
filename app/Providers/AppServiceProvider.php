@@ -62,7 +62,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register Schema Validation Service
+        $this->app->singleton(\App\Services\SchemaValidationService::class);
     }
 
     /**

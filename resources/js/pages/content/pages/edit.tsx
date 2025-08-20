@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Page } from '@/types';
+import { type BreadcrumbItem, type Page, type SchemaTypeConfig, type SchemaType, type FAQItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Save, FileText, Globe, Search, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { FormEventHandler, useEffect } from 'react';
+import { ArrowLeft, Save, FileText, Globe, Search, CheckCircle, AlertCircle, Loader2, Zap } from 'lucide-react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import { useSlugValidation } from '@/hooks/use-slug-validation';
+import { AEOFaqEditor, TopicSelector, KeywordManager, ReadingTimeDisplay, SchemaPreview } from '@/components/aeo';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -29,7 +30,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Props {
     page: Page;
-    schemaTypes: Record<string, string>;
+    schemaTypes: SchemaTypeConfig[];
 }
 
 export default function EditPage({ page, schemaTypes }: Props) {
@@ -49,6 +50,11 @@ export default function EditPage({ page, schemaTypes }: Props) {
         theme: page.theme || 'default',
         blocks: page.blocks || [] as any[],
         template_config: page.template_config || {} as Record<string, any>,
+        // AEO Enhancement fields
+        topics: page.topics || [] as string[],
+        keywords: page.keywords || [] as string[],
+        faq_data: page.faq_data || [] as FAQItem[],
+        content_type: page.content_type || 'general' as string,
     });
 
     const { 
@@ -58,6 +64,8 @@ export default function EditPage({ page, schemaTypes }: Props) {
         generateSlug, 
         clearValidation 
     } = useSlugValidation({ excludeId: page.id });
+
+    const [showSchemaPreview, setShowSchemaPreview] = useState(false);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -213,7 +221,7 @@ export default function EditPage({ page, schemaTypes }: Props) {
                                             <p className="text-sm text-green-600">✓ Slug is available</p>
                                         )}
                                         <p className="text-xs text-muted-foreground">
-                                            This will be the URL: /pages/{data.slug || 'page-url-slug'}
+                                            This will be the URL: /{data.slug || 'page-url-slug'}
                                         </p>
                                     </div>
 
@@ -317,14 +325,14 @@ export default function EditPage({ page, schemaTypes }: Props) {
 
                                     <div className="space-y-2">
                                         <Label htmlFor="schema_type">Schema Type</Label>
-                                        <Select value={data.schema_type} onValueChange={(value) => setData('schema_type', value)}>
+                                        <Select value={data.schema_type} onValueChange={(value) => setData('schema_type', value as SchemaType)}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select schema type" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {Object.entries(schemaTypes).map(([value, label]) => (
-                                                    <SelectItem key={value} value={value}>
-                                                        {label}
+                                                {schemaTypes.map((type) => (
+                                                    <SelectItem key={type.value} value={type.value}>
+                                                        {type.label}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -335,113 +343,99 @@ export default function EditPage({ page, schemaTypes }: Props) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* AEO Enhancement Section */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Zap className="h-5 w-5 text-purple-600" />
+                                        AEO Optimization
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Answer Engine Optimization for AI-powered search results
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {/* Topics */}
+                                    <TopicSelector
+                                        value={data.topics}
+                                        onChange={(topics) => setData('topics', topics)}
+                                        disabled={processing}
+                                        error={errors.topics}
+                                    />
+
+                                    {/* Keywords */}
+                                    <KeywordManager
+                                        value={data.keywords}
+                                        onChange={(keywords) => setData('keywords', keywords)}
+                                        disabled={processing}
+                                        error={errors.keywords}
+                                        contentPreview={data.content}
+                                    />
+
+                                    {/* FAQ Editor (only for FAQ pages) */}
+                                    {data.schema_type === 'FAQPage' && (
+                                        <AEOFaqEditor
+                                            value={data.faq_data}
+                                            onChange={(faqData) => setData('faq_data', faqData)}
+                                            disabled={processing}
+                                            error={errors.faq_data}
+                                        />
+                                    )}
+
+                                    {/* Reading Time Display */}
+                                    <ReadingTimeDisplay
+                                        content={data.content}
+                                        showWordCount={true}
+                                        showDetails={false}
+                                    />
+
+                                    {/* Schema Preview */}
+                                    <SchemaPreview
+                                        schemaType={data.schema_type}
+                                        title={data.title}
+                                        content={data.content}
+                                        topics={data.topics}
+                                        keywords={data.keywords}
+                                        faqData={data.faq_data}
+                                        visible={showSchemaPreview}
+                                        onToggle={() => setShowSchemaPreview(!showSchemaPreview)}
+                                    />
+                                </CardContent>
+                            </Card>
                         </div>
 
                         {/* Sidebar */}
                         <div className="space-y-6">
-                            {/* Template Settings */}
+                            {/* Page Settings */}
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <FileText className="h-5 w-5" />
-                                        Template Settings
+                                        Page Settings
                                     </CardTitle>
                                     <CardDescription>
-                                        Choose how your page will be displayed on the public frontend
+                                        Configure how your page will be displayed
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="template">Page Template</Label>
-                                        <Select value={data.template} onValueChange={(value) => setData('template', value)}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select template" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectLabel>Core Templates</SelectLabel>
-                                                    <SelectItem value="core-page">Core Page (Default)</SelectItem>
-                                                </SelectGroup>
-                                                <SelectGroup>
-                                                    <SelectLabel>Client Templates</SelectLabel>
-                                                    <SelectItem value="client-home">Home Page Template</SelectItem>
-                                                    <SelectItem value="client-about">About Page Template</SelectItem>
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.template && (
-                                            <p className="text-sm text-destructive">{errors.template}</p>
-                                        )}
-                                        <p className="text-xs text-muted-foreground">
-                                            Template file: resources/js/templates/public/{data.template?.replace('client-', '') || 'core-page'}.tsx
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="layout">Layout</Label>
+                                        <Label htmlFor="layout">Page Layout</Label>
                                         <Select value={data.layout} onValueChange={(value) => setData('layout', value)}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select layout" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="default">Default Layout</SelectItem>
-                                                <SelectItem value="sidebar">Sidebar Layout</SelectItem>
-                                                <SelectItem value="full-width">Full Width Layout</SelectItem>
+                                                <SelectItem value="default">Default (Header + Content + Footer)</SelectItem>
+                                                <SelectItem value="sidebar">With Sidebar (Content + Contact Info)</SelectItem>
+                                                <SelectItem value="full-width">Full Width (No Container Limits)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         {errors.layout && (
                                             <p className="text-sm text-destructive">{errors.layout}</p>
                                         )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="theme">Theme</Label>
-                                        <Select value={data.theme} onValueChange={(value) => setData('theme', value)}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select theme" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="default">Default Theme</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.theme && (
-                                            <p className="text-sm text-destructive">{errors.theme}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="custom_class">Custom CSS Classes</Label>
-                                        <Input
-                                            id="custom_class"
-                                            type="text"
-                                            value={data.template_config?.custom_class || ''}
-                                            onChange={(e) => setData('template_config', {
-                                                ...data.template_config,
-                                                custom_class: e.target.value
-                                            })}
-                                            placeholder="e.g., dark-theme, special-layout"
-                                            className={errors.template_config?.custom_class ? 'border-destructive' : ''}
-                                        />
                                         <p className="text-xs text-muted-foreground">
-                                            Add custom CSS classes to the page wrapper
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="page_scripts">Page-Specific Scripts</Label>
-                                        <Textarea
-                                            id="page_scripts"
-                                            value={data.template_config?.page_scripts || ''}
-                                            onChange={(e) => setData('template_config', {
-                                                ...data.template_config,
-                                                page_scripts: e.target.value
-                                            })}
-                                            placeholder="Add any page-specific JavaScript here"
-                                            rows={4}
-                                            className={errors.template_config?.page_scripts ? 'border-destructive' : ''}
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            JavaScript code will be executed on this page only
+                                            Choose how content is arranged on the page
                                         </p>
                                     </div>
                                 </CardContent>
@@ -531,7 +525,7 @@ export default function EditPage({ page, schemaTypes }: Props) {
                                                 <p>Author: {page.user.name}</p>
                                                 <p>Status: {page.status}</p>
                                                 {page.is_featured && <p>✨ Featured page</p>}
-                                                <p>URL: /pages/{page.slug}</p>
+                                                <p>URL: /{page.slug}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -97,7 +97,7 @@ export default function ShowPage({ page, schemaData }: Props) {
         }
     };
 
-    const shareUrl = `${window.location.origin}/pages/${page.slug}`;
+    const shareUrl = `${window.location.origin}/${page.slug}`;
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -318,12 +318,12 @@ export default function ShowPage({ page, schemaData }: Props) {
                                     <div className="flex items-center gap-2">
                                         <Eye className="h-4 w-4 text-muted-foreground" />
                                         <a 
-                                            href={`/pages/${page.slug}`}
+                                            href={`/${page.slug}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 break-all"
                                         >
-                                            /pages/{page.slug}
+                                            /{page.slug}
                                         </a>
                                     </div>
                                 </CardContent>

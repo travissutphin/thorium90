@@ -55,3 +55,12 @@ yarn.lock
 
 # Documentation build artifacts
 /docs/_build/
+
+# Logs and temporary files
+*.log
+/tmp/
+/temp/
+/cache/
+debug_*.php
+test_*.php
+create_test_users.php

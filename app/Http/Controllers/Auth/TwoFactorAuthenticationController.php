@@ -61,10 +61,21 @@ class TwoFactorAuthenticationController extends Controller
     {
         $user = $request->user();
         
+        // Safely get recovery codes count without causing DecryptException
+        $recoveryCodesCount = 0;
+        if (!is_null($user->two_factor_recovery_codes)) {
+            try {
+                $recoveryCodesCount = count($user->recoveryCodes());
+            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                // Handle corrupted/invalid recovery codes gracefully
+                $recoveryCodesCount = 0;
+            }
+        }
+        
         return response()->json([
             'two_factor_enabled' => !is_null($user->two_factor_secret),
             'two_factor_confirmed' => !is_null($user->two_factor_confirmed_at),
-            'recovery_codes_count' => $user->recoveryCodes()->count(),
+            'recovery_codes_count' => $recoveryCodesCount,
         ]);
     }
 
@@ -114,9 +125,22 @@ class TwoFactorAuthenticationController extends Controller
             ], 400);
         }
 
-        return response()->json([
-            'recovery_codes' => $user->recoveryCodes(),
-        ]);
+        // Check if recovery codes exist before trying to decrypt
+        if (is_null($user->two_factor_recovery_codes)) {
+            return response()->json([
+                'error' => 'Recovery codes have not been generated yet.',
+            ], 400);
+        }
+
+        try {
+            return response()->json([
+                'recovery_codes' => $user->recoveryCodes(),
+            ]);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return response()->json([
+                'error' => 'Recovery codes are corrupted. Please generate new ones.',
+            ], 400);
+        }
     }
 
     /**
@@ -126,10 +150,16 @@ class TwoFactorAuthenticationController extends Controller
     {
         $generate($request->user());
 
-        return response()->json([
-            'message' => 'New recovery codes have been generated.',
-            'recovery_codes' => $request->user()->recoveryCodes(),
-        ]);
+        try {
+            return response()->json([
+                'message' => 'New recovery codes have been generated.',
+                'recovery_codes' => $request->user()->recoveryCodes(),
+            ]);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve newly generated recovery codes.',
+            ], 500);
+        }
     }
 
     /**

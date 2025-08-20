@@ -58,6 +58,12 @@ class UIPermissionTest extends TestCase
     {
         // Create an admin user for testing
         $admin = $this->createAdmin();
+        
+        // Give admin user 2FA since it's required for admin roles
+        $admin->forceFill([
+            'two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'), // Valid base32 secret
+            'two_factor_confirmed_at' => now(),
+        ])->save();
 
         // Make a request to the dashboard as the admin user
         $response = $this->actingAs($admin)->get('/dashboard');
@@ -112,6 +118,12 @@ class UIPermissionTest extends TestCase
     {
         // Create a super admin user for testing
         $superAdmin = $this->createSuperAdmin();
+        
+        // Give super admin user 2FA since it's required for admin roles
+        $superAdmin->forceFill([
+            'two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'), // Valid base32 secret
+            'two_factor_confirmed_at' => now(),
+        ])->save();
 
         // Make a request to the dashboard as the super admin user
         $response = $this->actingAs($superAdmin)->get('/dashboard');
@@ -162,6 +174,12 @@ class UIPermissionTest extends TestCase
     {
         // Create an admin user for testing
         $admin = $this->createAdmin();
+        
+        // Give admin user 2FA since it's required for admin roles
+        $admin->forceFill([
+            'two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'), // Valid base32 secret
+            'two_factor_confirmed_at' => now(),
+        ])->save();
 
         // Make a request to the dashboard as the admin user
         $response = $this->actingAs($admin)->get('/dashboard');
@@ -203,8 +221,8 @@ class UIPermissionTest extends TestCase
                 };
                 
                 return $hasPermission('view dashboard') &&    // Should have dashboard access
-                       $hasPermission('create posts') &&      // Should be able to create posts
-                       $hasPermission('edit posts') &&        // Should be able to edit posts
+                       $hasPermission('create pages') &&      // Should be able to create pages
+                       $hasPermission('edit pages') &&        // Should be able to edit pages
                        !$hasPermission('view users');         // Should NOT have user management access
             });
         });

@@ -99,15 +99,13 @@ class TwoFactorAuthenticationTest extends TestCase
         // Enable 2FA
         $this->actingAs($user)->post('/user/two-factor-authentication');
 
-        // Get the secret to generate a valid code
-        $secret = decrypt($user->fresh()->two_factor_secret);
-        
-        // Use a mock valid code for testing (in real scenario, user would get this from their authenticator app)
-        $code = '123456'; // This will need to be mocked or we can use a different approach
+        // Mock the TwoFactorAuthenticationProvider to return true for confirmation
+        $mockProvider = $this->mock(TwoFactorAuthenticationProvider::class);
+        $mockProvider->shouldReceive('verify')->andReturn(true);
 
         $response = $this->actingAs($user)
             ->post('/user/two-factor-authentication/confirm', [
-                'code' => $code
+                'code' => '123456'
             ]);
 
         $response->assertOk();
@@ -285,7 +283,19 @@ class TwoFactorAuthenticationTest extends TestCase
     /** @test */
     public function two_factor_challenge_shows_for_users_with_2fa()
     {
-        $response = $this->get('/two-factor-challenge');
+        $user = User::factory()->create();
+        $user->assignRole('Subscriber');
+        
+        // Set up 2FA for the user
+        $user->forceFill([
+            'two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'), // Valid base32 secret
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        // Simulate login session (required for 2FA challenge)
+        session(['login.id' => $user->id, 'login.remember' => false]);
+
+        $response = $this->getJson('/two-factor-challenge');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -310,11 +320,12 @@ class TwoFactorAuthenticationTest extends TestCase
         // Simulate login session
         session(['login.id' => $user->id, 'login.remember' => false]);
 
-        // Use a mock valid code for testing (in real scenario, user would get this from their authenticator app)
-        $code = '123456'; // This will need to be mocked or we can use a different approach
+        // Mock the TwoFactorAuthenticationProvider to return true for any code
+        $mockProvider = $this->mock(TwoFactorAuthenticationProvider::class);
+        $mockProvider->shouldReceive('verify')->andReturn(true);
 
-        $response = $this->post('/two-factor-challenge', [
-            'code' => $code
+        $response = $this->postJson('/two-factor-challenge', [
+            'code' => '123456'
         ]);
 
         $response->assertOk();
@@ -340,13 +351,17 @@ class TwoFactorAuthenticationTest extends TestCase
         // Simulate login session
         session(['login.id' => $user->id, 'login.remember' => false]);
 
-        $response = $this->post('/two-factor-challenge', [
+        // Mock the TwoFactorAuthenticationProvider to return false for invalid code
+        $mockProvider = $this->mock(TwoFactorAuthenticationProvider::class);
+        $mockProvider->shouldReceive('verify')->andReturn(false);
+
+        $response = $this->postJson('/two-factor-challenge', [
             'code' => '000000' // Invalid code
         ]);
 
         $response->assertStatus(422);
-        $response->assertJson([
-            'error' => 'The provided two factor authentication code was invalid.'
+        $response->assertJsonFragment([
+            'The provided two factor authentication code was invalid.'
         ]);
     }
 
@@ -367,7 +382,7 @@ class TwoFactorAuthenticationTest extends TestCase
         // Simulate login session
         session(['login.id' => $user->id, 'login.remember' => false]);
 
-        $response = $this->post('/two-factor-challenge', [
+        $response = $this->postJson('/two-factor-challenge', [
             'recovery_code' => 'recovery-code-1'
         ]);
 
@@ -430,8 +445,16 @@ class TwoFactorAuthenticationTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('Subscriber');
 
-        // Enable and confirm 2FA
+        // Confirm password first
+        $this->actingAs($user)
+            ->post('/user/confirm-password', [
+                'password' => 'password'
+            ]);
+
+        // Enable 2FA first
         $this->actingAs($user)->post('/user/two-factor-authentication');
+        
+        // Then confirm it
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
         $response = $this->actingAs($user)

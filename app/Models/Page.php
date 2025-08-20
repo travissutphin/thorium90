@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Services\SchemaValidationService;
 
 class Page extends Model
 {
@@ -30,6 +31,13 @@ class Page extends Model
         'template_config',
         'user_id',
         'published_at',
+        // AEO Enhancement fields
+        'topics',
+        'keywords',
+        'faq_data',
+        'reading_time',
+        'content_type',
+        'content_score',
     ];
 
     protected $casts = [
@@ -38,6 +46,10 @@ class Page extends Model
         'blocks' => 'array',
         'template_config' => 'array',
         'published_at' => 'datetime',
+        // AEO Enhancement casts
+        'topics' => 'array',
+        'keywords' => 'array',
+        'faq_data' => 'array',
     ];
 
     protected $dates = [
@@ -64,11 +76,21 @@ class Page extends Model
             if (empty($page->excerpt) && !empty($page->content)) {
                 $page->excerpt = Str::limit(strip_tags($page->content), 160);
             }
+            
+            // Auto-calculate reading time if not manually set
+            if (is_null($page->reading_time)) {
+                $page->reading_time = $page->calculateReadingTime();
+            }
         });
 
         static::updating(function ($page) {
             if ($page->isDirty('title') && empty($page->getOriginal('slug'))) {
                 $page->slug = Str::slug($page->title);
+            }
+            
+            // Recalculate reading time if content changed and reading_time wasn't manually set
+            if ($page->isDirty('content') && is_null($page->reading_time)) {
+                $page->reading_time = $page->calculateReadingTime();
             }
         });
     }
@@ -137,37 +159,209 @@ class Page extends Model
      */
     public function getSchemaDataAttribute($value)
     {
-        if ($value) {
-            return $value;
+        // If schema_data is already set, use it
+        if (!empty($value)) {
+            // If it's a JSON string, decode it
+            if (is_string($value)) {
+                $value = json_decode($value, true);
+            }
+            if (is_array($value) && !empty($value)) {
+                return $this->enhanceSchemaData($value);
+            }
         }
 
-        $schema = [
-            '@context' => 'https://schema.org',
-            '@type' => $this->schema_type ?: 'WebPage',
-            'name' => $this->title,
-            'description' => $this->meta_description,
-            'url' => $this->url,
-            'datePublished' => $this->published_at?->toISOString(),
-            'dateModified' => $this->updated_at->toISOString(),
-            'author' => [
-                '@type' => 'Person',
-                'name' => $this->user?->name,
-            ],
-            'publisher' => [
-                '@type' => 'Organization',
-                'name' => config('app.name'),
-                'url' => config('app.url'),
-            ],
+        // Generate default schema data using the service
+        $schemaService = app(SchemaValidationService::class);
+        
+        $pageData = [
+            'title' => $this->title,
+            'content' => $this->content,
+            'excerpt' => $this->excerpt,
+            'meta_description' => $this->meta_description,
+            'published_at' => $this->published_at,
+            'updated_at' => $this->updated_at,
         ];
 
-        if ($this->schema_type === 'Article') {
-            $schema['@type'] = 'Article';
-            $schema['headline'] = $this->title;
-            $schema['articleBody'] = strip_tags($this->content);
-            $schema['wordCount'] = str_word_count(strip_tags($this->content));
+        $schema = $schemaService->generateDefaultSchemaData($this->schema_type ?: 'WebPage', $pageData);
+        
+        return $this->enhanceSchemaData($schema);
+    }
+
+    /**
+     * Enhance schema data with computed values.
+     */
+    protected function enhanceSchemaData(array $schema): array
+    {
+        // Always ensure these computed properties are up to date
+        $schema['@context'] = 'https://schema.org';
+        $schema['@type'] = $this->schema_type ?: 'WebPage';
+        $schema['url'] = $this->url;
+        $schema['datePublished'] = $this->published_at?->toISOString();
+        $schema['dateModified'] = $this->updated_at->toISOString();
+        
+        // Author information
+        $schema['author'] = [
+            '@type' => 'Person',
+            'name' => $this->user?->name ?? 'Unknown',
+        ];
+        
+        // Publisher information
+        $schema['publisher'] = [
+            '@type' => 'Organization',
+            'name' => config('app.name'),
+            'url' => config('app.url'),
+        ];
+
+        // Add computed properties based on schema type (preserve user-provided values)
+        switch ($this->schema_type) {
+            case 'Article':
+            case 'BlogPosting':
+            case 'NewsArticle':
+                if (!isset($schema['headline']) || empty($schema['headline'])) {
+                    $schema['headline'] = $this->title;
+                }
+                if (!isset($schema['articleBody']) || empty($schema['articleBody'])) {
+                    $schema['articleBody'] = strip_tags($this->content);
+                }
+                // Always compute wordCount from content (override user-provided value)
+                $schema['wordCount'] = str_word_count(strip_tags($this->content ?? ''));
+                break;
+                
+            case 'FAQPage':
+                // Handle FAQ schema structure
+                if ($this->faq_data && is_array($this->faq_data)) {
+                    $schema['mainEntity'] = [];
+                    foreach ($this->faq_data as $faq) {
+                        $schema['mainEntity'][] = [
+                            '@type' => 'Question',
+                            'name' => $faq['question'] ?? '',
+                            'acceptedAnswer' => [
+                                '@type' => 'Answer',
+                                'text' => $faq['answer'] ?? '',
+                            ],
+                        ];
+                    }
+                }
+                break;
+        }
+
+        // Ensure name and description are set if missing (preserve user-provided values)
+        if (!isset($schema['name']) || empty($schema['name'])) {
+            $schema['name'] = $this->title;
+        }
+        if (!isset($schema['description']) || empty($schema['description'])) {
+            $schema['description'] = $this->meta_description ?? $this->excerpt;
+        }
+
+        // AEO Enhancements - Add breadcrumb, keywords, and content categorization
+        if (!isset($schema['breadcrumb'])) {
+            $schema['breadcrumb'] = $this->generateBreadcrumbList();
+        }
+        
+        if (!isset($schema['keywords']) && $this->keywords) {
+            $schema['keywords'] = is_array($this->keywords) ? implode(', ', $this->keywords) : $this->keywords;
+        }
+        
+        if (!isset($schema['inLanguage'])) {
+            $schema['inLanguage'] = config('app.locale', 'en');
+        }
+        
+        // Add content categorization for AEO
+        if ($this->topics && is_array($this->topics)) {
+            $schema['about'] = array_map(function($topic) {
+                return [
+                    '@type' => 'Thing',
+                    'name' => $topic,
+                ];
+            }, $this->topics);
+        }
+        
+        // Add reading time for content quality signals
+        if ($this->reading_time) {
+            $schema['timeRequired'] = "PT{$this->reading_time}M"; // ISO 8601 duration format
         }
 
         return $schema;
+    }
+
+    /**
+     * Generate breadcrumb list schema for site navigation hierarchy.
+     */
+    protected function generateBreadcrumbList(): array
+    {
+        $breadcrumbs = [
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => []
+        ];
+
+        // Home page breadcrumb
+        $breadcrumbs['itemListElement'][] = [
+            '@type' => 'ListItem',
+            'position' => 1,
+            'name' => 'Home',
+            'item' => config('app.url')
+        ];
+
+        // If page has a topic/category, add it to breadcrumb
+        if ($this->topics && is_array($this->topics) && count($this->topics) > 0) {
+            $breadcrumbs['itemListElement'][] = [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => $this->topics[0], // Use first topic as category
+                'item' => config('app.url') . '/category/' . Str::slug($this->topics[0])
+            ];
+        }
+
+        // Current page breadcrumb
+        $position = count($breadcrumbs['itemListElement']) + 1;
+        $breadcrumbs['itemListElement'][] = [
+            '@type' => 'ListItem',
+            'position' => $position,
+            'name' => $this->title,
+            'item' => $this->url
+        ];
+
+        return $breadcrumbs;
+    }
+
+    /**
+     * Calculate reading time in minutes based on content length.
+     */
+    public function calculateReadingTime(): int
+    {
+        $wordCount = str_word_count(strip_tags($this->content ?? ''));
+        $wordsPerMinute = 200; // Average reading speed
+        return max(1, ceil($wordCount / $wordsPerMinute));
+    }
+
+
+    /**
+     * Validate and set schema data.
+     */
+    public function setSchemaDataAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['schema_data'] = null;
+            return;
+        }
+
+        // Validate schema data using the service
+        $schemaService = app(SchemaValidationService::class);
+        
+        try {
+            $validated = $schemaService->validateSchemaData($this->schema_type ?: 'WebPage', $value);
+            $this->attributes['schema_data'] = json_encode($validated);
+        } catch (\Exception $e) {
+            // Log the validation error but don't break the model
+            \Log::warning('Schema data validation failed for page: ' . $e->getMessage(), [
+                'page_id' => $this->id,
+                'schema_type' => $this->schema_type,
+                'schema_data' => $value,
+            ]);
+            
+            // Store the data anyway but mark it as unvalidated
+            $this->attributes['schema_data'] = json_encode($value);
+        }
     }
 
     /**
