@@ -39,6 +39,11 @@ class EnsureTwoFactorAuthentication
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // TEMPORARY: 2FA enforcement disabled for development
+        // TODO: Re-enable 2FA enforcement when ready for production
+        return $next($request);
+        
+        /* DISABLED 2FA ENFORCEMENT CODE:
         $user = $request->user();
 
         // Skip if user is not authenticated
@@ -71,6 +76,7 @@ class EnsureTwoFactorAuthentication
         }
 
         return $next($request);
+        */
     }
 
     /**
