@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
+use Inertia\Inertia;
+use Inertia\Response;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
@@ -57,7 +60,7 @@ class TwoFactorAuthenticationController extends Controller
     /**
      * Get the current 2FA status for the authenticated user.
      */
-    public function show(Request $request): JsonResponse
+    public function show(Request $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         
@@ -72,11 +75,19 @@ class TwoFactorAuthenticationController extends Controller
             }
         }
         
-        return response()->json([
+        $data = [
             'two_factor_enabled' => !is_null($user->two_factor_secret),
             'two_factor_confirmed' => !is_null($user->two_factor_confirmed_at),
             'recovery_codes_count' => $recoveryCodesCount,
-        ]);
+        ];
+        
+        // Return redirect for web requests expecting Inertia (don't render a separate view)
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('dashboard')->with('two_factor_status', $data);
+        }
+        
+        // Return JSON response for API requests
+        return response()->json($data);
     }
 
     /**

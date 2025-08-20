@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Events\TwoFactorAuthenticationEnabled;
@@ -67,12 +70,15 @@ class TwoFactorChallengeController extends Controller
      * It validates that the user has a valid login session before showing the challenge.
      *
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|Response|RedirectResponse
      */
-    public function create(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse|Response|RedirectResponse
     {
         // Ensure the user has a valid login session
         if (!$request->session()->has('login.id')) {
+            if ($request->header('X-Inertia')) {
+                return redirect()->route('login')->with('error', 'Authentication session not found.');
+            }
             return response()->json([
                 'error' => 'Authentication session not found.',
                 'redirect_url' => route('login'),
@@ -83,6 +89,9 @@ class TwoFactorChallengeController extends Controller
         $user = \App\Models\User::find($request->session()->get('login.id'));
         
         if (!$user || !$user->two_factor_secret) {
+            if ($request->header('X-Inertia')) {
+                return redirect()->route('login')->with('error', 'Two factor authentication is not enabled.');
+            }
             return response()->json([
                 'error' => 'Two factor authentication is not enabled.',
                 'redirect_url' => route('login'),
@@ -92,11 +101,18 @@ class TwoFactorChallengeController extends Controller
         // Fire the challenged event
         event(new TwoFactorAuthenticationChallenged($user));
 
-        return response()->json([
+        $data = [
             'two_factor_challenge' => true,
             'recovery_codes_available' => !is_null($user->two_factor_recovery_codes),
             'message' => 'Please enter your two-factor authentication code or recovery code.',
-        ]);
+        ];
+
+        // Return Inertia response for web requests
+        if ($request->header('X-Inertia')) {
+            return Inertia::render('auth/two-factor-challenge', $data);
+        }
+
+        return response()->json($data);
     }
 
     /**
