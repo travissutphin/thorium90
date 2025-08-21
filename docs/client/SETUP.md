@@ -16,6 +16,10 @@
 
 ### Option 1: Interactive Setup (Recommended)
 ```bash
+# Clone repository
+git clone https://github.com/travissutphin/thorium90.git
+cd thorium90
+
 # Install dependencies
 composer install
 npm install
@@ -33,8 +37,15 @@ The setup wizard will guide you through:
 
 ### Option 2: Manual Setup
 
-#### 1. Environment Configuration
+#### 1. Clone and Environment Configuration
 ```bash
+# Clone repository
+git clone https://github.com/travissutphin/thorium90.git
+cd thorium90
+
+# Install dependencies
+composer install && npm install
+
 # Copy environment template
 cp .env.example .env
 
@@ -62,19 +73,21 @@ DB_CONNECTION=sqlite
 # Database file will be created automatically
 ```
 
-#### 3. Database Migration
+#### 3. Database Migration and Setup
 ```bash
 # Create database tables
-php artisan migrate
+php artisan migrate --force
 
-# Seed initial data
-php artisan db:seed
+# Seed initial data (creates roles, permissions, and test users)
+php artisan db:seed --class=DatabaseSeeder --force
 ```
 
-#### 4. Create Admin User
-```bash
-php artisan thorium90:admin
-```
+**Note**: The DatabaseSeeder creates default admin users:
+- **Super Admin**: `test@example.com` / `password`
+- **Admin**: `admin@example.com` / `password`
+- **Editor**: `editor@example.com` / `password`
+- **Author**: `author@example.com` / `password`
+- **Subscriber**: `subscriber@example.com` / `password`
 
 ## Post-Installation
 

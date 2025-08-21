@@ -4,7 +4,7 @@
 
 **Laravel 12 CMS boilerplate with production-ready features**
 
-Built with [Thorium90 Framework](https://github.com/thorium90/boilerplate)
+Built with [Thorium90 Framework](https://github.com/travissutphin/thorium90)
 
 ## System Requirements
 
@@ -18,8 +18,8 @@ Built with [Thorium90 Framework](https://github.com/thorium90/boilerplate)
 ### Interactive Setup (Recommended)
 ```bash
 # Clone and install
-git clone https://github.com/thorium90/boilerplate.git
-cd boilerplate
+git clone https://github.com/travissutphin/thorium90.git
+cd thorium90
 composer install && npm install
 
 # Run setup wizard
@@ -28,24 +28,32 @@ php artisan thorium90:setup --interactive
 
 ### Manual Setup
 ```bash
+# Clone and install
+git clone https://github.com/travissutphin/thorium90.git
+cd thorium90
+composer install && npm install
+
 # Environment setup
 cp .env.example .env
 php artisan key:generate
 
 # Database (choose one)
 # SQLite (development):
-php artisan migrate --seed
+php artisan migrate --force
+php artisan db:seed --class=DatabaseSeeder --force
 
 # MySQL (production):
-# Configure .env with MySQL credentials, then:
-php artisan migrate --seed
-
-# Create admin user
-php artisan thorium90:admin
+# Edit .env with MySQL credentials, then:
+php artisan migrate --force
+php artisan db:seed --class=DatabaseSeeder --force
 
 # Start development
 php artisan serve
 ```
+
+**Default Admin Users Created:**
+- **Super Admin**: `test@example.com` / `password`
+- **Admin**: `admin@example.com` / `password`
 
 ## Production Features
 

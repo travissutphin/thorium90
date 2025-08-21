@@ -51,7 +51,7 @@ EXIT;
 ### 1. Server Preparation
 ```bash
 # Clone repository
-git clone https://github.com/thorium90/boilerplate.git /var/www/thorium90
+git clone https://github.com/travissutphin/thorium90.git /var/www/thorium90
 cd /var/www/thorium90
 
 # Set permissions
