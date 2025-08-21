@@ -288,6 +288,11 @@ class Thorium90Setup extends Command
             }
 
             File::put($envPath, $env);
+            
+            // Refresh Laravel configuration to use updated environment
+            if ($databaseConfig) {
+                $this->refreshDatabaseConfiguration();
+            }
         }
     }
 
@@ -317,6 +322,31 @@ class Thorium90Setup extends Command
         return $env;
     }
 
+    protected function refreshDatabaseConfiguration()
+    {
+        $this->line('🔄 Refreshing database configuration...');
+        
+        // Clear configuration cache
+        $this->call('config:clear');
+        
+        // Get the updated DB_CONNECTION from the .env file
+        $envPath = base_path('.env');
+        if (File::exists($envPath)) {
+            $env = File::get($envPath);
+            if (preg_match('/^DB_CONNECTION=(.*)$/m', $env, $matches)) {
+                $dbConnection = trim($matches[1]);
+                
+                // Update runtime configuration
+                config(['database.default' => $dbConnection]);
+                
+                // Purge any existing database connections
+                app('db')->purge();
+                
+                $this->info("✅ Database configuration refreshed to: {$dbConnection}");
+            }
+        }
+    }
+
     protected function configureFeatures($preset)
     {
         $this->line('🔧 Configuring features...');
@@ -340,6 +370,10 @@ class Thorium90Setup extends Command
         $this->line('🗄️  Running database migrations...');
         
         try {
+            // Show current database configuration
+            $driver = config('database.default');
+            $this->info("📊 Using database driver: {$driver}");
+            
             // Validate database configuration first
             $service = new DatabaseConfigurationService();
             $validation = $service->validateConfiguration();
