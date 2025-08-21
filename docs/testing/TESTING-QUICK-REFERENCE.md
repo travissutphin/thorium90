@@ -11,10 +11,10 @@ scripts/regression-test-enhanced.bat --quick
 scripts/regression-test-enhanced.bat
 
 # Linux/Mac - Essential tests (3-5 min)
-./regression-test-enhanced.sh --quick
+scripts/regression-test-enhanced.sh --quick
 
 # Linux/Mac - Full comprehensive test (8-12 min)
-./regression-test-enhanced.sh
+scripts/regression-test-enhanced.sh
 ```
 
 ### Legacy System
@@ -23,7 +23,7 @@ scripts/regression-test-enhanced.bat
 scripts/regression-test.bat
 
 # Linux/Mac - Full regression test
-./regression-test.sh
+scripts/regression-test.sh
 
 # Individual test suites
 php artisan test tests/Feature/Auth/

@@ -1,14 +1,10 @@
-# Template System Guide
-
-## 🚨 **IMPORTANT: Start Here First**
-
-**BEFORE using the template system, you MUST complete the [Development Workflow](Development-Workflow) consistency check.**
-
-This ensures you understand how the template system integrates with the overall system architecture and patterns.
+# Thorium90 Template System
 
 ## Overview
 
-The Template System provides a flexible, developer-friendly architecture for creating custom UI/UX designs across the Thorium90 CMS. It's designed as a **rapid development framework** where you can quickly customize templates for different clients while keeping core functionality separate and updateable.
+The Template System is a flexible, plugin-ready architecture that provides consistent UI/UX design capabilities across the Thorium90 CMS. It supports dynamic layouts, reusable blocks, and theming while maintaining simplicity and ease of management.
+
+**Note**: Before using the template system, review the development workflow in `/docs/development/BOILERPLATE-WORKFLOW.md` to understand how templates integrate with the overall architecture.
 
 ## 🎯 **Thorium90 as a Starter Framework**
 

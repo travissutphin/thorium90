@@ -1,182 +1,227 @@
-# Thorium90 - Laravel + React Starter Kit
+# Thorium90 - Laravel 12 Rapid Development Framework
 
-## Introduction
+![Thorium90 Logo](public/images/thorium90-logo.png)
 
-Our React starter kit provides a robust, modern starting point for building Laravel applications with a React frontend using [Inertia](https://inertiajs.com).
+## Overview
 
-Inertia allows you to build modern, single-page React applications using classic server-side routing and controllers. This lets you enjoy the frontend power of React combined with the incredible backend productivity of Laravel and lightning-fast Vite compilation.
+Thorium90 is a professional Laravel 12 rapid development framework designed for agencies and developers. Build exceptional client projects with unprecedented speed and quality using modern tools and best practices.
 
-This React starter kit utilizes React 19, TypeScript, Tailwind, and the [shadcn/ui](https://ui.shadcn.com) and [radix-ui](https://www.radix-ui.com) component libraries.
+## 🚀 Key Features
 
-## 🚀 Features
+### Modern Technology Stack
+- **Laravel 12** with latest PHP 8.4 support
+- **React 19** with TypeScript for type-safe frontend development  
+- **Inertia.js** for seamless SPA experience
+- **Tailwind CSS** with shadcn/ui components
+- **Vite** for lightning-fast development builds
 
-### Multi-Role User Authentication System
-This application includes a comprehensive role-based access control (RBAC) system built with Spatie Laravel Permission package.
+### Comprehensive Authentication System
+- **Multi-Role RBAC**: 5 user roles with 21 granular permissions
+- **Two-Factor Authentication**: Mandatory for Admin/Super Admin roles
+- **Social Login**: GitHub, Google, and extensible provider system
+- **Email Verification**: Complete email workflow with customizable templates
 
-#### Key Features:
-- **5 User Roles**: Super Admin, Admin, Editor, Author, Subscriber
-- **21 Granular Permissions**: Covering user management, content creation, media handling, and system administration
-- **Frontend Integration**: Seamless integration with Inertia.js for real-time permission checking
-- **Computed Properties**: Easy-to-use boolean flags for common permission checks
+### Content Management System
+- **Dynamic Page System**: Create and manage pages with flexible templates
+- **Schema.org Integration**: Built-in SEO and structured data support
+- **Template System**: Flexible, plugin-ready architecture
+- **AEO Optimization**: Answer Engine Optimization for AI search engines
 
-#### Roles & Permissions Matrix:
+### Developer Experience
+- **Setup Wizard**: Interactive installation with `php artisan thorium90:setup`
+- **Plugin Architecture**: Extensible plugin system for custom features
+- **Testing Suite**: Comprehensive test coverage with regression testing
+- **Documentation**: Complete development guides and API references
+
+## 📦 Quick Installation
+
+### Option 1: Setup Wizard (Recommended)
+```bash
+# Clone the repository
+git clone https://github.com/travissutphin/thorium90.git your-project-name
+cd your-project-name
+
+# Install dependencies
+composer install && npm install
+
+# Run interactive setup wizard
+php artisan thorium90:setup --interactive
+```
+
+### Option 2: Manual Installation
+```bash
+# Clone and install
+git clone https://github.com/travissutphin/thorium90.git your-project-name
+cd your-project-name
+composer install && npm install
+
+# Environment setup
+cp .env.example .env
+php artisan key:generate
+
+# Database setup
+php artisan migrate:fresh --seed
+
+# Start development
+php artisan serve
+npm run dev
+```
+
+## 🎯 Framework Architecture
+
+### Boilerplate Philosophy
+Thorium90 serves as a **professional boilerplate** for client projects:
+
+- **Clone per project**: Each client gets their own instance
+- **Rapid customization**: Modify templates without touching core code
+- **Updateable core**: Pull framework updates while preserving customizations
+- **Production ready**: Built-in security, performance, and SEO optimizations
+
+### Role-Based Access Control
 
 | Role | User Management | Content Management | Media Management | System Admin |
 |------|----------------|-------------------|------------------|--------------|
-| Super Admin | ✅ All | ✅ All | ✅ All | ✅ All |
-| Admin | ✅ All | ✅ All | ✅ All | ✅ Limited |
-| Editor | ❌ None | ✅ All | ✅ All | ❌ None |
-| Author | ❌ None | ✅ Own Content | ✅ Upload | ❌ None |
+| Super Admin | ✅ Full Access | ✅ Full Access | ✅ Full Access | ✅ Full Access |
+| Admin | ✅ Full Access | ✅ Full Access | ✅ Full Access | ✅ Limited |
+| Editor | ❌ None | ✅ Full Access | ✅ Full Access | ❌ None |
+| Author | ❌ None | ✅ Own Content | ✅ Upload Only | ❌ None |
 | Subscriber | ❌ None | ❌ None | ❌ None | ❌ None |
-
-### Technical Stack
-- **Backend**: Laravel 11 with Spatie Laravel Permission v6.21
-- **Frontend**: React 19, TypeScript, Inertia.js
-- **Styling**: Tailwind CSS, shadcn/ui components
-- **Testing**: PHPUnit with comprehensive test coverage
 
 ## 📖 Documentation
 
-### Quick Start
-1. **Installation**: `composer install && npm install`
-2. **Setup**: `cp .env.example .env && php artisan key:generate`
-3. **Database**: `php artisan migrate:fresh --seed`
-4. **Development**: `php artisan serve` and `npm run dev`
+### Essential Reading
+- **[Installation Guide](docs/installation.md)** - Complete setup instructions
+- **[Development Workflow](docs/development/BOILERPLATE-WORKFLOW.md)** - MANDATORY consistency process
+- **[Authentication System](docs/authentication/README.md)** - User management and security
+- **[Template System](docs/features/templates.md)** - Flexible page templates
+- **[Testing Strategy](docs/testing/TESTING.md)** - Quality assurance procedures
 
-### **Required Reading (Start Here)**
-1. **[Development Workflow](wiki/Development-Workflow)** - **MANDATORY: Consistency process for all tasks**
-2. **[System Overview](wiki/Home)** - Understanding the system goals
-3. **[Developer Guide](wiki/Developer-Guide)** - Technical implementation details
-4. **[Testing Strategy](wiki/Testing-Strategy)** - Testing procedures and standards
+### Feature Documentation  
+- **[Schema Validation](docs/features/schema-validation.md)** - SEO and structured data
+- **[Plugin System](docs/features/hybrid-system.md)** - Extensible architecture
+- **[CMS Pages](docs/features/cms/pages-guide.md)** - Content management
 
-### Complete Documentation
-- **[Wiki](wiki/)** - Comprehensive system documentation
-- **[Docs](docs/)** - Development and testing guides
-- **[Testing](docs/testing/)** - Testing procedures and regression tests
+### Development Resources
+- **[API Reference](docs/api/README.md)** - Backend API documentation
+- **[Frontend Integration](docs/development/frontend-integration.md)** - React components and hooks
+- **[Permissions Guide](docs/development/permissions-guide.md)** - RBAC implementation
 
-### Authentication System
-- [Authentication Guide](docs/authentication/README.md) - Complete system overview
-- [API Documentation](docs/authentication/api.md) - Endpoint documentation
-- [Troubleshooting](docs/authentication/troubleshooting.md) - Common issues and solutions
-- [Deployment Guide](docs/authentication/deployment.md) - Production deployment checklist
-
-### Development
-- [Testing Guide](docs/testing/authentication-tests.md) - How to run and write tests
-- [Permissions Guide](docs/development/permissions-guide.md) - Working with roles and permissions
-- [Frontend Integration](docs/development/frontend-integration.md) - Using permissions in React components
-
-### Usage Examples
-
-#### Backend Permission Checking
-```php
-// Check if user can perform action
-if ($user->can('create posts')) {
-    // Allow post creation
-}
-
-// Check if user has specific role
-if ($user->hasRole('Admin')) {
-    // Admin-specific logic
-}
-```
-
-#### Frontend Permission Checking
-```typescript
-// In React components
-const { auth } = usePage<SharedData>().props;
-
-if (auth.user.can('create posts')) {
-    // Show create post button
-}
-
-if (auth.user.is_admin) {
-    // Show admin panel
-}
-```
-
-## 🧪 Testing
+## 🧪 Testing & Quality Assurance
 
 ### Running Tests
 ```bash
 # Run all tests
 php artisan test
 
-# Run authentication tests only
-php artisan test --filter=UIPermissionTest
+# Run specific test suites
+php artisan test --filter="Authentication"
+php artisan test --filter="Critical|Auth|Permission"
 
-# Run specific test
-php artisan test --filter=test_inertia_shares_user_data_correctly
+# Run with coverage
+php artisan test --coverage
 ```
 
 ### Test Coverage
-- ✅ Role-based user creation
-- ✅ Permission inheritance
-- ✅ Frontend data sharing
-- ✅ Inertia.js integration
-- ✅ Computed properties validation
+- ✅ Authentication and authorization
+- ✅ Role-based access control
+- ✅ Page management and templates
+- ✅ Schema validation and SEO
+- ✅ Plugin system integration
+- ✅ Database integrity and performance
 
-## 📄 Configuration
+### Quality Tools
+```bash
+# Code quality checks
+composer lint
+composer test
+composer stan
 
-### Permission Configuration
-File: `config/permission.php`
+# Frontend testing
+npm run test
+npm run type-check
+```
 
-Key settings:
-- **Guard**: 'web' (default Laravel guard)
-- **Cache**: Enabled for performance
-- **Display Names**: Customizable permission display names
+## 🔧 Configuration
 
-### Available Permissions
-```php
-// User Management
-'view users', 'create users', 'edit users', 'delete users', 'manage user roles'
+### Key Configuration Files
+- `config/thorium90.php` - Framework-specific settings
+- `config/permission.php` - RBAC configuration  
+- `config/schema.php` - Schema.org validation rules
+- `config/features.php` - Feature flag management
 
-// Content Management  
-'view posts', 'create posts', 'edit posts', 'delete posts', 'publish posts'
-'edit own posts', 'delete own posts'
+### Environment Variables
+```env
+# Core Application
+APP_NAME="Your Project Name"
+APP_ENV=production
+APP_DEBUG=false
 
-// System Administration
-'manage settings', 'manage roles', 'manage permissions'
+# Database Configuration  
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_DATABASE=your_database
 
-// Media Management
-'upload media', 'manage media', 'delete media'
+# Authentication
+THORIUM90_2FA_REQUIRED=true
+THORIUM90_SETUP_COMPLETED=true
 
-// Comment Management
-'view comments', 'moderate comments', 'delete comments'
+# Social Login (Optional)
+GITHUB_CLIENT_ID=your_github_client_id
+GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
 ## 🚀 Deployment
 
 ### Pre-deployment Checklist
-- [ ] Run migrations: `php artisan migrate`
-- [ ] Clear cache: `php artisan cache:clear`
-- [ ] Run tests: `php artisan test --filter=UIPermissionTest`
-- [ ] Verify permission configuration
+- [ ] Run full test suite: `php artisan test`
+- [ ] Check code quality: `composer lint && composer stan`
+- [ ] Build assets: `npm run build`
+- [ ] Clear caches: `php artisan optimize:clear`
+- [ ] Run migrations: `php artisan migrate --force`
 
-### Post-deployment Verification
-- [ ] Verify role assignments
-- [ ] Test permission inheritance
-- [ ] Validate frontend integration
-- [ ] Check admin panel access
+### Production Optimization
+```bash
+# Optimize for production
+php artisan optimize
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
 
 ## 🤝 Contributing
 
-Thank you for considering contributing to our starter kit! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
 ### Development Workflow
 1. Fork the repository
-2. Create a feature branch
-3. Write tests for new functionality
-4. Ensure all tests pass
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Follow coding standards and write tests
+4. Run the test suite: `php artisan test`
 5. Submit a pull request
 
-## 📖 Official Documentation
+### Coding Standards
+- **PSR-12** for PHP code style
+- **ESLint + Prettier** for JavaScript/TypeScript
+- **Comprehensive testing** for all new features
+- **TypeScript** for type safety
 
-Documentation for all Laravel starter kits can be found on the [Laravel website](https://laravel.com/docs/starter-kits).
+## 📄 License & Support
 
-## 📋 Code of Conduct
+### License
+Thorium90 is open-source software licensed under the [MIT License](LICENSE).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Getting Help
+- **Documentation**: Complete guides in `/docs/`
+- **GitHub Issues**: Bug reports and feature requests
+- **Community**: Join our Discord community
+- **Professional Support**: Available for enterprise clients
 
-## 📄 License
+### Version Compatibility
+- **PHP**: ^8.2 minimum, 8.4 recommended
+- **Laravel**: 12.x LTS
+- **Node.js**: ^18.0 minimum, 20.x recommended
+- **MySQL**: ^8.0 or PostgreSQL ^14.0
 
-The Laravel + React starter kit is open-sourced software licensed under the MIT license.
+---
+
+**Built with ❤️ by the Thorium90 Team**
+
+*Empowering developers to build exceptional web applications with speed and confidence.*
