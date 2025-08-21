@@ -311,8 +311,17 @@ class Thorium90Setup extends Command
             // Update DB_CONNECTION to sqlite
             $env = preg_replace('/^DB_CONNECTION=.*/m', 'DB_CONNECTION=sqlite', $env);
             
-            // Set SQLite database path
-            $env = preg_replace('/^(?:# )?DB_DATABASE=.*/m', 'DB_DATABASE=database/database.sqlite', $env);
+            // Add or update DB_DATABASE for SQLite - check if line exists
+            if (preg_match('/^# ?DB_DATABASE=.*/m', $env)) {
+                // Replace existing DB_DATABASE line (commented or not)
+                $env = preg_replace('/^# ?DB_DATABASE=.*/m', 'DB_DATABASE=' . database_path('database.sqlite'), $env);
+            } elseif (preg_match('/^DB_DATABASE=.*/m', $env)) {
+                // Replace existing uncommented DB_DATABASE line
+                $env = preg_replace('/^DB_DATABASE=.*/m', 'DB_DATABASE=' . database_path('database.sqlite'), $env);
+            } else {
+                // Add DB_DATABASE line after DB_CONNECTION
+                $env = preg_replace('/^(DB_CONNECTION=sqlite)$/m', "$1\nDB_DATABASE=" . database_path('database.sqlite'), $env);
+            }
             
             // Comment out MySQL/PostgreSQL settings that don't apply to SQLite
             $env = preg_replace('/^DB_HOST=.*/m', '# DB_HOST=127.0.0.1', $env);
@@ -321,14 +330,17 @@ class Thorium90Setup extends Command
             $env = preg_replace('/^DB_PASSWORD=.*/m', '# DB_PASSWORD=', $env);
             
             $this->info('✅ Environment configured for SQLite');
+            $this->info('SQLite database path: ' . database_path('database.sqlite'));
         } else {
-            // Update database connection settings
-            $env = preg_replace('/DB_CONNECTION=.*/', "DB_CONNECTION={$config['type']}", $env);
-            $env = preg_replace('/(?:# )?DB_HOST=.*/', "DB_HOST={$config['host']}", $env);
-            $env = preg_replace('/(?:# )?DB_PORT=.*/', "DB_PORT={$config['port']}", $env);
-            $env = preg_replace('/(?:# )?DB_DATABASE=.*/', "DB_DATABASE={$config['database']}", $env);
-            $env = preg_replace('/(?:# )?DB_USERNAME=.*/', "DB_USERNAME={$config['username']}", $env);
-            $env = preg_replace('/(?:# )?DB_PASSWORD=.*/', "DB_PASSWORD={$config['password']}", $env);
+            // Update database connection settings for MySQL/PostgreSQL
+            $env = preg_replace('/^# ?DB_CONNECTION=.*/m', "DB_CONNECTION={$config['type']}", $env);
+            $env = preg_replace('/^# ?DB_HOST=.*/m', "DB_HOST={$config['host']}", $env);
+            $env = preg_replace('/^# ?DB_PORT=.*/m', "DB_PORT={$config['port']}", $env);
+            $env = preg_replace('/^# ?DB_DATABASE=.*/m', "DB_DATABASE={$config['database']}", $env);
+            $env = preg_replace('/^# ?DB_USERNAME=.*/m', "DB_USERNAME={$config['username']}", $env);
+            $env = preg_replace('/^# ?DB_PASSWORD=.*/m', "DB_PASSWORD={$config['password']}", $env);
+            
+            $this->info("✅ Environment configured for {$config['type']}");
         }
 
         return $env;
@@ -341,7 +353,7 @@ class Thorium90Setup extends Command
         // Clear configuration cache first  
         $this->call('config:clear');
         
-        // Parse the .env file to get new DB_CONNECTION before clearing cache
+        // Parse the .env file to get new DB_CONNECTION and DB_DATABASE
         $envPath = base_path('.env');
         if (File::exists($envPath)) {
             $env = File::get($envPath);
@@ -351,6 +363,16 @@ class Thorium90Setup extends Command
                 // Update environment variables in memory
                 $_ENV['DB_CONNECTION'] = $dbConnection;
                 putenv("DB_CONNECTION={$dbConnection}");
+                
+                // Also update DB_DATABASE if SQLite
+                if ($dbConnection === 'sqlite') {
+                    if (preg_match('/^DB_DATABASE=(.*)$/m', $env, $dbMatches)) {
+                        $dbPath = trim($dbMatches[1]);
+                        $_ENV['DB_DATABASE'] = $dbPath;
+                        putenv("DB_DATABASE={$dbPath}");
+                        $this->info("SQLite database path set to: {$dbPath}");
+                    }
+                }
                 
                 // Update Laravel's runtime configuration
                 config(['database.default' => $dbConnection]);
@@ -414,6 +436,20 @@ class Thorium90Setup extends Command
             $driver = config('database.default');
             $this->info("📊 Using database driver: {$driver}");
             
+            // For SQLite, ensure database file exists and is writable
+            if ($driver === 'sqlite') {
+                $dbPath = config('database.connections.sqlite.database');
+                if (!File::exists($dbPath)) {
+                    $this->error("❌ SQLite database file not found: {$dbPath}");
+                    throw new Exception('SQLite database file does not exist');
+                }
+                if (!is_writable($dbPath)) {
+                    $this->error("❌ SQLite database file is not writable: {$dbPath}");
+                    throw new Exception('SQLite database file is not writable');
+                }
+                $this->info("✅ SQLite database verified: {$dbPath}");
+            }
+            
             // Validate database configuration first
             $service = new DatabaseConfigurationService();
             $validation = $service->validateConfiguration();
@@ -433,11 +469,16 @@ class Thorium90Setup extends Command
                 }
             }
 
+            $this->info('🔄 Running migrations...');
             $this->call('migrate', ['--force' => true]);
+            
+            $this->info('🌱 Running seeders...');
             $this->call('db:seed', ['--class' => 'PermissionSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'RoleSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'RolePermissionSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'Thorium90DefaultPagesSeeder', '--force' => true]);
+            
+            $this->info('✅ Database setup completed successfully');
             
         } catch (Exception $e) {
             $this->error('❌ Migration failed: ' . $e->getMessage());
@@ -614,10 +655,30 @@ php artisan thorium90:rebrand     # Update branding
         
         // Create database file if it doesn't exist
         if (!File::exists($databasePath)) {
-            File::put($databasePath, '');
-            $this->info("✅ Created SQLite database: {$databasePath}");
+            try {
+                File::put($databasePath, '');
+                
+                // Verify the file was created and is writable
+                if (File::exists($databasePath) && is_writable($databasePath)) {
+                    $this->info("✅ Created SQLite database: {$databasePath}");
+                } else {
+                    throw new Exception("Database file created but not writable");
+                }
+            } catch (Exception $e) {
+                $this->error("❌ Failed to create SQLite database: " . $e->getMessage());
+                throw $e;
+            }
         } else {
-            $this->info("✅ SQLite database already exists: {$databasePath}");
+            // Verify existing database is writable
+            if (is_writable($databasePath)) {
+                $this->info("✅ SQLite database already exists: {$databasePath}");
+            } else {
+                $this->warn("⚠️  SQLite database exists but is not writable: {$databasePath}");
+                $this->line("Please check file permissions.");
+            }
         }
+        
+        // Display full path for clarity
+        $this->line("Database location: " . realpath($databasePath));
     }
 }
