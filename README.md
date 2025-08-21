@@ -18,9 +18,16 @@ Built with [Thorium90 Framework](https://github.com/travissutphin/thorium90)
 ### Interactive Setup (Recommended)
 ```bash
 # Clone and install
-git clone https://github.com/travissutphin/thorium90.git
-cd thorium90
-composer install && npm install
+git clone https://github.com/travissutphin/thorium90.git [project name]
+
+# Change directory
+cd [project name]
+
+# Install composer
+composer install
+
+# Install Node
+npm install
 
 # Run setup wizard
 php artisan thorium90:setup --interactive
@@ -29,9 +36,10 @@ php artisan thorium90:setup --interactive
 ### Manual Setup
 ```bash
 # Clone and install
-git clone https://github.com/travissutphin/thorium90.git
-cd thorium90
-composer install && npm install
+git clone https://github.com/travissutphin/thorium90.git [project name]
+cd [project name]
+composer install 
+npm install
 
 # Environment setup
 cp .env.example .env

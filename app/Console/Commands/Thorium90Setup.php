@@ -110,13 +110,15 @@ class Thorium90Setup extends Command
         $this->line('Choose your database type for this project.');
         $this->newLine();
 
+        // Display options with descriptions
+        $this->line('  <info>mysql</info>: MySQL (Recommended for production)');
+        $this->line('  <info>sqlite</info>: SQLite (Quick setup for development)');
+        $this->line('  <info>pgsql</info>: PostgreSQL (Advanced features)');
+        $this->newLine();
+
         $databaseType = $this->choice(
             'Which database would you like to use?',
-            [
-                'mysql' => 'MySQL (Recommended for production)',
-                'sqlite' => 'SQLite (Quick setup for development)',
-                'pgsql' => 'PostgreSQL (Advanced features)'
-            ],
+            ['mysql', 'sqlite', 'pgsql'],
             'mysql'
         );
 
@@ -125,6 +127,10 @@ class Thorium90Setup extends Command
             if (!$this->confirm('Continue with SQLite?', true)) {
                 return $this->setupDatabase(); // Ask again
             }
+            
+            // Ensure SQLite database file exists
+            $this->ensureSQLiteDatabase();
+            
             return ['type' => 'sqlite'];
         }
 
@@ -305,10 +311,12 @@ class Thorium90Setup extends Command
             // Update DB_CONNECTION to sqlite
             $env = preg_replace('/^DB_CONNECTION=.*/m', 'DB_CONNECTION=sqlite', $env);
             
-            // Comment out MySQL/PostgreSQL settings
+            // Set SQLite database path
+            $env = preg_replace('/^(?:# )?DB_DATABASE=.*/m', 'DB_DATABASE=database/database.sqlite', $env);
+            
+            // Comment out MySQL/PostgreSQL settings that don't apply to SQLite
             $env = preg_replace('/^DB_HOST=.*/m', '# DB_HOST=127.0.0.1', $env);
             $env = preg_replace('/^DB_PORT=.*/m', '# DB_PORT=3306', $env);
-            $env = preg_replace('/^DB_DATABASE=.*/m', '# DB_DATABASE=thorium90', $env);
             $env = preg_replace('/^DB_USERNAME=.*/m', '# DB_USERNAME=root', $env);
             $env = preg_replace('/^DB_PASSWORD=.*/m', '# DB_PASSWORD=', $env);
             
@@ -586,5 +594,30 @@ php artisan thorium90:rebrand     # Update branding
 ---
 *Need help? Check the [Thorium90 Documentation](https://thorium90.com/docs)*
 ";
+    }
+
+    /**
+     * Ensure SQLite database file exists
+     */
+    protected function ensureSQLiteDatabase()
+    {
+        $this->line('🗄️  Setting up SQLite database...');
+        
+        $databasePath = database_path('database.sqlite');
+        $databaseDir = dirname($databasePath);
+        
+        // Ensure database directory exists
+        if (!File::exists($databaseDir)) {
+            File::makeDirectory($databaseDir, 0755, true);
+            $this->info("✅ Created database directory: {$databaseDir}");
+        }
+        
+        // Create database file if it doesn't exist
+        if (!File::exists($databasePath)) {
+            File::put($databasePath, '');
+            $this->info("✅ Created SQLite database: {$databasePath}");
+        } else {
+            $this->info("✅ SQLite database already exists: {$databasePath}");
+        }
     }
 }

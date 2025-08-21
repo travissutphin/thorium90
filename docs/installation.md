@@ -41,37 +41,59 @@ composer install
 npm install
 ```
 
-### 4. Environment Configuration
+### 4. Setup Options
+
+Choose your preferred setup method:
+
+#### Option A: Interactive Setup (Recommended)
+Run the interactive setup wizard for guided configuration:
+
+```bash
+php artisan thorium90:setup --interactive
+```
+
+The wizard will walk you through:
+- Database selection (MySQL, SQLite, or PostgreSQL)
+- Database configuration and testing
+- Admin user creation
+- Project settings
+- Feature selection
+
+#### Option B: Manual Setup
+
+##### Environment Configuration
 
 Choose the appropriate environment configuration:
 
-#### For Development
+**For Development:**
 ```bash
 cp .env.example .env
 ```
 
-#### For Testing
+**For Testing:**
 ```bash
 cp .env.testing.example .env.testing
 ```
 
-#### For Production
+**For Production:**
 ```bash
 cp .env.production.example .env
 ```
 
-### 5. Generate Application Key
+##### Generate Application Key
 
 ```bash
 php artisan key:generate
 ```
 
-### 6. Database Setup
+### 5. Database Setup (Manual Setup Only)
 
-#### Option A: SQLite (Development - Default)
+**Note**: Skip this section if you used the interactive setup wizard.
+
+#### SQLite (Development - Default)
 No additional setup required. The database file will be created automatically.
 
-#### Option B: MySQL/PostgreSQL
+#### MySQL/PostgreSQL
 1. Create a new database:
 ```sql
 CREATE DATABASE thorium90_dev;
@@ -87,13 +109,17 @@ DB_USERNAME=your_username
 DB_PASSWORD=your_password
 ```
 
-### 7. Run Database Migrations
+### 6. Run Database Migrations (Manual Setup Only)
+
+**Note**: Skip this section if you used the interactive setup wizard.
 
 ```bash
 php artisan migrate
 ```
 
-### 8. Seed the Database
+### 7. Seed the Database (Manual Setup Only)
+
+**Note**: Skip this section if you used the interactive setup wizard.
 
 ```bash
 php artisan db:seed
@@ -106,7 +132,7 @@ This will create:
 - Default settings
 - Sample content (optional)
 
-### 9. Build Frontend Assets
+### 8. Build Frontend Assets
 
 #### For Development
 ```bash
@@ -118,7 +144,7 @@ npm run dev
 npm run build
 ```
 
-### 10. Start the Development Server
+### 9. Start the Development Server
 
 ```bash
 php artisan serve
@@ -128,7 +154,9 @@ The application will be available at `http://localhost:8000`
 
 ## Post-Installation Setup
 
-### 1. Create Your First Admin User
+### 1. Create Your First Admin User (Manual Setup Only)
+
+**Note**: Skip this if you used the interactive setup wizard, which creates the admin user automatically.
 
 ```bash
 php artisan tinker
