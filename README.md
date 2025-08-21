@@ -1,6 +1,6 @@
 # Thorium90 - Laravel 12 Rapid Development Framework
 
-![Thorium90 Logo](public/images/logo/header.png)
+![Thorium90 Logo](public/images/logos/header.png)
 
 ## Overview
 
