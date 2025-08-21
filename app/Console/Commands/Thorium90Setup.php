@@ -299,9 +299,11 @@ class Thorium90Setup extends Command
     protected function updateDatabaseEnvironment($env, $config)
     {
         $this->line('🔧 Configuring database environment...');
+        $this->info("Selected database type: {$config['type']}");
 
         if ($config['type'] === 'sqlite') {
-            $env = preg_replace('/DB_CONNECTION=.*/', 'DB_CONNECTION=sqlite', $env);
+            // Update DB_CONNECTION to sqlite
+            $env = preg_replace('/^DB_CONNECTION=.*/m', 'DB_CONNECTION=sqlite', $env);
             
             // Comment out MySQL/PostgreSQL settings
             $env = preg_replace('/^DB_HOST=.*/m', '# DB_HOST=127.0.0.1', $env);
@@ -309,6 +311,8 @@ class Thorium90Setup extends Command
             $env = preg_replace('/^DB_DATABASE=.*/m', '# DB_DATABASE=thorium90', $env);
             $env = preg_replace('/^DB_USERNAME=.*/m', '# DB_USERNAME=root', $env);
             $env = preg_replace('/^DB_PASSWORD=.*/m', '# DB_PASSWORD=', $env);
+            
+            $this->info('✅ Environment configured for SQLite');
         } else {
             // Update database connection settings
             $env = preg_replace('/DB_CONNECTION=.*/', "DB_CONNECTION={$config['type']}", $env);
@@ -326,24 +330,43 @@ class Thorium90Setup extends Command
     {
         $this->line('🔄 Refreshing database configuration...');
         
-        // Clear configuration cache
+        // Clear all Laravel caches first
         $this->call('config:clear');
+        $this->call('cache:clear');
         
-        // Get the updated DB_CONNECTION from the .env file
+        // Force reload environment variables
         $envPath = base_path('.env');
         if (File::exists($envPath)) {
+            // Parse the .env file manually to get DB_CONNECTION
             $env = File::get($envPath);
             if (preg_match('/^DB_CONNECTION=(.*)$/m', $env, $matches)) {
                 $dbConnection = trim($matches[1]);
                 
-                // Update runtime configuration
+                // Update environment variables in memory
+                $_ENV['DB_CONNECTION'] = $dbConnection;
+                putenv("DB_CONNECTION={$dbConnection}");
+                
+                // Update Laravel's runtime configuration
                 config(['database.default' => $dbConnection]);
                 
-                // Purge any existing database connections
+                // Completely purge database manager and connections
+                app()->forgetInstance('db');
                 app('db')->purge();
                 
                 $this->info("✅ Database configuration refreshed to: {$dbConnection}");
+                
+                // Verify the change took effect
+                $currentDriver = config('database.default');
+                if ($currentDriver !== $dbConnection) {
+                    $this->warn("⚠️  Runtime config still shows: {$currentDriver}");
+                    // Force set it again
+                    app('config')->set('database.default', $dbConnection);
+                }
+            } else {
+                $this->error("❌ Could not find DB_CONNECTION in .env file");
             }
+        } else {
+            $this->error("❌ .env file not found");
         }
     }
 
