@@ -20,7 +20,8 @@
       "Bash(git add:*)",
       "Bash(git merge:*)",
       "Bash(git push:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
