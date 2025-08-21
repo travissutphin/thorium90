@@ -330,14 +330,12 @@ class Thorium90Setup extends Command
     {
         $this->line('🔄 Refreshing database configuration...');
         
-        // Clear all Laravel caches first
+        // Clear configuration cache first  
         $this->call('config:clear');
-        $this->call('cache:clear');
         
-        // Force reload environment variables
+        // Parse the .env file to get new DB_CONNECTION before clearing cache
         $envPath = base_path('.env');
         if (File::exists($envPath)) {
-            // Parse the .env file manually to get DB_CONNECTION
             $env = File::get($envPath);
             if (preg_match('/^DB_CONNECTION=(.*)$/m', $env, $matches)) {
                 $dbConnection = trim($matches[1]);
@@ -354,6 +352,17 @@ class Thorium90Setup extends Command
                 app('db')->purge();
                 
                 $this->info("✅ Database configuration refreshed to: {$dbConnection}");
+                
+                // Only clear cache if it's not database-stored or we can safely connect
+                $cacheStore = config('cache.default');
+                if ($cacheStore !== 'database') {
+                    $this->call('cache:clear');
+                    $this->info('✅ Cache cleared');
+                } else {
+                    // For database cache during driver switch, skip cache:clear to avoid connection errors
+                    $this->warn('⚠️  Skipped cache:clear (database cache with driver switch)');
+                    $this->line('Cache will be recreated automatically as needed.');
+                }
                 
                 // Verify the change took effect
                 $currentDriver = config('database.default');
