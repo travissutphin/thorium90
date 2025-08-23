@@ -100,6 +100,7 @@ class Thorium90Setup extends Command
         
         // Force SQLite for rapid local development
         $this->line('📊 Using SQLite for local development (zero configuration)');
+        $this->ensureSQLiteDatabase();
         $databaseConfig = ['type' => 'sqlite'];
         
         // Smart defaults - no questions asked
