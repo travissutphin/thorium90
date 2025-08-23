@@ -68,6 +68,7 @@
         ],
         "post-install-cmd": [
             "@php artisan key:generate --ansi --force",
+            "@php artisan thorium90:setup --silent",
             "@npm run build"
         ],
         "dev": [
