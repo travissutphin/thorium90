@@ -7,7 +7,7 @@ This guide will walk you through setting up the Thorium90 CMS from scratch. The 
 ## Prerequisites
 
 ### System Requirements
-- **PHP**: 8.2 or higher
+- **PHP**: 8.0 or higher
 - **Node.js**: 18.0 or higher
 - **Composer**: 2.0 or higher
 - **Database**: MySQL 8.0+ or PostgreSQL 13+

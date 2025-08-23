@@ -8,7 +8,7 @@ Built with [Thorium90 Framework](https://github.com/travissutphin/thorium90)
 
 ## System Requirements
 
-- **PHP**: 8.4+
+- **PHP**: 8.0+
 - **Database**: MySQL 8.0+ (production), SQLite (development)
 - **Node.js**: 22+ with npm
 - **Composer**: 2.0+

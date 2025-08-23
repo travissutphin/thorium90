@@ -8,7 +8,7 @@
 - **Alternative**: PostgreSQL 13+
 
 ### System Requirements
-- PHP 8.4+
+- PHP 8.0+
 - Composer 2.0+
 - Node.js 22+ & npm
 
