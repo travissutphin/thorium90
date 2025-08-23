@@ -13,6 +13,7 @@ class Thorium90Setup extends Command
 {
     protected $signature = 'thorium90:setup 
                             {--interactive : Run interactive setup wizard}
+                            {--silent : Skip all questions, use smart defaults}
                             {--preset=default : Setup preset (default|ecommerce|blog|saas)}
                             {--name= : Project name}
                             {--domain= : Primary domain}
@@ -49,7 +50,9 @@ class Thorium90Setup extends Command
         $this->info('🚀 Welcome to Thorium90 Boilerplate Setup!');
         $this->newLine();
 
-        if ($this->option('interactive')) {
+        if ($this->option('silent')) {
+            $this->runSilentSetup();
+        } elseif ($this->option('interactive')) {
             $this->runInteractiveSetup();
         } else {
             $this->runQuickSetup();
@@ -88,6 +91,33 @@ class Thorium90Setup extends Command
         $preset = $this->choice('Choose a preset', array_keys($this->presets), 'default');
 
         $this->setupProject($projectName, $domain, $adminEmail, $adminPassword, $preset, $databaseConfig);
+    }
+
+    protected function runSilentSetup()
+    {
+        $this->info('⚡ Running silent setup with smart defaults...');
+        $this->newLine();
+        
+        // Force SQLite for rapid local development
+        $this->line('📊 Using SQLite for local development (zero configuration)');
+        $databaseConfig = ['type' => 'sqlite'];
+        
+        // Smart defaults - no questions asked
+        $projectName = $this->option('name') ?: basename(getcwd());
+        $domain = $this->option('domain') ?: '';
+        $adminEmail = $this->option('admin-email') ?: 'admin@example.com';
+        $adminPassword = $this->option('admin-password') ?: 'password';
+        $preset = $this->option('preset') ?: 'default';
+        
+        $this->info("📝 Project: {$projectName}");
+        $this->info("👤 Admin: {$adminEmail}");
+        $this->info("🎯 Preset: {$preset}");
+        $this->newLine();
+        
+        $this->setupProject($projectName, $domain, $adminEmail, $adminPassword, $preset, $databaseConfig);
+        
+        $this->info('🎉 Silent setup completed! Perfect for rapid development.');
+        $this->warn('💡 Tip: Use this for local dev, deploy to Laravel Cloud for production MySQL.');
     }
 
     protected function runQuickSetup()

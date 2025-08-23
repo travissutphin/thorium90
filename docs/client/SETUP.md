@@ -8,13 +8,13 @@
 - **Alternative**: PostgreSQL 13+
 
 ### System Requirements
-- PHP 8.2+
+- PHP 8.4+
 - Composer 2.0+
-- Node.js 18+ & npm
+- Node.js 22+ & npm
 
 ## Installation Methods
 
-### Option 1: Interactive Setup (Recommended)
+### Option 1: Silent Setup (Fastest - Recommended for Local Dev)
 ```bash
 # Clone repository
 git clone https://github.com/travissutphin/thorium90.git
@@ -24,6 +24,19 @@ cd thorium90
 composer install
 npm install
 
+# Silent setup (SQLite auto-configured, 30 seconds)
+php artisan thorium90:setup --silent
+```
+
+**What silent setup does:**
+- Forces SQLite database (zero configuration)
+- Uses project folder name as project name
+- Creates admin user: `admin@example.com` / `password`
+- Runs migrations and seeders automatically
+- Perfect for rapid local development
+
+### Option 2: Interactive Setup (Customizable)
+```bash
 # Run interactive setup wizard
 php artisan thorium90:setup --interactive
 ```
@@ -35,7 +48,7 @@ The setup wizard will guide you through:
 4. **Admin User Creation**: Credentials for admin access
 5. **Feature Selection**: Enable/disable modules
 
-### Option 2: Manual Setup
+### Option 3: Manual Setup
 
 #### 1. Clone and Environment Configuration
 ```bash
@@ -125,9 +138,11 @@ npm run build
 ## Available Artisan Commands
 
 ```bash
-php artisan thorium90:setup       # Re-run setup
-php artisan thorium90:docs        # Generate documentation
-php artisan thorium90:rebrand     # Update branding
+php artisan thorium90:setup --silent      # Silent setup (SQLite, smart defaults)
+php artisan thorium90:setup --interactive # Interactive setup wizard
+php artisan thorium90:setup               # Quick setup with defaults
+php artisan thorium90:docs                # Generate documentation
+php artisan thorium90:rebrand             # Update branding
 ```
 
 ---

@@ -8,14 +8,14 @@ Built with [Thorium90 Framework](https://github.com/travissutphin/thorium90)
 
 ## System Requirements
 
-- **PHP**: 8.2+
+- **PHP**: 8.4+
 - **Database**: MySQL 8.0+ (production), SQLite (development)
-- **Node.js**: 18+ with npm
+- **Node.js**: 22+ with npm
 - **Composer**: 2.0+
 
 ## Quick Start
 
-### Interactive Setup (Recommended)
+### Silent Setup (Fastest - Recommended for Local Dev)
 ```bash
 # Clone and install
 git clone https://github.com/travissutphin/thorium90.git [project name]
@@ -23,13 +23,17 @@ git clone https://github.com/travissutphin/thorium90.git [project name]
 # Change directory
 cd [project name]
 
-# Install composer
+# Install dependencies
 composer install
-
-# Install Node
 npm install
 
-# Run setup wizard
+# Silent setup (30 seconds, SQLite auto-configured)
+php artisan thorium90:setup --silent
+```
+
+### Interactive Setup (ALPAH not stable - Customizable)
+```bash
+# Run setup wizard with options
 php artisan thorium90:setup --interactive
 ```
 
