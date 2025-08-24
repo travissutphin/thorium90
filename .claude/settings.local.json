@@ -22,7 +22,17 @@
       "Bash(git push:*)",
       "Bash(git branch:*)",
       "Bash(git pull:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "WebFetch(domain:cloud.laravel.com)",
+      "Read(/C:\\xampp\\htdocs\\thorium90/**)",
+      "Bash(composer check-platform-reqs:*)",
+      "Bash(composer update:*)",
+      "Bash(composer install:*)",
+      "Bash(tasklist:*)",
+      "Read(/C:\\xampp\\htdocs\\thorium90\\app\\Console\\Commands/**)",
+      "Read(/C:\\xampp\\htdocs\\thorium90\\config/**)",
+      "Read(/C:\\xampp\\htdocs\\thorium90/**)"
     ],
     "deny": [],
     "ask": []

@@ -29,15 +29,26 @@ npm install
 
 # Silent setup (30 seconds, SQLite auto-configured)
 php artisan thorium90:setup --silent
+
+# Run Build and Dev
+npm run build
+
+npm run Dev
+
+# Start the local server
+php artisan serve --port=8000
+
+**Default Admin Users Created:**
+- **Admin**: `admin@example.com` / `password`
 ```
 
-### Interactive Setup (ALPAH not stable - Customizable)
+### Interactive Setup ( in ALPAH phase - not stable )
 ```bash
 # Run setup wizard with options
 php artisan thorium90:setup --interactive
 ```
 
-### Manual Setup
+### Manual Setup (in ALPAH phase - not stable )
 ```bash
 # Clone and install
 git clone https://github.com/travissutphin/thorium90.git [project name]
