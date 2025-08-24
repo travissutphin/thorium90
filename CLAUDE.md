@@ -1,6 +1,8 @@
 # Project Instructions for Claude
 
-- Start each reply with the Claude Model in use and display in the terminal
+- *Important* Always Start each reply with the Claude Model in use and display in the terminal
+- Always ensure we are following best practices as laid out in this file
+- Always suggest changes based on best practices even for existing code
 
 ## Core Development Standards
 - Always reference documentation within `/docs/` when coding to adhere to standards
