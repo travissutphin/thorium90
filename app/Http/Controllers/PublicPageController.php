@@ -16,7 +16,7 @@ class PublicPageController extends Controller
         
         // Fallback to default content if no home page exists
         if (!$page) {
-            $page = (object) [
+            $page = new Page([
                 'title' => 'Content Management Redefined',
                 'excerpt' => 'Experience the power of AI-driven content management with human verification. Build, manage, and scale your digital presence with confidence.',
                 'meta_title' => 'Thorium90 - Content Management Redefined',
@@ -41,7 +41,13 @@ class PublicPageController extends Controller
                         'cta'
                     ]
                 ],
-            ];
+            ]);
+            
+            // Set computed properties that aren't fillable
+            $page->id = 0;
+            $page->exists = false;
+            $page->created_at = now();
+            $page->updated_at = now();
         } else {
             $page->load('user');
         }
