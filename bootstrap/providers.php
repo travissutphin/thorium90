@@ -4,4 +4,5 @@ return [
     App\Providers\AppServiceProvider::class,
     Laravel\Fortify\FortifyServiceProvider::class,
     App\Providers\PluginServiceProvider::class,
+    App\Features\Blog\Providers\BlogServiceProvider::class,
 ];
