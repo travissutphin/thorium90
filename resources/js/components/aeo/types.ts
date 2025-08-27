@@ -5,11 +5,10 @@
  * following the existing schema.org and component patterns in the application.
  */
 
-export interface FAQItem {
-    id: string;
-    question: string;
-    answer: string;
-}
+import { FAQItem } from '@/types';
+
+// Re-export FAQItem for AEO components
+export type { FAQItem };
 
 export interface AEOData {
     topics: string[];

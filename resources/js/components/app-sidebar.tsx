@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Settings, FileText, Image, Shield } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Settings, FileText, Image, Shield, PenTool } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const footerNavItems: NavItem[] = [
@@ -48,6 +48,16 @@ export function AppSidebar() {
                 icon: FileText,
                 permission: 'view pages',
             });
+
+            // Blog section - only show if blog feature is enabled and user has blog permissions
+            if (userPermissions.some(perm => perm.startsWith('blog.'))) {
+                items.push({
+                    title: 'Blog',
+                    href: '/admin/blog/posts',
+                    icon: PenTool,
+                    permission: 'blog.posts.view',
+                });
+            }
 
             if (userPermissions.includes('upload media')) {
                 items.push({

@@ -52,6 +52,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Schema Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure available schema types for blog posts. This affects the
+    | admin interface dropdown and validation rules.
+    |
+    */
+    'schema' => [
+        'available_types' => [
+            'BlogPosting' => 'Blog Post (Default)',
+            'Article' => 'Article', 
+            'NewsArticle' => 'News Article',
+            'Review' => 'Review',
+            'HowTo' => 'How-To Guide',
+            'FAQPage' => 'FAQ Page',
+        ],
+        'default_type' => 'BlogPosting',
+        'descriptions' => [
+            'BlogPosting' => 'Standard blog content with author, date, and engagement metrics',
+            'Article' => 'Editorial content like journalism, research, or in-depth analysis',
+            'NewsArticle' => 'Time-sensitive news content with journalistic standards',
+            'Review' => 'Product, service, or media reviews with ratings and opinions',
+            'HowTo' => 'Step-by-step tutorials and instructional content',
+            'FAQPage' => 'Question and answer format content',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Blog Permissions
     |--------------------------------------------------------------------------
     |

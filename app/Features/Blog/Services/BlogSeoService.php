@@ -88,7 +88,7 @@ class BlogSeoService
         $breadcrumbs = [
             [
                 'title' => 'Home',
-                'url' => route('home'),
+                'url' => route('home.show'),
             ],
             [
                 'title' => 'Blog',
@@ -292,5 +292,211 @@ class BlogSeoService
         }
 
         return $suggestions;
+    }
+
+    /**
+     * Generate enhanced schema data for a specific blog post.
+     */
+    public function generatePostSchema(BlogPost $post, array $context = []): array
+    {
+        // Get the base schema from the post model
+        $baseSchema = $post->schema_data ?? [];
+        
+        // Enhance with contextual information
+        $enhancedSchema = array_merge($baseSchema, [
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => $post->url,
+            ],
+            'headline' => $post->title,
+            'description' => $post->meta_description ?? $post->excerpt,
+            'url' => $post->url,
+            'datePublished' => $post->published_at?->toISOString(),
+            'dateModified' => $post->updated_at->toISOString(),
+            'wordCount' => str_word_count(strip_tags($post->content ?? '')),
+            'inLanguage' => config('app.locale', 'en'),
+            'isAccessibleForFree' => true,
+        ]);
+
+        // Enhanced author information
+        if ($post->user) {
+            $enhancedSchema['author'] = [
+                '@type' => 'Person',
+                'name' => $post->user->name,
+                'url' => $post->user->website ?? config('app.url'),
+            ];
+            
+            if ($post->user->bio) {
+                $enhancedSchema['author']['description'] = $post->user->bio;
+            }
+        }
+
+        // Enhanced publisher information
+        $enhancedSchema['publisher'] = [
+            '@type' => 'Organization',
+            'name' => config('app.name'),
+            'url' => config('app.url'),
+        ];
+
+        // Add publisher logo if it exists
+        if (file_exists(public_path('images/logo.png'))) {
+            $enhancedSchema['publisher']['logo'] = [
+                '@type' => 'ImageObject',
+                'url' => asset('images/logo.png'),
+                'width' => 600,
+                'height' => 60,
+            ];
+        }
+
+        // Blog category as articleSection and genre
+        if ($post->blogCategory) {
+            $enhancedSchema['articleSection'] = $post->blogCategory->name;
+            $enhancedSchema['genre'] = $post->blogCategory->name;
+        }
+
+        // Blog tags as keywords and tags
+        if ($post->blogTags && $post->blogTags->count() > 0) {
+            $tagNames = $post->blogTags->pluck('name')->toArray();
+            $enhancedSchema['keywords'] = implode(', ', $tagNames);
+            $enhancedSchema['tags'] = $tagNames;
+        }
+
+        // Reading time
+        if ($post->reading_time) {
+            $enhancedSchema['timeRequired'] = "PT{$post->reading_time}M";
+        }
+
+        // Enhanced featured image with dimensions
+        if ($post->featured_image) {
+            $imagePath = public_path('storage/' . $post->featured_image);
+            $imageInfo = file_exists($imagePath) ? getimagesize($imagePath) : null;
+            
+            $enhancedSchema['image'] = [
+                '@type' => 'ImageObject',
+                'url' => asset('storage/' . $post->featured_image),
+                'description' => $post->featured_image_alt ?? $post->title,
+            ];
+            
+            if ($imageInfo) {
+                $enhancedSchema['image']['width'] = $imageInfo[0];
+                $enhancedSchema['image']['height'] = $imageInfo[1];
+            }
+        }
+
+        // View count interaction statistics
+        if (config('blog.features.view_counts') && $post->view_count) {
+            $enhancedSchema['interactionStatistic'] = [
+                '@type' => 'InteractionCounter',
+                'interactionType' => 'https://schema.org/ViewAction',
+                'userInteractionCount' => $post->view_count,
+            ];
+        }
+
+        // Comments if available
+        if (isset($context['comments']) && $context['comments']->count() > 0) {
+            $enhancedSchema['commentCount'] = $context['comments']->count();
+            
+            // Add comment schema for first few comments
+            $topComments = $context['comments']->take(3);
+            $enhancedSchema['comment'] = $topComments->map(function ($comment) {
+                return [
+                    '@type' => 'Comment',
+                    'text' => strip_tags($comment->content),
+                    'dateCreated' => $comment->created_at->toISOString(),
+                    'author' => [
+                        '@type' => 'Person',
+                        'name' => $comment->user->name ?? $comment->author_name,
+                    ],
+                ];
+            })->toArray();
+        }
+
+        // Related articles (enhances discoverability)
+        if (isset($context['relatedPosts']) && $context['relatedPosts']->count() > 0) {
+            $enhancedSchema['relatedLink'] = $context['relatedPosts']->map(function ($relatedPost) {
+                return $relatedPost->url;
+            })->toArray();
+        }
+
+        return $enhancedSchema;
+    }
+
+    /**
+     * Generate breadcrumb schema markup.
+     */
+    public function generateBreadcrumbSchema(array $breadcrumbs): array
+    {
+        $breadcrumbItems = [];
+        
+        foreach ($breadcrumbs as $index => $breadcrumb) {
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'name' => $breadcrumb['title'],
+                'item' => $breadcrumb['url'] ?? $breadcrumb['href'],
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $breadcrumbItems,
+        ];
+    }
+
+    /**
+     * Generate FAQ schema for blog posts with FAQ content.
+     */
+    public function generateFaqSchema(array $faqItems): array
+    {
+        $faqEntities = array_map(function ($item) {
+            return [
+                '@type' => 'Question',
+                'name' => $item['question'],
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $item['answer'],
+                ],
+            ];
+        }, $faqItems);
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => $faqEntities,
+        ];
+    }
+
+    /**
+     * Generate HowTo schema for tutorial blog posts.
+     */
+    public function generateHowToSchema(string $name, array $steps, ?string $description = null): array
+    {
+        $howToSteps = array_map(function ($step, $index) {
+            return [
+                '@type' => 'HowToStep',
+                'position' => $index + 1,
+                'name' => $step['name'],
+                'text' => $step['text'],
+                'image' => $step['image'] ?? null,
+            ];
+        }, $steps, array_keys($steps));
+
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'HowTo',
+            'name' => $name,
+            'step' => array_filter($howToSteps, function ($step) {
+                return !empty($step['name']) && !empty($step['text']);
+            }),
+        ];
+
+        if ($description) {
+            $schema['description'] = $description;
+        }
+
+        return $schema;
     }
 }

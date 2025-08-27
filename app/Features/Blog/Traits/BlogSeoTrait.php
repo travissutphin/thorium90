@@ -66,6 +66,11 @@ trait BlogSeoTrait
      */
     public function getUrlAttribute(): string
     {
+        // Return a default URL if slug is not set (for new models)
+        if (empty($this->slug)) {
+            return config('app.url') . '/blog';
+        }
+        
         if (isset($this->blog_post_id)) {
             // This is for comments or other related models
             return route('blog.posts.show', $this->blogPost->slug);
@@ -74,12 +79,17 @@ trait BlogSeoTrait
         // For posts, categories, tags
         $routeName = match (class_basename($this)) {
             'BlogPost' => 'blog.posts.show',
-            'BlogCategory' => 'blog.categories.show',
+            'BlogCategory' => 'blog.categories.show', 
             'BlogTag' => 'blog.tags.show',
             default => 'blog.posts.show'
         };
         
-        return route($routeName, $this->slug);
+        try {
+            return route($routeName, $this->slug);
+        } catch (\Exception $e) {
+            // Fallback URL if route generation fails
+            return config('app.url') . '/blog/' . $this->slug;
+        }
     }
 
     /**
@@ -153,23 +163,47 @@ trait BlogSeoTrait
         $schema['datePublished'] = $this->published_at?->toISOString();
         $schema['dateModified'] = $this->updated_at->toISOString();
         
-        // Author information
+        // Main entity of page (best practice for BlogPosting)
+        $schema['mainEntityOfPage'] = [
+            '@type' => 'WebPage',
+            '@id' => $this->url,
+        ];
+        
+        // Enhanced author information
         if (isset($this->user)) {
             $schema['author'] = [
                 '@type' => 'Person',
                 'name' => $this->user->name,
+                'url' => config('app.url'),
             ];
+            
+            // Add author bio if available
+            if (isset($this->user->bio)) {
+                $schema['author']['description'] = $this->user->bio;
+            }
         }
         
-        // Publisher information
+        // Enhanced publisher information with logo
         $schema['publisher'] = [
             '@type' => 'Organization',
             'name' => config('app.name'),
             'url' => config('app.url'),
         ];
+        
+        // Add publisher logo if available
+        $logoPath = public_path('images/logo.png');
+        if (file_exists($logoPath)) {
+            $schema['publisher']['logo'] = [
+                '@type' => 'ImageObject',
+                'url' => asset('images/logo.png'),
+                'width' => 600,
+                'height' => 60,
+            ];
+        }
 
-        // Blog-specific enhancements
-        if ($this->schema_type === 'BlogPosting' || $this->schema_type === 'Article') {
+        // Content-based schema enhancements (applies to all content types)
+        $contentBasedTypes = ['BlogPosting', 'Article', 'NewsArticle', 'Review', 'HowTo'];
+        if (in_array($this->schema_type, $contentBasedTypes)) {
             if (!isset($schema['headline'])) {
                 $schema['headline'] = $this->title;
             }
@@ -180,18 +214,31 @@ trait BlogSeoTrait
             // Word count for content analysis
             $schema['wordCount'] = str_word_count(strip_tags($this->content ?? ''));
             
-            // Blog category
+            // Blog category as articleSection
             if (isset($this->blogCategory)) {
                 $schema['articleSection'] = $this->blogCategory->name;
+                
+                // Add genre based on category
+                $schema['genre'] = $this->blogCategory->name;
             }
             
-            // Reading time
+            // Blog tags as keywords and tags array
+            if (isset($this->blogTags) && $this->blogTags->count() > 0) {
+                $tagNames = $this->blogTags->pluck('name')->toArray();
+                $schema['keywords'] = implode(', ', $tagNames);
+                $schema['tags'] = $tagNames;
+            }
+            
+            // Reading time in ISO duration format
             if ($this->reading_time) {
                 $schema['timeRequired'] = "PT{$this->reading_time}M";
             }
+            
+            // Content language
+            $schema['inLanguage'] = config('app.locale', 'en');
         }
 
-        // Keywords and topics
+        // Enhanced keywords and topics
         if (!isset($schema['keywords']) && $this->keywords) {
             $schema['keywords'] = is_array($this->keywords) ? implode(', ', $this->keywords) : $this->keywords;
         }
@@ -205,22 +252,43 @@ trait BlogSeoTrait
             }, $this->topics);
         }
 
-        // Featured image
+        // Enhanced featured image with dimensions
         if (!empty($this->featured_image)) {
+            $imagePath = public_path('storage/' . $this->featured_image);
+            $imageInfo = file_exists($imagePath) ? getimagesize($imagePath) : null;
+            
             $schema['image'] = [
                 '@type' => 'ImageObject',
                 'url' => asset('storage/' . $this->featured_image),
                 'description' => $this->featured_image_alt ?? $this->title,
             ];
+            
+            // Add image dimensions if available
+            if ($imageInfo) {
+                $schema['image']['width'] = $imageInfo[0];
+                $schema['image']['height'] = $imageInfo[1];
+            }
         }
 
         // Engagement metrics (if enabled)
-        if (config('blog.features.view_counts')) {
+        if (config('blog.features.view_counts') && $this->view_count) {
             $schema['interactionStatistic'] = [
                 '@type' => 'InteractionCounter',
                 'interactionType' => 'https://schema.org/ViewAction',
-                'userInteractionCount' => $this->view_count ?? 0,
+                'userInteractionCount' => $this->view_count,
             ];
+        }
+        
+        // Content tier for premium content detection
+        if (isset($this->is_premium) && $this->is_premium) {
+            $schema['isAccessibleForFree'] = false;
+        } else {
+            $schema['isAccessibleForFree'] = true;
+        }
+
+        // Content rating if available
+        if (config('blog.features.content_rating') && isset($this->content_rating)) {
+            $schema['contentRating'] = $this->content_rating;
         }
 
         return $schema;

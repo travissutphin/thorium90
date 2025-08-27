@@ -90,6 +90,20 @@ trait WithRoles
             'view comments',
             'moderate comments',
             'delete comments',
+            
+            // Blog Management (Phase 2)
+            'blog.posts.view',
+            'blog.posts.create', 
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.categories.create',
+            'blog.categories.edit', 
+            'blog.categories.delete',
+            'blog.tags.view',
+            'blog.tags.create',
+            'blog.tags.edit',
+            'blog.tags.delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -147,6 +161,18 @@ trait WithRoles
             'delete comments',
             'manage settings',
             'view system stats',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.categories.create',
+            'blog.categories.edit',
+            'blog.categories.delete',
+            'blog.tags.view',
+            'blog.tags.create',
+            'blog.tags.edit',
+            'blog.tags.delete',
         ];
         
         $role->syncPermissions($permissions);
@@ -172,6 +198,12 @@ trait WithRoles
             'view comments',
             'moderate comments',
             'delete comments',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.tags.view',
         ];
         
         $role->syncPermissions($permissions);
@@ -193,6 +225,11 @@ trait WithRoles
             'delete own pages',
             'upload media',
             'view comments',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.categories.view',
+            'blog.tags.view',
         ];
         
         $role->syncPermissions($permissions);

@@ -32,7 +32,16 @@
       "Bash(tasklist:*)",
       "Read(/C:\\xampp\\htdocs\\thorium90\\app\\Console\\Commands/**)",
       "Read(/C:\\xampp\\htdocs\\thorium90\\config/**)",
-      "Read(/C:\\xampp\\htdocs\\thorium90/**)"
+      "Read(/C:\\xampp\\htdocs\\thorium90/**)",
+      "Bash(.scriptstest-regression.bat)",
+      "Bash(rg:*)",
+      "Read(/C:\\Users\\travi\\Downloads/**)",
+      "Read(/C:\\Users\\travi\\Downloads/**)",
+      "Bash(scriptstest-regression.bat)",
+      "Bash(scripts/test-regression.bat)",
+      "Bash(for file in *.tsx)",
+      "Bash(do echo \"=== Checking $file ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

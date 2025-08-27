@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Features\Blog\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,32 +17,23 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['blog.enabled'])->group(function () {
     
     // Blog index and listing routes
-    Route::get('/blog', function () {
-        return response()->json(['message' => 'Blog index - Phase 1 implementation']);
-    })->name('blog.index');
+    Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
     
-    Route::get('/blog/category/{category}', function ($category) {
-        return response()->json(['message' => "Blog category: {$category}"]);
-    })->name('blog.categories.show');
+    // Blog search
+    Route::get('/blog/search', [BlogController::class, 'search'])->name('blog.search');
     
-    Route::get('/blog/tag/{tag}', function ($tag) {
-        return response()->json(['message' => "Blog tag: {$tag}"]);
-    })->name('blog.tags.show');
+    // Blog archive
+    Route::get('/blog/archive', [BlogController::class, 'archive'])->name('blog.archive');
+    Route::get('/blog/archive/{year}', [BlogController::class, 'archive'])->name('blog.archive.year');
+    Route::get('/blog/archive/{year}/{month}', [BlogController::class, 'archive'])->name('blog.archive.month');
     
-    Route::get('/blog/{post}', function ($post) {
-        return response()->json(['message' => "Blog post: {$post}"]);
-    })->name('blog.posts.show');
+    // Category and tag routes
+    Route::get('/blog/category/{category}', [BlogController::class, 'category'])->name('blog.categories.show');
+    Route::get('/blog/tag/{tag}', [BlogController::class, 'tag'])->name('blog.tags.show');
+    
+    // Newsletter subscription
+    Route::post('/blog/newsletter/subscribe', [BlogController::class, 'subscribeNewsletter'])->name('newsletter.subscribe');
+    
+    // Individual blog post (must be last to avoid conflicts)
+    Route::get('/blog/{post}', [BlogController::class, 'show'])->name('blog.posts.show');
 });
-
-/*
-|--------------------------------------------------------------------------
-| Phase 2 Routes (Coming Soon)
-|--------------------------------------------------------------------------
-|
-| These routes will be implemented in Phase 2 with proper controllers:
-| - BlogController for public blog pages
-| - BlogPostController for individual post pages
-| - BlogCategoryController for category listings
-| - BlogTagController for tag listings
-|
-*/

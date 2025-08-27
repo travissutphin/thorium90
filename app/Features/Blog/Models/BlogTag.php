@@ -2,14 +2,13 @@
 
 namespace App\Features\Blog\Models;
 
-use App\Features\Blog\Traits\BlogSeoTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class BlogTag extends Model
 {
-    use HasFactory, BlogSeoTrait;
+    use HasFactory;
 
     protected $fillable = [
         'name',
@@ -23,9 +22,6 @@ class BlogTag extends Model
         'usage_count' => 'integer',
     ];
 
-    protected $attributes = [
-        'schema_type' => 'DefinedTerm',
-    ];
 
     /**
      * Boot the model.
@@ -116,6 +112,14 @@ class BlogTag extends Model
     public function getCssColorAttribute()
     {
         return "color: {$this->color}; background-color: {$this->color}20;";
+    }
+
+    /**
+     * Get the tag's URL.
+     */
+    public function getUrlAttribute(): string
+    {
+        return route('blog.tags.show', $this->slug);
     }
 
     /**

@@ -286,6 +286,7 @@ class BlogPost extends Model
                     });
                 }
             })
+            ->with(['blogCategory', 'user', 'blogTags']) // Eager load to prevent N+1 queries
             ->orderBy('published_at', 'desc')
             ->limit($limit)
             ->get();

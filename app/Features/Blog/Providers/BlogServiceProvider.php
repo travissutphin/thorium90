@@ -67,7 +67,7 @@ class BlogServiceProvider extends ServiceProvider
             ->group(__DIR__.'/../routes/web.php');
 
         // Load admin blog routes
-        Route::middleware(['web', 'auth', 'role:Admin|Super Admin'])
+        Route::middleware(['web', 'auth', 'verified', 'role.any:Super Admin,Admin'])
             ->prefix('admin')
             ->name('admin.')
             ->namespace('App\Features\Blog\Controllers\Admin')
@@ -109,45 +109,19 @@ class BlogServiceProvider extends ServiceProvider
      */
     protected function registerPermissions()
     {
-        // Create blog permissions if they don't exist
-        $permissions = [
-            'view blog admin',
-            'create blog posts',
-            'edit blog posts',
-            'delete blog posts',
-            'publish blog posts',
-            'manage blog categories',
-            'manage blog tags',
-            'moderate blog comments',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
-        }
-
-        // Assign permissions to roles based on config
-        $this->assignPermissionsToRoles();
+        // Blog permissions are handled by the BlogPermissionSeeder
+        // This ensures consistency and proper permission management
+        // No need to create permissions here as they should be seeded
     }
 
     /**
      * Assign blog permissions to roles based on configuration.
+     * Permissions are now handled by BlogPermissionSeeder for consistency.
      */
     protected function assignPermissionsToRoles()
     {
-        $rolePermissions = config('blog.permissions', []);
-
-        foreach ($rolePermissions as $permission => $roles) {
-            $permissionModel = Permission::where('name', str_replace('_', ' ', $permission))->first();
-            
-            if ($permissionModel) {
-                foreach ($roles as $roleName) {
-                    $role = Role::where('name', $roleName)->first();
-                    if ($role && !$role->hasPermissionTo($permissionModel)) {
-                        $role->givePermissionTo($permissionModel);
-                    }
-                }
-            }
-        }
+        // Permissions assignment is now handled by BlogPermissionSeeder
+        // This ensures consistent permission management across the application
     }
 
     /**

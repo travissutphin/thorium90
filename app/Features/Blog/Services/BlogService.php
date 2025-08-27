@@ -190,20 +190,27 @@ class BlogService
     {
         $tags = config('blog.cache.tags', []);
         
-        if (empty($tags)) {
-            // Clear specific cache keys if tags not configured
+        // Check if current cache driver supports tagging
+        $supportsTags = method_exists(Cache::getStore(), 'tags');
+        
+        if (!$supportsTags || empty($tags)) {
+            // Clear specific cache keys if tags not supported or configured
             $keys = [
-                'blog.featured_posts.*',
-                'blog.popular_posts.*',
-                'blog.recent_posts.*',
+                'blog.featured_posts.5',
+                'blog.featured_posts.10',
+                'blog.popular_posts.5',
+                'blog.popular_posts.10',
+                'blog.recent_posts.5',
+                'blog.recent_posts.10',
                 'blog.active_categories',
-                'blog.popular_tags.*',
+                'blog.popular_tags.10',
+                'blog.popular_tags.20',
                 'blog.archive_data',
                 'blog.stats',
             ];
             
-            foreach ($keys as $pattern) {
-                Cache::forget($pattern);
+            foreach ($keys as $key) {
+                Cache::forget($key);
             }
         } else {
             // Clear by cache tags if supported

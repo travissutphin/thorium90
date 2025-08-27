@@ -31,4 +31,18 @@
         @endif
     </url>
     @endforeach
+
+    <!-- Blog Content -->
+    @if(isset($blogSitemapData) && count($blogSitemapData) > 0)
+        @foreach($blogSitemapData as $blogItem)
+        <url>
+            <loc>{{ $blogItem['url'] }}</loc>
+            @if(isset($blogItem['lastmod']))
+            <lastmod>{{ $blogItem['lastmod']->toAtomString() }}</lastmod>
+            @endif
+            <changefreq>{{ $blogItem['changefreq'] ?? 'weekly' }}</changefreq>
+            <priority>{{ $blogItem['priority'] ?? '0.8' }}</priority>
+        </url>
+        @endforeach
+    @endif
 </urlset>

@@ -49,12 +49,31 @@ return [
                 'headline' => 'required|string|max:110',
                 'articleBody' => 'required|string',
                 'wordCount' => 'nullable|integer|min:1',
-                'blogCategory' => 'nullable|string|max:100',
+                'articleSection' => 'nullable|string|max:100',
+                'genre' => 'nullable|string|max:100',
                 'tags' => 'nullable|array',
                 'tags.*' => 'string|max:50',
+                'timeRequired' => 'nullable|string|regex:/^PT\d+M$/',
+                'inLanguage' => 'nullable|string|size:2',
+                'isAccessibleForFree' => 'nullable|boolean',
+                'commentCount' => 'nullable|integer|min:0',
             ],
-            'required_properties' => ['headline', 'articleBody'],
-            'optional_properties' => ['wordCount', 'blogCategory', 'tags'],
+            'required_properties' => ['headline', 'articleBody', 'mainEntityOfPage'],
+            'optional_properties' => [
+                'wordCount', 'articleSection', 'genre', 'tags', 'timeRequired', 
+                'inLanguage', 'isAccessibleForFree', 'commentCount', 'interactionStatistic',
+                'comment', 'relatedLink'
+            ],
+        ],
+
+        'BreadcrumbList' => [
+            'label' => 'Breadcrumb Navigation',
+            'description' => 'Navigation breadcrumbs for page hierarchy',
+            'fields' => [
+                'itemListElement' => 'required|array',
+            ],
+            'required_properties' => ['itemListElement'],
+            'optional_properties' => [],
         ],
 
         'NewsArticle' => [

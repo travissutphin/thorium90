@@ -19,7 +19,7 @@
                 <a href="/about" class="text-gray-700 hover:text-gray-900 font-medium transition">About Us</a>
                 <a href="/our-team" class="text-gray-700 hover:text-gray-900 font-medium transition">Our Team</a>
                 <a href="/contact" class="text-gray-700 hover:text-gray-900 font-medium transition">Contact Us</a>
-				<a href="/login" class="block text-white hover:text-gray-300 font-medium">Admin</a>
+				<a href="/login" class="text-gray-700 hover:text-gray-900 font-medium transition">Admin</a>
                 <button 
                     onclick="toggleDarkMode()"
                     class="theme-toggle"
