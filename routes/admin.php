@@ -58,6 +58,18 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin'])->prefix('a
     Route::middleware('permission:view system stats')->group(function () {
         Route::get('/settings/stats', [App\Http\Controllers\Admin\AdminSettingsController::class, 'stats'])->name('settings.stats');
     });
+
+    // Media Management (Admin+ only)
+    Route::resource('media', App\Http\Controllers\Admin\MediaController::class)->except(['show'])->parameters([
+        'media' => 'media'
+    ]);
+    Route::post('/media/bulk-action', [App\Http\Controllers\Admin\MediaController::class, 'bulkAction'])->name('media.bulk-action');
+    Route::post('/media/upload-api', [App\Http\Controllers\Admin\MediaController::class, 'uploadApi'])->name('media.upload-api');
+    
+    // Media detail view with permission check
+    Route::middleware('permission:view media')->group(function () {
+        Route::get('/media/{media}', [App\Http\Controllers\Admin\MediaController::class, 'show'])->name('media.show');
+    });
 });
 
 // Content Management Routes - require content creator roles
@@ -92,12 +104,5 @@ Route::middleware(['auth', 'verified', 'role.any:Super Admin,Admin,Editor,Author
     // Slug validation API
     Route::middleware('permission:create pages')->group(function () {
         Route::post('/pages/check-slug', [App\Http\Controllers\PageController::class, 'checkSlug'])->name('pages.check-slug');
-    });
-
-    // Media Management
-    Route::middleware('permission:upload media')->group(function () {
-        Route::get('/media', function () {
-            return Inertia::render('content/media/index');
-        })->name('media.index');
     });
 });

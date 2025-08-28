@@ -82,7 +82,9 @@ trait WithRoles
             'manage permissions',
             
             // Media Management
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'delete media',
             
@@ -153,7 +155,9 @@ trait WithRoles
             'publish pages',
             'edit own pages',
             'delete own pages',
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'delete media',
             'view comments',
@@ -193,7 +197,9 @@ trait WithRoles
             'edit pages',
             'delete pages',
             'publish pages',
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'view comments',
             'moderate comments',
@@ -223,6 +229,7 @@ trait WithRoles
             'create pages',
             'edit own pages',
             'delete own pages',
+            'view media',
             'upload media',
             'view comments',
             'blog.posts.view',
