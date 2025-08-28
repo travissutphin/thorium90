@@ -380,16 +380,28 @@ class PageController extends Controller
     }
 
     /**
-     * Generate sitemap for pages.
+     * Generate sitemap for pages and blog content.
      */
     public function sitemap()
     {
         $pages = Page::published()
-                    ->select(['slug', 'updated_at', 'created_at'])
+                    ->select(['slug', 'updated_at', 'created_at', 'is_featured', 'schema_type'])
                     ->orderBy('updated_at', 'desc')
                     ->get();
 
-        return response()->view('sitemap.pages', compact('pages'))
+        // Include blog content if blog is enabled
+        $blogSitemapData = [];
+        if (config('blog.enabled', true) && config('blog.seo.generate_sitemap', true)) {
+            try {
+                $blogSeoService = app(\App\Features\Blog\Services\BlogSeoService::class);
+                $blogSitemapData = $blogSeoService->generateSitemapData();
+            } catch (\Exception $e) {
+                // Blog service not available, continue without blog data
+                logger('Blog sitemap generation failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->view('sitemap.pages', compact('pages', 'blogSitemapData'))
                         ->header('Content-Type', 'application/xml');
     }
 

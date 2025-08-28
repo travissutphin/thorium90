@@ -14,10 +14,10 @@ class FeatureService
     {
         // Cache feature checks for performance
         return Cache::remember("feature.{$feature}", 3600, function () use ($feature) {
-            // Check plugins (complex features)
-            if (str_starts_with($feature, 'plugin.')) {
-                $plugin = str_replace('plugin.', '', $feature);
-                return config("features.plugins.{$plugin}", false);
+            // Check modules (complex features)
+            if (str_starts_with($feature, 'module.')) {
+                $module = str_replace('module.', '', $feature);
+                return config("features.modules.{$module}", false);
             }
             
             // Check custom features (simple on/off)
@@ -26,12 +26,12 @@ class FeatureService
     }
     
     /**
-     * Get all enabled plugins
+     * Get all enabled modules
      */
-    public function enabledPlugins(): array
+    public function enabledModules(): array
     {
         return array_keys(
-            array_filter(config('features.plugins', []))
+            array_filter(config('features.modules', []))
         );
     }
     
@@ -66,9 +66,9 @@ class FeatureService
      */
     private function setFeature(string $feature, bool $enabled): void
     {
-        if (str_starts_with($feature, 'plugin.')) {
-            $plugin = str_replace('plugin.', '', $feature);
-            Config::set("features.plugins.{$plugin}", $enabled);
+        if (str_starts_with($feature, 'module.')) {
+            $module = str_replace('module.', '', $feature);
+            Config::set("features.modules.{$module}", $enabled);
         } else {
             Config::set("features.custom.{$feature}", $enabled);
         }
@@ -83,9 +83,9 @@ class FeatureService
     public function getStats(): array
     {
         return [
-            'plugins' => [
-                'total' => count(config('features.plugins', [])),
-                'enabled' => count($this->enabledPlugins()),
+            'modules' => [
+                'total' => count(config('features.modules', [])),
+                'enabled' => count($this->enabledModules()),
             ],
             'custom' => [
                 'total' => count(config('features.custom', [])),
@@ -99,14 +99,14 @@ class FeatureService
      */
     public function getAllFeatures(): array
     {
-        $plugins = config('features.plugins', []);
+        $modules = config('features.modules', []);
         $custom = config('features.custom', []);
         
         return [
-            'plugins' => array_map(fn($enabled) => [
+            'modules' => array_map(fn($enabled) => [
                 'enabled' => $enabled,
-                'type' => 'plugin'
-            ], $plugins),
+                'type' => 'module'
+            ], $modules),
             'custom' => array_map(fn($enabled) => [
                 'enabled' => $enabled,
                 'type' => 'custom'

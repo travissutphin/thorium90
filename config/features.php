@@ -3,20 +3,20 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Plugin Features
+    | Feature Modules
     |--------------------------------------------------------------------------
     |
-    | Complex, reusable features that are implemented as full plugins.
+    | Complex, reusable features that are implemented as full feature modules.
     | These have their own service providers, migrations, routes, etc.
     |
     */
-    'plugins' => [
-        'blog' => env('PLUGIN_BLOG', true),
-        'shop' => env('PLUGIN_SHOP', false),
-        'events' => env('PLUGIN_EVENTS', false),
-        'portfolio' => env('PLUGIN_PORTFOLIO', false),
-        'newsletter' => env('PLUGIN_NEWSLETTER', false),
-        'forms' => env('PLUGIN_FORMS', true),
+    'modules' => [
+        'blog' => env('BLOG_ENABLED', true),
+        'shop' => env('SHOP_ENABLED', false),
+        'events' => env('EVENTS_ENABLED', false),
+        'portfolio' => env('PORTFOLIO_ENABLED', false),
+        'newsletter' => env('NEWSLETTER_ENABLED', false),
+        'forms' => env('FORMS_ENABLED', true),
     ],
 
     /*
@@ -51,8 +51,8 @@ return [
     |
     */
     'descriptions' => [
-        // Plugin descriptions
-        'plugins' => [
+        // Feature module descriptions
+        'modules' => [
             'blog' => 'Full blog system with posts, categories, and tags',
             'shop' => 'E-commerce functionality with products and orders',
             'events' => 'Event management with calendar and bookings',

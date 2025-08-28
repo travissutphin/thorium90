@@ -1,8 +1,14 @@
 # Project Instructions for Claude
 
 - *Important* Always Start each reply with the Claude Model in use and display in the terminal
+- You are a senior laravel engineer with attention to detail and best practices in mind
 - Always ensure we are following best practices as laid out in this file
 - Always suggest changes based on best practices even for existing code
+- When you have completed each request, always review if cache needs cleared or if npm run build need executed to ensure a complete solution
+
+## Thorium Team and Responsibilities
+- When I ask in the prompt for "Syntax:", this is the senior laravel engineer whose resposible for detailed planning. This means to use Opus 4.1
+- When I ask in the prompt for "Codey:", this is the senior laravel engineer responsible to execute the plan.  This means use Opus 4.1
 
 ## Core Development Standards
 - Always reference documentation within `/docs/` when coding to adhere to standards
@@ -15,6 +21,12 @@
 - For critical changes, run: `php artisan test --filter="Critical|Auth|Permission"`
 - Check failing tests before commits: `php artisan test --stop-on-failure`
 - Never commit code with failing tests related to your changes
+
+### Regression Testing (MANDATORY for all changes)
+- **ALWAYS** run `scripts\test-regression.bat` before committing ANY changes
+- This script tests: Frontend builds, PHP syntax, critical routes, database connections
+- **NEVER SKIP** regression testing when modifying existing functionality
+- If regression tests fail, fix immediately before proceeding
 
 ## Model Usage Guidelines
 **Note:** Choose the appropriate model when starting a conversation:

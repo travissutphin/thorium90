@@ -82,7 +82,9 @@ trait WithRoles
             'manage permissions',
             
             // Media Management
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'delete media',
             
@@ -90,6 +92,20 @@ trait WithRoles
             'view comments',
             'moderate comments',
             'delete comments',
+            
+            // Blog Management (Phase 2)
+            'blog.posts.view',
+            'blog.posts.create', 
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.categories.create',
+            'blog.categories.edit', 
+            'blog.categories.delete',
+            'blog.tags.view',
+            'blog.tags.create',
+            'blog.tags.edit',
+            'blog.tags.delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -139,7 +155,9 @@ trait WithRoles
             'publish pages',
             'edit own pages',
             'delete own pages',
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'delete media',
             'view comments',
@@ -147,6 +165,18 @@ trait WithRoles
             'delete comments',
             'manage settings',
             'view system stats',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.categories.create',
+            'blog.categories.edit',
+            'blog.categories.delete',
+            'blog.tags.view',
+            'blog.tags.create',
+            'blog.tags.edit',
+            'blog.tags.delete',
         ];
         
         $role->syncPermissions($permissions);
@@ -167,11 +197,19 @@ trait WithRoles
             'edit pages',
             'delete pages',
             'publish pages',
+            'view media',
             'upload media',
+            'edit media',
             'manage media',
             'view comments',
             'moderate comments',
             'delete comments',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.posts.delete',
+            'blog.categories.view',
+            'blog.tags.view',
         ];
         
         $role->syncPermissions($permissions);
@@ -191,8 +229,14 @@ trait WithRoles
             'create pages',
             'edit own pages',
             'delete own pages',
+            'view media',
             'upload media',
             'view comments',
+            'blog.posts.view',
+            'blog.posts.create',
+            'blog.posts.edit',
+            'blog.categories.view',
+            'blog.tags.view',
         ];
         
         $role->syncPermissions($permissions);
