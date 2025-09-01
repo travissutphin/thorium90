@@ -62,7 +62,7 @@ export function AppSidebar() {
             if (userPermissions.includes('upload media')) {
                 items.push({
                     title: 'Media',
-                    href: '/content/media',
+                    href: '/admin/media',
                     icon: Image,
                     permission: 'upload media',
                 });

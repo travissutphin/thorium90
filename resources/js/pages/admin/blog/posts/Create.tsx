@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { type BreadcrumbItem, type FAQItem } from '@/types';
-import { AEOFaqEditor, TopicSelector, KeywordManager, ReadingTimeDisplay } from '@/components/aeo';
+import { AEOFaqEditor, TopicSelector, KeywordManager, ReadingTimeDisplay, ContentAnalysisPanel } from '@/components/aeo';
+import BlogFeaturedImageSelector from '@/components/blog/forms/BlogFeaturedImageSelector';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -24,11 +25,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Posts',
-        href: '/admin/blog/posts',
+        href: route('admin.blog.posts.index'),
     },
     {
         title: 'Create',
-        href: '/admin/blog/posts/create',
+        href: route('admin.blog.posts.create'),
     },
 ];
 
@@ -156,7 +157,7 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
         setErrors({});
 
         try {
-            await router.post('/admin/blog/posts', formData);
+            await router.post(route('admin.blog.posts.store'), formData);
         } catch (error) {
             console.error('Error creating post:', error);
         } finally {
@@ -169,7 +170,7 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
         setIsSubmitting(true);
         
         try {
-            await router.post('/admin/blog/posts', draftData);
+            await router.post(route('admin.blog.posts.store'), draftData);
         } catch (error) {
             console.error('Error saving draft:', error);
         } finally {
@@ -185,7 +186,7 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
         setIsSubmitting(true);
         
         try {
-            await router.post('/admin/blog/posts', publishData);
+            await router.post(route('admin.blog.posts.store'), publishData);
         } catch (error) {
             console.error('Error publishing post:', error);
         } finally {
@@ -209,7 +210,7 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
             <form onSubmit={handleSubmit} className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <Link href="/admin/blog/posts">
+                        <Link href={route('admin.blog.posts.index')}>
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Posts
@@ -408,6 +409,37 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
 
                     {/* Sidebar */}
                     <div className="space-y-6">
+                        {/* AI Content Analysis */}
+                        <ContentAnalysisPanel
+                            title={formData.title}
+                            content={formData.content}
+                            onTagsSelected={(selectedTags) => {
+                                // Find matching tag IDs from the available tags
+                                const matchingTagIds = selectedTags
+                                    .map(suggestionTag => {
+                                        const existingTag = tags.find(availableTag => 
+                                            availableTag.name.toLowerCase() === suggestionTag.name.toLowerCase()
+                                        );
+                                        return existingTag?.id;
+                                    })
+                                    .filter(id => id !== undefined) as number[];
+                                
+                                // Update form tags
+                                handleInputChange('tags', [...formData.tags, ...matchingTagIds.filter(id => !formData.tags.includes(id))]);
+                            }}
+                            onKeywordsSelected={(keywords) => {
+                                handleInputChange('keywords', keywords);
+                            }}
+                            onTopicsSelected={(topics) => {
+                                handleInputChange('topics', topics);
+                            }}
+                            onFAQsSelected={(faqs) => {
+                                handleInputChange('faq_data', faqs);
+                            }}
+                            onContentTypeSelected={(contentType) => {
+                                handleInputChange('content_type', contentType);
+                            }}
+                        />
                         {/* Status & Publishing */}
                         <Card>
                             <CardHeader>
@@ -564,34 +596,20 @@ export default function CreateBlogPost({ categories, tags, config }: Props) {
                             </CardContent>
                         </Card>
 
-                        {/* Featured Image */}
+                        {/* Enhanced Featured Image with Media Library */}
                         {config.features.featured_images && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Featured Image</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="featured_image">Image URL</Label>
-                                        <Input
-                                            id="featured_image"
-                                            value={formData.featured_image}
-                                            onChange={(e) => handleInputChange('featured_image', e.target.value)}
-                                            placeholder="https://example.com/image.jpg"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="featured_image_alt">Alt Text</Label>
-                                        <Input
-                                            id="featured_image_alt"
-                                            value={formData.featured_image_alt}
-                                            onChange={(e) => handleInputChange('featured_image_alt', e.target.value)}
-                                            placeholder="Describe the image for accessibility"
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <BlogFeaturedImageSelector
+                                imageUrl={formData.featured_image}
+                                altText={formData.featured_image_alt}
+                                onChange={(url, alt) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        featured_image: url,
+                                        featured_image_alt: alt
+                                    }));
+                                }}
+                                error={errors.featured_image}
+                            />
                         )}
                     </div>
                 </div>

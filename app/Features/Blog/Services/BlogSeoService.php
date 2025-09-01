@@ -431,12 +431,18 @@ class BlogSeoService
         $breadcrumbItems = [];
         
         foreach ($breadcrumbs as $index => $breadcrumb) {
-            $breadcrumbItems[] = [
+            $item = [
                 '@type' => 'ListItem',
                 'position' => $index + 1,
                 'name' => $breadcrumb['title'],
-                'item' => $breadcrumb['url'] ?? $breadcrumb['href'],
             ];
+            
+            // Only add 'item' if URL exists (skip for current page)
+            if (!empty($breadcrumb['url'])) {
+                $item['item'] = $breadcrumb['url'];
+            }
+            
+            $breadcrumbItems[] = $item;
         }
 
         return [

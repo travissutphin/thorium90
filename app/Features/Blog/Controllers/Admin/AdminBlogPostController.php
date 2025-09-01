@@ -109,14 +109,16 @@ class AdminBlogPostController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:blog_tags,id',
             'published_at' => 'nullable|date',
-            // AEO Enhancement validation rules
-            'faq_data' => 'nullable|array|max:10',
-            'faq_data.*.question' => 'required_with:faq_data.*|string|min:10|max:300',
-            'faq_data.*.answer' => 'required_with:faq_data.*|string|min:20|max:1000',
-            'faq_data.*.id' => 'required_with:faq_data.*|string',
-            'reading_time' => 'nullable|integer|min:1|max:120',
-            'content_type' => 'nullable|string|in:blog_post,tutorial,review,news,guide,analysis',
+            // AEO Enhancement validation rules (simplified)
+            'faq_data' => 'nullable|array',
+            'reading_time' => 'nullable|integer|min:0|max:120',
+            'content_type' => 'nullable|string|max:50',
             'content_score' => 'nullable|numeric|min:0|max:100',
+            // Unified SEO fields (optional - for future use)
+            'seo_keywords' => 'nullable|array',
+            'enhanced_tags' => 'nullable|array', 
+            'optimization_data' => 'nullable|array',
+            'ai_model_used' => 'nullable|string|max:100',
         ]);
 
         // Auto-generate slug if not provided
@@ -217,14 +219,16 @@ class AdminBlogPostController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:blog_tags,id',
             'published_at' => 'nullable|date',
-            // AEO Enhancement validation rules
-            'faq_data' => 'nullable|array|max:10',
-            'faq_data.*.question' => 'required_with:faq_data.*|string|min:10|max:300',
-            'faq_data.*.answer' => 'required_with:faq_data.*|string|min:20|max:1000',
-            'faq_data.*.id' => 'required_with:faq_data.*|string',
-            'reading_time' => 'nullable|integer|min:1|max:120',
-            'content_type' => 'nullable|string|in:blog_post,tutorial,review,news,guide,analysis',
+            // AEO Enhancement validation rules (simplified)
+            'faq_data' => 'nullable|array',
+            'reading_time' => 'nullable|integer|min:0|max:120',
+            'content_type' => 'nullable|string|max:50',
             'content_score' => 'nullable|numeric|min:0|max:100',
+            // Unified SEO fields (optional - for future use)
+            'seo_keywords' => 'nullable|array',
+            'enhanced_tags' => 'nullable|array', 
+            'optimization_data' => 'nullable|array',
+            'ai_model_used' => 'nullable|string|max:100',
         ]);
 
         $oldCategoryId = $post->blog_category_id;

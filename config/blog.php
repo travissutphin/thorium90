@@ -81,6 +81,54 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Schema Mapping Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Maps schema types to content optimization settings. Used by the
+    | ContentOptimizationService for AI-driven SEO and AEO optimization.
+    |
+    */
+    'schema_mapping' => [
+        'BlogPosting' => [
+            'content_type' => 'blog_post',
+            'keyword_focus' => 'broad',
+            'requirements' => ['author', 'datePublished'],
+            'optional_faqs' => false
+        ],
+        'Article' => [
+            'content_type' => 'article',
+            'keyword_focus' => 'authoritative',
+            'requirements' => ['author', 'datePublished', 'publisher'],
+            'optional_faqs' => false
+        ],
+        'NewsArticle' => [
+            'content_type' => 'news',
+            'keyword_focus' => 'timely',
+            'requirements' => ['author', 'datePublished', 'publisher', 'location'],
+            'optional_faqs' => false
+        ],
+        'Review' => [
+            'content_type' => 'review',
+            'keyword_focus' => 'product',
+            'requirements' => ['author', 'reviewBody', 'reviewRating'],
+            'optional_faqs' => true
+        ],
+        'HowTo' => [
+            'content_type' => 'tutorial',
+            'keyword_focus' => 'instructional',
+            'requirements' => ['name', 'step', 'totalTime'],
+            'optional_faqs' => true
+        ],
+        'FAQPage' => [
+            'content_type' => 'faq',
+            'keyword_focus' => 'question-based',
+            'requirements' => ['mainEntity'],
+            'optional_faqs' => true // Required for this schema
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Blog Permissions
     |--------------------------------------------------------------------------
     |

@@ -4,7 +4,7 @@
     @if($post->featured_image)
     <div class="mb-4">
         <a href="{{ $post->url }}">
-            <img src="{{ asset('storage/' . $post->featured_image) }}" 
+            <img src="{{ $post->featured_image }}" 
                  alt="{{ $post->featured_image_alt ?: $post->title }}"
                  class="blog-featured-image hover:opacity-90 transition-opacity">
         </a>

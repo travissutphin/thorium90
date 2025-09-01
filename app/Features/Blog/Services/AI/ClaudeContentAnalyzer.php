@@ -15,9 +15,9 @@ class ClaudeContentAnalyzer implements AIContentAnalyzerInterface
 
     public function __construct()
     {
-        $this->apiKey = config('ai.providers.claude.api_key');
-        $this->model = config('ai.providers.claude.model', 'claude-3-sonnet-20240229');
-        $this->costPerToken = config('ai.providers.claude.cost_per_token', 0.000003);
+        $this->apiKey = env('CLAUDE_API_KEY');
+        $this->model = env('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022');
+        $this->costPerToken = (float) env('CLAUDE_COST_PER_TOKEN', 0.000003);
     }
 
     public function analyzeContent(string $title, string $content): array
@@ -75,7 +75,7 @@ class ClaudeContentAnalyzer implements AIContentAnalyzerInterface
 
     public function isAvailable(): bool
     {
-        return !empty($this->apiKey) && config('ai.providers.claude.enabled', false);
+        return !empty($this->apiKey) && env('CLAUDE_ENABLED', false);
     }
 
     public function getName(): string
@@ -98,47 +98,88 @@ class ClaudeContentAnalyzer implements AIContentAnalyzerInterface
         $wordCount = str_word_count(strip_tags($content));
         
         return "
-You are a content analysis expert. Analyze this blog post and provide highly relevant, specific suggestions.
+You are an SEO and content optimization expert. Analyze this blog post and provide highly relevant, actionable suggestions for unified SEO optimization.
 
 TITLE: {$title}
 
 CONTENT: {$content}
 
-ANALYSIS REQUIREMENTS:
+OPTIMIZATION REQUIREMENTS:
 
-1. **Tags**: Extract the most specific, relevant tags from the actual content. Avoid generic tags like 'blog', 'tips', 'guide'. Focus on technical terms, specific topics, tools, or concepts mentioned.
+1. **Unified Keywords**: Create a comprehensive keyword strategy that includes:
+   - Primary keywords (high search volume, direct match to content)
+   - Secondary keywords (supporting topics and related terms)
+   - Long-tail keywords (specific phrases users would search for)
+   - Question-based keywords (for voice search and answer engines)
 
-2. **Keywords**: Identify keywords with actual SEO potential that match what users would search for. Include both short-tail and long-tail keywords directly related to the content.
+2. **Enhanced Tags**: Suggest tags with SEO context and confidence scoring. Focus on specific, actionable tags that aid discoverability.
 
-3. **Topics**: Identify the main themes/subjects covered in the content. Be specific (e.g., 'Laravel Eloquent ORM' not just 'PHP').
+3. **Content Classification**: Determine the optimal content type and provide quality metrics.
 
-4. **Content Quality**: Base your scores on the actual content depth, structure, and usefulness.
+4. **Answer Engine Optimization**: Generate FAQ content that addresses common user questions related to the topic.
 
 Provide ONLY a valid JSON response in exactly this format:
 
 {
-  \"tags\": [
-    {\"name\": \"specific_tag_from_content\", \"confidence\": 85, \"reason\": \"mentioned prominently in section X\"}
-  ],
   \"keywords\": [
-    {\"name\": \"exact_keyword_phrase\", \"confidence\": 90, \"reason\": \"high search volume potential\", \"search_intent\": \"informational\"}
+    {
+      \"term\": \"exact keyword phrase\",
+      \"type\": \"primary|secondary|long_tail|question\",
+      \"confidence\": 90,
+      \"search_intent\": \"informational|navigational|commercial|transactional\",
+      \"reason\": \"why this keyword is valuable\",
+      \"search_volume\": \"high|medium|low\"
+    }
+  ],
+  \"tags\": [
+    {
+      \"name\": \"specific_tag_from_content\",
+      \"confidence\": 85,
+      \"seo_weight\": 0.8,
+      \"reason\": \"mentioned prominently and relevant for categorization\"
+    }
   ],
   \"topics\": [
-    {\"name\": \"specific_topic\", \"confidence\": 80, \"reason\": \"core theme of the article\"}
+    {
+      \"name\": \"broad_topic_theme\",
+      \"confidence\": 80,
+      \"relevance\": \"core|supporting|peripheral\",
+      \"reason\": \"central theme of the content\"
+    }
   ],
   \"faqs\": [
-    {\"question\": \"What is X?\", \"answer\": \"Based on content: X is...\", \"confidence\": 75, \"type\": \"generated\"}
+    {
+      \"question\": \"What is X?\",
+      \"answer\": \"Based on content: X is...\",
+      \"confidence\": 75,
+      \"search_intent\": \"informational\",
+      \"type\": \"generated\"
+    }
   ],
-  \"content_type\": \"tutorial\",
-  \"reading_time\": {$this->calculateReadingTime($wordCount)},
-  \"quality_score\": 82,
-  \"improvements\": [
-    \"Specific actionable improvement\"
+  \"content_analysis\": {
+    \"content_type\": \"blog_post|tutorial|review|news|guide|analysis\",
+    \"reading_time\": {$this->calculateReadingTime($wordCount)},
+    \"quality_score\": 82,
+    \"seo_score\": 75,
+    \"readability_score\": 78,
+    \"keyword_density\": 2.3
+  },
+  \"optimization_suggestions\": [
+    \"Specific actionable improvement for better SEO performance\"
   ],
-  \"seo_score\": 75
+  \"schema_recommendations\": [
+    \"BlogPosting\",
+    \"HowTo\"
+  ]
 }
 
-CRITICAL: Provide 5-8 highly relevant tags, 6-10 specific keywords, 3-5 focused topics. Base everything on the ACTUAL content, not generic assumptions.
+CRITICAL REQUIREMENTS:
+- Provide 8-12 strategic keywords across all types
+- Include 2-3 question-based keywords for voice search
+- Suggest 5-8 highly relevant tags with confidence scores
+- Generate 2-4 FAQs that directly address user search intent
+- Base ALL suggestions on ACTUAL content analysis, not generic assumptions
+- Focus on search intent matching and user value
 ";
     }
     
@@ -180,23 +221,29 @@ CRITICAL: Provide 5-8 highly relevant tags, 6-10 specific keywords, 3-5 focused 
             $jsonData = json_decode($matches[0], true);
             
             if (json_last_error() === JSON_ERROR_NONE) {
+                // Extract content analysis data
+                $contentAnalysis = $jsonData['content_analysis'] ?? [];
+                
                 return [
-                    'confidence' => $jsonData['quality_score'] ?? 85,
+                    'confidence' => $contentAnalysis['quality_score'] ?? 85,
                     'suggestions' => [
                         'tags' => $jsonData['tags'] ?? [],
                         'keywords' => $jsonData['keywords'] ?? [],
                         'topics' => $jsonData['topics'] ?? [],
                         'faqs' => $jsonData['faqs'] ?? [],
-                        'content_type' => $jsonData['content_type'] ?? 'blog_post',
-                        'reading_time' => $jsonData['reading_time'] ?? 3,
+                        'content_type' => $contentAnalysis['content_type'] ?? 'blog_post',
+                        'reading_time' => $contentAnalysis['reading_time'] ?? 3,
+                        'schema_recommendations' => $jsonData['schema_recommendations'] ?? ['BlogPosting'],
                     ],
                     'metadata' => [
-                        'word_count' => str_word_count($content),
+                        'word_count' => str_word_count(strip_tags($content)),
                         'analyzed_at' => now(),
                         'analyzer' => 'claude',
-                        'quality_score' => $jsonData['quality_score'] ?? 85,
-                        'seo_score' => $jsonData['seo_score'] ?? 75,
-                        'improvements' => $jsonData['improvements'] ?? [],
+                        'quality_score' => $contentAnalysis['quality_score'] ?? 85,
+                        'seo_score' => $contentAnalysis['seo_score'] ?? 75,
+                        'readability_score' => $contentAnalysis['readability_score'] ?? 80,
+                        'keyword_density' => $contentAnalysis['keyword_density'] ?? 2.0,
+                        'improvements' => $jsonData['optimization_suggestions'] ?? [],
                     ]
                 ];
             }

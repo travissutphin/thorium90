@@ -11,6 +11,8 @@ export { default as TopicSelector } from './TopicSelector';
 export { default as KeywordManager } from './KeywordManager';
 export { default as ReadingTimeDisplay } from './ReadingTimeDisplay';
 export { default as SchemaPreview } from './SchemaPreview';
+export { default as ContentAnalysisPanel } from './ContentAnalysisPanel';
+export { default as UnifiedSEOOptimizer } from './UnifiedSEOOptimizer';
 
 // Export types for external use
 export type {

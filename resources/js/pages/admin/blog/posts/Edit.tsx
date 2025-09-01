@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { ArrowLeft, Save, Eye, Trash2, BarChart3 } from 'lucide-react';
 import { type BreadcrumbItem, type FAQItem } from '@/types';
-import { AEOFaqEditor, TopicSelector, KeywordManager, ReadingTimeDisplay } from '@/components/aeo';
+import { AEOFaqEditor, TopicSelector, KeywordManager, ReadingTimeDisplay, ContentAnalysisPanel } from '@/components/aeo';
+import BlogFeaturedImageSelector from '@/components/blog/forms/BlogFeaturedImageSelector';
 
 interface BlogCategory {
     id: number;
@@ -94,23 +95,60 @@ interface FormData {
 export default function EditBlogPost({ post, categories, tags, seoSuggestions, config }: Props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+    
+    // Auto-hide notification after 5 seconds
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => {
+                setNotification(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification]);
+
+    const showNotification = (type: 'success' | 'error', message: string) => {
+        setNotification({ type, message });
+    };
+
+    const getValidationErrorMessage = (errors: Record<string, string>) => {
+        const errorMessages = Object.entries(errors).map(([field, message]) => {
+            const friendlyFieldNames: Record<string, string> = {
+                'meta_description': 'Meta Description',
+                'meta_title': 'Meta Title',
+                'title': 'Title',
+                'content': 'Content',
+                'excerpt': 'Excerpt',
+                'slug': 'URL Slug',
+                'blog_category_id': 'Category',
+                'featured_image': 'Featured Image',
+                'featured_image_alt': 'Image Alt Text'
+            };
+            const friendlyName = friendlyFieldNames[field] || field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            return `${friendlyName}: ${message}`;
+        });
+        
+        return errorMessages.length === 1 
+            ? errorMessages[0]
+            : `Please fix the following errors:\n• ${errorMessages.join('\n• ')}`;
+    };
     
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Admin',
-            href: '/admin',
+            href: route('admin.dashboard'),
         },
         {
             title: 'Blog',
-            href: '/admin/blog',
+            href: route('admin.blog.posts.index'),
         },
         {
             title: 'Posts',
-            href: '/admin/blog/posts',
+            href: route('admin.blog.posts.index'),
         },
         {
             title: `Edit: ${post.title}`,
-            href: `/admin/blog/posts/${post.id}/edit`,
+            href: route('admin.blog.posts.edit', { post: post.id }),
         },
     ];
     
@@ -160,7 +198,17 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
         setErrors({});
 
         try {
-            await router.put(`/admin/blog/posts/${post.id}`, prepareFormData(formData));
+            await router.put(route('admin.blog.posts.update', { post: post.id }), prepareFormData(formData), {
+                onError: (errors) => {
+                    console.error('Validation errors:', JSON.stringify(errors, null, 2));
+                    setErrors(errors);
+                    showNotification('error', getValidationErrorMessage(errors));
+                },
+                onSuccess: () => {
+                    console.log('Post updated successfully');
+                    showNotification('success', 'Blog post updated successfully!');
+                }
+            });
         } catch (error) {
             console.error('Error updating post:', error);
         } finally {
@@ -173,7 +221,17 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
         setIsSubmitting(true);
         
         try {
-            await router.put(`/admin/blog/posts/${post.id}`, prepareFormData(draftData));
+            await router.put(route('admin.blog.posts.update', { post: post.id }), prepareFormData(draftData), {
+                onError: (errors) => {
+                    console.error('Draft validation errors:', JSON.stringify(errors, null, 2));
+                    setErrors(errors);
+                    showNotification('error', getValidationErrorMessage(errors));
+                },
+                onSuccess: () => {
+                    console.log('Draft saved successfully');
+                    showNotification('success', 'Draft saved successfully!');
+                }
+            });
         } catch (error) {
             console.error('Error saving draft:', error);
         } finally {
@@ -189,7 +247,17 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
         setIsSubmitting(true);
         
         try {
-            await router.put(`/admin/blog/posts/${post.id}`, prepareFormData(publishData));
+            await router.put(route('admin.blog.posts.update', { post: post.id }), prepareFormData(publishData), {
+                onError: (errors) => {
+                    console.error('Publish validation errors:', JSON.stringify(errors, null, 2));
+                    setErrors(errors);
+                    showNotification('error', getValidationErrorMessage(errors));
+                },
+                onSuccess: () => {
+                    console.log('Post published successfully');
+                    showNotification('success', 'Post published successfully!');
+                }
+            });
         } catch (error) {
             console.error('Error publishing post:', error);
         } finally {
@@ -201,7 +269,7 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
         if (confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) {
             setIsSubmitting(true);
             try {
-                await router.delete(`/admin/blog/posts/${post.id}`);
+                await router.delete(route('admin.blog.posts.destroy', { post: post.id }));
             } catch (error) {
                 console.error('Error deleting post:', error);
             } finally {
@@ -220,20 +288,66 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
     };
 
     const prepareFormData = (data: FormData) => {
-        return {
+        const prepared = {
             ...data,
-            blog_category_id: data.blog_category_id === '0' ? '' : data.blog_category_id
+            // Convert category ID properly
+            blog_category_id: data.blog_category_id === '0' || data.blog_category_id === '' ? null : parseInt(data.blog_category_id),
+            // Ensure arrays are properly formatted
+            topics: Array.isArray(data.topics) ? data.topics : [],
+            keywords: Array.isArray(data.keywords) ? data.keywords : [],
+            tags: Array.isArray(data.tags) ? data.tags.map(id => parseInt(id.toString())) : [],
+            faq_data: Array.isArray(data.faq_data) ? data.faq_data : [],
+            // Convert boolean properly
+            is_featured: Boolean(data.is_featured)
         };
+        
+        // Remove empty string values and convert to null
+        Object.keys(prepared).forEach(key => {
+            if (prepared[key as keyof typeof prepared] === '') {
+                (prepared as any)[key] = null;
+            }
+        });
+        
+        // Debug logging
+        console.log('Submitting form data:', prepared);
+        
+        return prepared;
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Blog Post: ${post.title}`} />
 
+            {/* Notification Toast */}
+            {notification && (
+                <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
+                    notification.type === 'success' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-red-500 text-white'
+                }`}>
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                            <p className="font-medium">
+                                {notification.type === 'success' ? '✅ Success' : '❌ Error'}
+                            </p>
+                            <p className="text-sm mt-1 whitespace-pre-line">
+                                {notification.message}
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => setNotification(null)}
+                            className="ml-3 text-white hover:text-gray-200"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <Link href="/admin/blog/posts">
+                        <Link href={route('admin.blog.posts.index')}>
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back to Posts
@@ -365,7 +479,7 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
                                             placeholder="SEO-optimized title..."
                                             maxLength={60}
                                         />
-                                        <p className={`text-xs mt-1 ${
+                                        <p className={`text-xs mt-1 font-medium ${
                                             formData.meta_title.length > 60 
                                                 ? 'text-red-500' 
                                                 : formData.meta_title.length < 30 
@@ -373,9 +487,16 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
                                                     : 'text-green-600'
                                         }`}>
                                             {formData.meta_title.length}/60 characters
-                                            {formData.meta_title.length > 60 && ' (Too long)'}
-                                            {formData.meta_title.length < 30 && ' (Too short)'}
+                                            {formData.meta_title.length > 60 && ' ⚠️ TOO LONG - Will prevent saving!'}
+                                            {formData.meta_title.length < 30 && formData.meta_title.length > 0 && ' (Recommended: 30-60)'}
                                         </p>
+                                        {formData.meta_title.length > 60 && (
+                                            <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
+                                                <p className="text-red-700 text-xs">
+                                                    <strong>⚠️ Character limit exceeded!</strong> Please reduce by {formData.meta_title.length - 60} characters to save your post.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div>
@@ -388,7 +509,7 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
                                             placeholder="SEO meta description..."
                                             maxLength={160}
                                         />
-                                        <p className={`text-xs mt-1 ${
+                                        <p className={`text-xs mt-1 font-medium ${
                                             formData.meta_description.length > 160 
                                                 ? 'text-red-500' 
                                                 : formData.meta_description.length < 120 
@@ -396,9 +517,16 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
                                                     : 'text-green-600'
                                         }`}>
                                             {formData.meta_description.length}/160 characters
-                                            {formData.meta_description.length > 160 && ' (Too long)'}
-                                            {formData.meta_description.length < 120 && ' (Too short)'}
+                                            {formData.meta_description.length > 160 && ' ⚠️ TOO LONG - Will prevent saving!'}
+                                            {formData.meta_description.length < 120 && formData.meta_description.length > 0 && ' (Recommended: 120-160)'}
                                         </p>
+                                        {formData.meta_description.length > 160 && (
+                                            <div className="bg-red-50 border border-red-200 rounded p-2 mt-2">
+                                                <p className="text-red-700 text-xs">
+                                                    <strong>⚠️ Character limit exceeded!</strong> Please reduce by {formData.meta_description.length - 160} characters to save your post.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div>
@@ -463,6 +591,49 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
 
                     {/* Sidebar */}
                     <div className="space-y-6">
+                        {/* AI Content Analysis */}
+                        <ContentAnalysisPanel
+                            title={formData.title}
+                            content={formData.content}
+                            onTagsSelected={useCallback((selectedTags) => {
+                                // Schedule update for next tick to avoid render-phase setState
+                                setTimeout(() => {
+                                    // Find matching tag IDs from the available tags
+                                    const matchingTagIds = selectedTags
+                                        .map(suggestionTag => {
+                                            const existingTag = tags.find(availableTag => 
+                                                availableTag.name.toLowerCase() === suggestionTag.name.toLowerCase()
+                                            );
+                                            return existingTag?.id;
+                                        })
+                                        .filter(id => id !== undefined) as number[];
+                                    
+                                    // Update form tags
+                                    handleInputChange('tags', [...formData.tags, ...matchingTagIds.filter(id => !formData.tags.includes(id))]);
+                                }, 0);
+                            }, [tags, formData.tags])}
+                            onKeywordsSelected={useCallback((keywords) => {
+                                setTimeout(() => {
+                                    handleInputChange('keywords', keywords);
+                                }, 0);
+                            }, [])}
+                            onTopicsSelected={useCallback((topics) => {
+                                setTimeout(() => {
+                                    handleInputChange('topics', topics);
+                                }, 0);
+                            }, [])}
+                            onFAQsSelected={useCallback((faqs) => {
+                                setTimeout(() => {
+                                    handleInputChange('faq_data', faqs);
+                                }, 0);
+                            }, [])}
+                            onContentTypeSelected={useCallback((contentType) => {
+                                setTimeout(() => {
+                                    handleInputChange('content_type', contentType);
+                                }, 0);
+                            }, [])}
+                        />
+                        
                         {/* SEO Analysis */}
                         {seoSuggestions && seoSuggestions.length > 0 && (
                             <Card>
@@ -642,47 +813,20 @@ export default function EditBlogPost({ post, categories, tags, seoSuggestions, c
                             </CardContent>
                         </Card>
 
-                        {/* Featured Image */}
+                        {/* Enhanced Featured Image with Media Library */}
                         {config.features.featured_images && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Featured Image</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="featured_image">Image URL</Label>
-                                        <Input
-                                            id="featured_image"
-                                            value={formData.featured_image}
-                                            onChange={(e) => handleInputChange('featured_image', e.target.value)}
-                                            placeholder="https://example.com/image.jpg"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="featured_image_alt">Alt Text</Label>
-                                        <Input
-                                            id="featured_image_alt"
-                                            value={formData.featured_image_alt}
-                                            onChange={(e) => handleInputChange('featured_image_alt', e.target.value)}
-                                            placeholder="Describe the image for accessibility"
-                                        />
-                                    </div>
-
-                                    {formData.featured_image && (
-                                        <div className="mt-2">
-                                            <img 
-                                                src={formData.featured_image} 
-                                                alt={formData.featured_image_alt || 'Featured image preview'}
-                                                className="max-w-full h-auto rounded border"
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <BlogFeaturedImageSelector
+                                imageUrl={formData.featured_image}
+                                altText={formData.featured_image_alt}
+                                onChange={(url, alt) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        featured_image: url,
+                                        featured_image_alt: alt
+                                    }));
+                                }}
+                                error={errors.featured_image}
+                            />
                         )}
                     </div>
                 </div>

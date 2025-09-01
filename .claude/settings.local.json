@@ -41,7 +41,11 @@
       "Bash(scripts/test-regression.bat)",
       "Bash(for file in *.tsx)",
       "Bash(do echo \"=== Checking $file ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git stash:*)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\app\\Http\\Controllers\\Auth/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\config/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)"
     ],
     "deny": [],
     "ask": []

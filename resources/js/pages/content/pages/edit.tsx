@@ -50,6 +50,7 @@ export default function EditPage({ page, schemaTypes }: Props) {
         theme: page.theme || 'default',
         blocks: page.blocks || [] as any[],
         template_config: page.template_config || {} as Record<string, any>,
+        schema_data: page.schema_data || {} as Record<string, any>,
         // AEO Enhancement fields
         topics: page.topics || [] as string[],
         keywords: page.keywords || [] as string[],
@@ -69,7 +70,19 @@ export default function EditPage({ page, schemaTypes }: Props) {
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('content.pages.update', page.id));
+        console.log('Form data being submitted:', data);
+        console.log('Route URL:', route('content.pages.update', page.id));
+        put(route('content.pages.update', page.id), {
+            onSuccess: () => {
+                console.log('Form submitted successfully');
+            },
+            onError: (errors) => {
+                console.error('Form submission errors:', errors);
+            },
+            onFinish: () => {
+                console.log('Form submission finished');
+            }
+        });
     };
 
     const handleTitleChange = (title: string) => {
@@ -479,7 +492,7 @@ export default function EditPage({ page, schemaTypes }: Props) {
                                         <Switch
                                             id="is_featured"
                                             checked={data.is_featured}
-                                            onCheckedChange={(checked) => setData('is_featured', checked as boolean)}
+                                            onCheckedChange={(checked) => setData('is_featured', Boolean(checked))}
                                         />
                                     </div>
 

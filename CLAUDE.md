@@ -1,32 +1,115 @@
-# Project Instructions for Claude
+# CLAUDE.md
 
-- *Important* Always Start each reply with the Claude Model in use and display in the terminal
-- You are a senior laravel engineer with attention to detail and best practices in mind
-- Always ensure we are following best practices as laid out in this file
-- Always suggest changes based on best practices even for existing code
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+- **Important** Always Start each reply with the Claude Model in use and display in the terminal
+- You are a senior laravel engineer with attention to detail and best practices in mind (keep it simple if it accomplishes the request)
+- **Always** ensure we are following best practices as laid out in this file
+- **Always** suggest changes based on best practices even for existing code
 - When you have completed each request, always review if cache needs cleared or if npm run build need executed to ensure a complete solution
 
-## Thorium Team and Responsibilities
-- When I ask in the prompt for "Syntax:", this is the senior laravel engineer whose resposible for detailed planning. This means to use Opus 4.1
-- When I ask in the prompt for "Codey:", this is the senior laravel engineer responsible to execute the plan.  This means use Opus 4.1
+## Architecture Overview
 
-## Core Development Standards
-- Always reference documentation within `/docs/` when coding to adhere to standards
-- Always run regression testing after large updates or additions using `/tests/`
-- Create temporary documentation in `/docs/development/`
-- Create script files (.bat) in `/scripts/`
+**Thorium90** is a Laravel 12 boilerplate built for production CMS applications with a hybrid frontend approach:
 
-## Testing Protocol
-- Run `php artisan test` after significant changes
-- For critical changes, run: `php artisan test --filter="Critical|Auth|Permission"`
-- Check failing tests before commits: `php artisan test --stop-on-failure`
+### Core Architecture
+- **Backend**: Laravel 12 with feature-based modular structure
+- **Frontend**: Hybrid approach - Inertia.js React for admin, Blade templates for public pages
+- **Database**: MySQL production / SQLite development with comprehensive migrations
+- **Authentication**: Laravel Fortify + Spatie Permissions with mandatory 2FA for admin roles
+- **UI Framework**: Tailwind CSS + shadcn/ui components + custom component library
+
+### Key Architectural Patterns
+- **Feature Modules**: Self-contained features (e.g., `app/Features/Blog/`) with their own controllers, models, services, routes, and views
+- **Service Layer**: Business logic separated into dedicated services (e.g., `BlogService`, `MediaUploadService`)
+- **Permission System**: Role-based access control with middleware enforcement
+- **Template System**: Dynamic page rendering with configurable templates and blocks
+- **AI Integration**: Pluggable AI content analysis system with provider abstraction
+
+### Frontend Structure
+```
+resources/js/
+├── components/          # Reusable UI components
+│   ├── aeo/            # AI/SEO optimization components
+│   ├── ui/             # shadcn/ui base components
+│   └── page-templates/ # Dynamic page template system
+├── pages/              # Inertia.js admin pages
+├── layouts/            # Layout components
+├── hooks/              # Custom React hooks
+└── core/               # Template/block system
+```
+
+## Essential Commands
+
+### Development Setup
+```bash
+# Quick start (recommended)
+php artisan thorium90:setup --silent
+
+# Development servers
+npm run dev          # Vite dev server
+php artisan serve    # Laravel server
+
+# Build assets
+npm run build        # Production build
+npm run build:ssr    # SSR build
+```
+
+### Testing & Quality Assurance
+```bash
+# Core testing
+php artisan test                                    # Full test suite
+php artisan test --filter="TestName"              # Single test
+php artisan test --filter="Critical|Auth|Permission" # Critical tests
+php artisan test --stop-on-failure                # Stop on first failure
+
+# Mandatory regression testing
+scripts\test-regression.bat                        # ALWAYS run before commits
+
+# Code quality
+npm run lint         # ESLint + fix
+npm run format       # Prettier formatting
+npm run types        # TypeScript checking
+```
+
+### Route & Cache Management
+```bash
+# Cache management
+php artisan cache:clear && php artisan config:clear && php artisan route:clear
+
+# Route debugging
+php artisan route:list | grep [search_term]
+php scripts/check-ziggy-routes.php              # Validate Ziggy routes
+
+# Permissions
+php artisan permission:show
+```
+
+## Development Workflow & Standards
+
+### Mandatory Testing Protocol
+- **ALWAYS** run `scripts\test-regression.bat` before committing ANY changes
+- **NEVER SKIP** regression testing when modifying existing functionality
+- Run `php artisan test --filter="Critical|Auth|Permission"` for critical changes
 - Never commit code with failing tests related to your changes
 
-### Regression Testing (MANDATORY for all changes)
-- **ALWAYS** run `scripts\test-regression.bat` before committing ANY changes
-- This script tests: Frontend builds, PHP syntax, critical routes, database connections
-- **NEVER SKIP** regression testing when modifying existing functionality
-- If regression tests fail, fix immediately before proceeding
+### Route Validation (PREVENT Ziggy Errors)
+- **BEFORE using route() helpers** in React/Inertia components, verify routes exist
+- **NEVER use hardcoded URLs** - always use `route('route.name')` helper
+- See `/docs/development/ZIGGY-ROUTE-DEBUGGING.md` for troubleshooting guide
+
+### Feature Development Guidelines
+- **Blog Feature**: Located in `app/Features/Blog/` - fully modular with own service provider
+- **AI Integration**: Use `AIContentAnalyzerInterface` for pluggable AI providers (Claude, OpenAI, Basic)
+- **Permissions**: Use OR logic middleware for multiple permissions
+- **Templates**: Public pages use Blade templates in `resources/views/`, admin uses Inertia
+- **2FA**: Mandatory for Admin/Super Admin roles
+
+### Frontend Development Patterns
+- **Components**: Place reusable components in `resources/js/components/`
+- **AEO Components**: SEO/AI optimization components in `resources/js/components/aeo/`
+- **State Management**: Use React hooks and Context API, avoid direct setState in render
+- **Type Safety**: Maintain TypeScript definitions in `resources/js/types/`
 
 ## Model Usage Guidelines
 **Note:** Choose the appropriate model when starting a conversation:
@@ -34,45 +117,16 @@
 - Use **Claude Sonnet** for: Quick implementations, routine coding tasks, simple fixes
 
 ## Task Identification Headers
-- Use "**ARCHITECTURE:**", "**DESIGN:**", "**DEBUG:**" → Indicates Opus needed
+- Use "**ARCHITECTURE:**", "**DESIGN:**", "**DEBUG:**" → Indicates Opus needed  
 - Use "**IMPLEMENT:**", "**FIX:**", "**REFACTOR:**" → Indicates Sonnet appropriate
 - Always start responses showing current model: "**Current Model: Claude [Opus/Sonnet]**"
-
-## Development Workflow
-1. **Before making changes:**
-   - Check existing tests: `php artisan test --filter=[FeatureName]`
-   - Review relevant docs in `/docs/`
-   - Check git status for context
-
-2. **After making changes:**
-   - Run affected tests first
-   - Run full test suite if multiple systems touched
-   - Verify no regression in core features
-
-3. **Before committing:**
-   - Ensure all related tests pass
-   - Run linting if available
-   - Review changes with `git diff`
-
-## Important Paths
-- Documentation: `/docs/`
-- Temporary docs: `/docs/development/`
-- Scripts: `/scripts/`
-- Tests: `/tests/`
-- Core configs: `/config/`
-
-## Key Commands Reference
-- Run all tests: `php artisan test`
-- Run specific test: `php artisan test --filter="TestName"`
-- Clear caches: `php artisan cache:clear && php artisan config:clear`
-- Check routes: `php artisan route:list`
-- Check permissions: `php artisan permission:show`
 
 ## Project-Specific Rules
 - Template system uses Blade (not Inertia) for public pages
 - Permission middleware uses OR logic for multiple permissions
 - 2FA is mandatory for Admin/Super Admin roles
 - Always preserve existing code style and conventions
+- Feature modules are self-contained with their own service providers
 
 ## Senior Developer Mindset & Approach
 
@@ -149,3 +203,12 @@ git push origin v1.X.X
 - Update CHANGELOG.md with every release
 
 See `/docs/development/BOILERPLATE-WORKFLOW.md` for complete workflow.
+
+## Important Paths
+- Documentation: `/docs/`
+- Temporary docs: `/docs/development/`
+- Scripts: `/scripts/`
+- Tests: `/tests/`
+- Core configs: `/config/`
+- Blog feature: `/app/Features/Blog/`
+- Frontend components: `/resources/js/components/`

@@ -52,8 +52,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Use Vite built assets -->
+    @vite(['resources/css/app.css', 'resources/js/app.tsx'])
 	
 	<!-- Lucide Icons -->
 	<script src="https://unpkg.com/lucide@latest"></script>
@@ -68,6 +68,138 @@
     <link rel="preload" href="{{ asset('css/features/blog/blog.css') }}" as="style">
     
     @stack('styles')
+    
+    <!-- Table of Contents Styling -->
+    <style>
+        /* Table of Contents Styling */
+        .toc-nav {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+        
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .toc-sublist {
+            list-style: none;
+            padding-left: 1rem;
+            margin: 0.25rem 0;
+            border-left: 2px solid #e5e7eb;
+        }
+        
+        .dark .toc-sublist {
+            border-left-color: #374151;
+        }
+        
+        .toc-item {
+            margin: 0.25rem 0;
+        }
+        
+        .toc-link {
+            display: block;
+            padding: 0.25rem 0;
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 0.25rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            line-height: 1.4;
+        }
+        
+        .toc-link:hover {
+            color: #374151;
+            background-color: #f3f4f6;
+        }
+        
+        .toc-link.toc-active {
+            color: #2563eb;
+            background-color: #dbeafe;
+            font-weight: 500;
+        }
+        
+        .dark .toc-link {
+            color: #9ca3af;
+        }
+        
+        .dark .toc-link:hover {
+            color: #d1d5db;
+            background-color: #374151;
+        }
+        
+        .dark .toc-link.toc-active {
+            color: #60a5fa;
+            background-color: #1e3a8a;
+        }
+        
+        /* Level-specific indentation and styling */
+        .toc-level-2 .toc-link {
+            font-weight: 500;
+        }
+        
+        .toc-level-3 .toc-link {
+            padding-left: 1rem;
+            font-size: 0.8125rem;
+        }
+        
+        .toc-level-4 .toc-link {
+            padding-left: 1.5rem;
+            font-size: 0.8125rem;
+            color: #9ca3af;
+        }
+        
+        .toc-level-5 .toc-link,
+        .toc-level-6 .toc-link {
+            padding-left: 2rem;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        
+        .dark .toc-level-4 .toc-link,
+        .dark .toc-level-5 .toc-link,
+        .dark .toc-level-6 .toc-link {
+            color: #6b7280;
+        }
+        
+        /* Smooth scroll behavior for the page */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Heading anchor styling */
+        .blog-prose h2,
+        .blog-prose h3,
+        .blog-prose h4,
+        .blog-prose h5,
+        .blog-prose h6 {
+            scroll-margin-top: 5rem;
+        }
+        
+        /* Optional: Add hover effect to headings to show they're linkable */
+        .blog-prose h2:hover,
+        .blog-prose h3:hover,
+        .blog-prose h4:hover,
+        .blog-prose h5:hover,
+        .blog-prose h6:hover {
+            position: relative;
+        }
+        
+        .blog-prose h2:hover::before,
+        .blog-prose h3:hover::before,
+        .blog-prose h4:hover::before,
+        .blog-prose h5:hover::before,
+        .blog-prose h6:hover::before {
+            content: '#';
+            position: absolute;
+            left: -1.5rem;
+            color: #9ca3af;
+            font-weight: normal;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 
 <body class="home-template hero-pattern blog-template" data-theme="{{ $theme ?? 'default' }}">
@@ -135,6 +267,7 @@
                 this.initEventListeners();
                 this.initIntersectionObserver();
                 this.initAccessibilityFeatures();
+                this.generateTableOfContents();
             }
 
             cacheElements() {
@@ -381,6 +514,141 @@
                     clearTimeout(timeout);
                     timeout = setTimeout(later, wait);
                 };
+            }
+
+            generateTableOfContents() {
+                const tocContainer = document.getElementById('table-of-contents');
+                const contentArea = document.querySelector('.blog-prose');
+                
+                if (!tocContainer || !contentArea) return;
+
+                // Find all headings in the post content (H2-H6, skip H1 as it's the post title)
+                const headings = contentArea.querySelectorAll('h2, h3, h4, h5, h6');
+                
+                if (headings.length === 0) {
+                    tocContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs italic">No headings found in this post.</p>';
+                    return;
+                }
+
+                // Generate unique IDs for headings if they don't have them
+                headings.forEach((heading, index) => {
+                    if (!heading.id) {
+                        const text = heading.textContent.trim();
+                        const id = text.toLowerCase()
+                            .replace(/[^\w\s-]/g, '') // Remove special characters
+                            .replace(/[\s_]+/g, '-') // Replace spaces and underscores with hyphens
+                            .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+                        heading.id = id || `heading-${index + 1}`;
+                    }
+                });
+
+                // Build the TOC HTML
+                let tocHTML = '<nav class="toc-nav" role="navigation" aria-label="Table of contents"><ul class="toc-list">';
+                let currentLevel = 2;
+                
+                headings.forEach((heading, index) => {
+                    const level = parseInt(heading.tagName.charAt(1));
+                    const text = heading.textContent.trim();
+                    const id = heading.id;
+                    
+                    // Handle nesting levels
+                    if (level > currentLevel) {
+                        // Open nested lists
+                        for (let i = currentLevel; i < level; i++) {
+                            tocHTML += '<li><ul class="toc-sublist">';
+                        }
+                    } else if (level < currentLevel) {
+                        // Close nested lists
+                        for (let i = currentLevel; i > level; i--) {
+                            tocHTML += '</ul></li>';
+                        }
+                    }
+                    
+                    tocHTML += `
+                        <li class="toc-item toc-level-${level}">
+                            <a href="#${id}" class="toc-link" data-target="${id}">
+                                ${text}
+                            </a>
+                        </li>
+                    `;
+                    
+                    currentLevel = level;
+                });
+                
+                // Close any remaining nested lists
+                while (currentLevel > 2) {
+                    tocHTML += '</ul></li>';
+                    currentLevel--;
+                }
+                
+                tocHTML += '</ul></nav>';
+                tocContainer.innerHTML = tocHTML;
+
+                // Add smooth scrolling behavior
+                this.initTocScrolling();
+                
+                // Add active section highlighting
+                this.initTocHighlighting();
+            }
+
+            initTocScrolling() {
+                const tocLinks = document.querySelectorAll('.toc-link');
+                
+                tocLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const targetId = e.target.getAttribute('data-target');
+                        const targetElement = document.getElementById(targetId);
+                        
+                        if (targetElement) {
+                            const offset = 80; // Account for any fixed header
+                            const elementPosition = targetElement.getBoundingClientRect().top;
+                            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+                            window.scrollTo({
+                                top: offsetPosition,
+                                behavior: 'smooth'
+                            });
+                            
+                            // Update URL hash
+                            history.pushState(null, null, `#${targetId}`);
+                            
+                            // Track analytics
+                            this.trackEvent('toc_navigation', { target: targetId });
+                        }
+                    });
+                });
+            }
+
+            initTocHighlighting() {
+                const tocLinks = document.querySelectorAll('.toc-link');
+                const headings = document.querySelectorAll('.blog-prose h2, .blog-prose h3, .blog-prose h4, .blog-prose h5, .blog-prose h6');
+                
+                if (headings.length === 0) return;
+
+                // Create intersection observer for heading visibility
+                const observerOptions = {
+                    rootMargin: '-80px 0px -80% 0px',
+                    threshold: 0
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            // Remove active class from all TOC links
+                            tocLinks.forEach(link => link.classList.remove('toc-active'));
+                            
+                            // Add active class to current section's TOC link
+                            const activeLink = document.querySelector(`[data-target="${entry.target.id}"]`);
+                            if (activeLink) {
+                                activeLink.classList.add('toc-active');
+                            }
+                        }
+                    });
+                }, observerOptions);
+
+                // Observe all headings
+                headings.forEach(heading => observer.observe(heading));
             }
         }
 

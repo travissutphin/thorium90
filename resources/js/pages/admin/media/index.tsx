@@ -151,7 +151,20 @@ const MediaIndex = ({ media, stats, filters }: Props) => {
             return <FileType className="h-12 w-12 text-red-600" />;
         }
         
-        return <FileText className="h-12 w-12 text-blue-600" />;
+        // Excel files - Green icons
+        if (['xls', 'xlsx'].includes(file.extension?.toLowerCase() || '') || 
+            ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.mime_type)) {
+            return <FileText className="h-12 w-12 text-green-600" />;
+        }
+        
+        // Word documents - Blue icons (doc, docx)
+        if (['doc', 'docx'].includes(file.extension?.toLowerCase() || '') || 
+            ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.mime_type)) {
+            return <FileText className="h-12 w-12 text-blue-600" />;
+        }
+        
+        // Default document icon - gray
+        return <FileText className="h-12 w-12 text-gray-600" />;
     };
 
     const getFileTypeColor = (type: string) => {

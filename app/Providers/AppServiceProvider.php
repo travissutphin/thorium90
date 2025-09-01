@@ -64,6 +64,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Schema Validation Service
         $this->app->singleton(\App\Services\SchemaValidationService::class);
+        
+        // Register Media Picker Interface with Core Implementation
+        $this->app->bind(
+            \App\Contracts\MediaPickerInterface::class,
+            \App\Services\CoreMediaService::class
+        );
     }
 
     /**

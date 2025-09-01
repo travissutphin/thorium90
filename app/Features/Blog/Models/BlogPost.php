@@ -40,6 +40,12 @@ class BlogPost extends Model
         'comment_count',
         'share_count',
         'published_at',
+        // Unified SEO fields
+        'seo_keywords',
+        'enhanced_tags',
+        'optimization_data',
+        'ai_optimized_at',
+        'ai_model_used',
     ];
 
     protected $casts = [
@@ -53,6 +59,11 @@ class BlogPost extends Model
         'comment_count' => 'integer',
         'share_count' => 'integer',
         'published_at' => 'datetime',
+        // Unified SEO field casts
+        'seo_keywords' => 'array',
+        'enhanced_tags' => 'array',
+        'optimization_data' => 'array',
+        'ai_optimized_at' => 'datetime',
     ];
 
     protected $dates = [

@@ -5,6 +5,7 @@ namespace App\Features\Blog\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Features\Blog\Services\BlogContentAnalyzer;
 use App\Features\Blog\Services\AI\AIAnalysisManager;
+use App\Features\Blog\Services\ContentOptimizationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -13,11 +14,16 @@ class BlogAnalysisController extends Controller
 {
     protected BlogContentAnalyzer $analyzer;
     protected AIAnalysisManager $aiManager;
+    protected ContentOptimizationService $optimizationService;
 
-    public function __construct(BlogContentAnalyzer $analyzer, AIAnalysisManager $aiManager)
-    {
+    public function __construct(
+        BlogContentAnalyzer $analyzer, 
+        AIAnalysisManager $aiManager,
+        ContentOptimizationService $optimizationService
+    ) {
         $this->analyzer = $analyzer;
         $this->aiManager = $aiManager;
+        $this->optimizationService = $optimizationService;
         
         // Apply permission middleware for blog content analysis
         $this->middleware('permission:blog.posts.create,blog.posts.edit');
@@ -388,5 +394,76 @@ class BlogAnalysisController extends Controller
             'usage' => $usage,
             'limits' => $canUseAI,
         ]);
+    }
+
+    /**
+     * Unified SEO optimization endpoint.
+     * Combines AI analysis with manual overrides for comprehensive SEO optimization.
+     */
+    public function unifiedOptimization(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:500',
+            'content' => 'nullable|string|min:20|max:65535',
+            'schema_type' => 'required|string|in:' . implode(',', array_keys(config('blog.schema.available_types', []))),
+            'use_ai' => 'boolean',
+            'manual_overrides' => 'array',
+            'manual_overrides.seo_keywords' => 'array',
+            'manual_overrides.enhanced_tags' => 'array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $data = [
+                'title' => $request->input('title'),
+                'content' => $request->input('content', ''),
+                'schema_type' => $request->input('schema_type', 'BlogPosting'),
+            ];
+
+            $options = [
+                'use_ai' => $request->input('use_ai', true),
+                'manual_overrides' => $request->input('manual_overrides', []),
+            ];
+
+            // Check AI usage limits if AI is requested
+            if ($options['use_ai'] && $request->input('schema_type') !== 'basic') {
+                $canUseAI = $this->aiManager->canUserAnalyze(auth()->id());
+                if (!$canUseAI['allowed']) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'AI analysis limit reached',
+                        'reason' => $canUseAI['reason'],
+                    ], 429);
+                }
+            }
+
+            // Run unified optimization
+            $result = $this->optimizationService->optimizeContent($data, $options);
+
+            return response()->json([
+                'success' => true,
+                'optimization_data' => $result,
+                'message' => 'Content optimized successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Unified optimization failed', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+                'title' => $request->input('title', ''),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Optimization failed',
+                'message' => config('app.debug') ? $e->getMessage() : 'An error occurred during optimization',
+            ], 500);
+        }
     }
 }

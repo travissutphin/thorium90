@@ -204,6 +204,7 @@ class PageController extends Controller
      */
     public function update(Request $request, Page $page, SchemaValidationService $schemaService)
     {
+
         // Check permissions
         if ($page->user_id === Auth::id()) {
             $this->authorize('edit own pages');
@@ -217,7 +218,7 @@ class PageController extends Controller
         $baseValidation = [
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:pages,slug,' . $page->id,
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'excerpt' => 'nullable|string|max:500',
             'status' => 'required|in:draft,published,private',
             'is_featured' => 'boolean',

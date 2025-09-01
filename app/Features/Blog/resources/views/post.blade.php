@@ -94,10 +94,10 @@
 
             <!-- Featured Image -->
             @if($post->featured_image)
-            <div class="mb-8">
-                <img src="{{ asset('storage/' . $post->featured_image) }}" 
+            <div class="mb-8 text-center">
+                <img src="{{ $post->featured_image }}" 
                      alt="{{ $post->featured_image_alt ?: $post->title }}"
-                     class="blog-featured-image-large">
+                     class="blog-featured-image-large mx-auto">
             </div>
             @endif
 

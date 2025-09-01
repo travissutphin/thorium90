@@ -52,7 +52,7 @@
                     @if($post->featured_image)
                     <div class="flex-shrink-0">
                         <a href="{{ $post->url }}">
-                            <img src="{{ asset('storage/' . $post->featured_image) }}" 
+                            <img src="{{ $post->featured_image }}" 
                                  alt="{{ $post->featured_image_alt ?: $post->title }}"
                                  class="w-16 h-16 object-cover rounded-lg group-hover:opacity-90 transition-opacity">
                         </a>

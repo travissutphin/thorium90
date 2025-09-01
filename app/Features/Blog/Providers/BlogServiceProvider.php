@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Features\Blog\Contracts\AIContentAnalyzerInterface;
 
 class BlogServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,22 @@ class BlogServiceProvider extends ServiceProvider
 
         $this->app->singleton('blog.seo', function ($app) {
             return new \App\Features\Blog\Services\BlogSeoService();
+        });
+
+        // Register AI Content Analyzer Interface
+        $this->app->bind(AIContentAnalyzerInterface::class, function ($app) {
+            $provider = env('AI_PROVIDER', 'basic');
+            
+            switch ($provider) {
+                case 'claude':
+                    return new \App\Features\Blog\Services\AI\ClaudeContentAnalyzer();
+                case 'openai':
+                    return new \App\Features\Blog\Services\AI\OpenAIContentAnalyzer();
+                case 'gemini':
+                    return new \App\Features\Blog\Services\AI\GeminiContentAnalyzer();
+                default:
+                    return new \App\Features\Blog\Services\AI\BasicContentAnalyzer();
+            }
         });
     }
 

@@ -6,7 +6,7 @@
                 <div class="flex items-center space-x-3 mb-4">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center">
                         <img 
-                            src="/images/thorium90-logo.png" 
+                            src="/images/logos/thorium90-logo.svg" 
                             alt="Thorium90 Logo" 
                             class="w-10 h-10 rounded-lg"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"

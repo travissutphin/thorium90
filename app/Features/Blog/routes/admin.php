@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Features\Blog\Controllers\Admin\AdminBlogPostController;
 use App\Features\Blog\Controllers\Admin\AdminBlogCategoryController;
 use App\Features\Blog\Controllers\Admin\AdminBlogTagController;
+use App\Features\Blog\Controllers\Admin\BlogAnalysisController;
+use App\Features\Blog\Controllers\Admin\BlogMediaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,5 +66,29 @@ Route::prefix('blog')->name('blog.')->group(function () {
             ->middleware('permission:blog.tags.edit');
         Route::delete('/{tag}', [AdminBlogTagController::class, 'destroy'])->name('destroy')
             ->middleware('permission:blog.tags.delete');
+    });
+    
+    // AI Content Analysis Routes
+    Route::prefix('analysis')->name('analysis.')->group(function () {
+        // Basic analysis routes
+        Route::post('/content', [BlogAnalysisController::class, 'analyzeContent'])->name('content');
+        Route::get('/tags/suggest', [BlogAnalysisController::class, 'suggestTags'])->name('tags.suggest');
+        Route::post('/faqs/generate', [BlogAnalysisController::class, 'generateFAQs'])->name('faqs.generate');
+        Route::get('/stats', [BlogAnalysisController::class, 'getAnalysisStats'])->name('stats');
+        
+        // AI analysis routes
+        Route::get('/options', [BlogAnalysisController::class, 'getAnalysisOptions'])->name('options');
+        Route::post('/ai', [BlogAnalysisController::class, 'analyzeWithAI'])->name('ai');
+        Route::post('/cost', [BlogAnalysisController::class, 'getAnalysisCost'])->name('cost');
+        Route::get('/usage', [BlogAnalysisController::class, 'getUserUsage'])->name('usage');
+        Route::post('/unified', [BlogAnalysisController::class, 'unifiedOptimization'])->name('unified');
+    });
+    
+    // Blog Media Routes (for featured image picker)
+    Route::prefix('media')->name('media.')->group(function () {
+        Route::get('/picker', [BlogMediaController::class, 'getMediaForBlog'])->name('picker')
+            ->middleware('permission:view media');
+        Route::get('/item/{id}', [BlogMediaController::class, 'getMediaItem'])->name('item')
+            ->middleware('permission:view media');
     });
 });

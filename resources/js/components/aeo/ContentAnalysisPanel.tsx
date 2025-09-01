@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -140,6 +140,7 @@ export default function ContentAnalysisPanel({
     const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
     const [estimatedCost, setEstimatedCost] = useState<number>(0);
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+    const userInteractionRef = useRef<boolean>(false);
     const [selectedSuggestions, setSelectedSuggestions] = useState<{
         tags: ContentAnalysisSuggestion[];
         keywords: string[];
@@ -189,6 +190,17 @@ export default function ContentAnalysisPanel({
 
         loadAnalysisOptions();
     }, []);
+
+    // Call parent callbacks when user makes selections (avoid initial render calls)
+    useEffect(() => {
+        // Only call callbacks if user has actually interacted with the component
+        if (userInteractionRef.current) {
+            onTagsSelected?.(selectedSuggestions.tags);
+            onKeywordsSelected?.(selectedSuggestions.keywords);  
+            onTopicsSelected?.(selectedSuggestions.topics);
+            onFAQsSelected?.(selectedSuggestions.faqs);
+        }
+    }, [selectedSuggestions]);
 
     // Update cost estimate when provider or content changes
     useEffect(() => {
@@ -346,6 +358,7 @@ export default function ContentAnalysisPanel({
     // }, [title, content, analyzeContent, canAnalyze, selectedProvider]);
 
     const handleSuggestionToggle = (type: 'tags' | 'keywords' | 'topics', suggestion: any) => {
+        userInteractionRef.current = true;
         setSelectedSuggestions(prev => {
             const updated = { ...prev };
             
@@ -356,7 +369,6 @@ export default function ContentAnalysisPanel({
                 } else {
                     updated.tags = [...updated.tags, suggestion];
                 }
-                onTagsSelected?.(updated.tags);
             } else if (type === 'keywords') {
                 const exists = updated.keywords.includes(suggestion.name);
                 if (exists) {
@@ -364,7 +376,6 @@ export default function ContentAnalysisPanel({
                 } else {
                     updated.keywords = [...updated.keywords, suggestion.name];
                 }
-                onKeywordsSelected?.(updated.keywords);
             } else if (type === 'topics') {
                 const exists = updated.topics.includes(suggestion.name);
                 if (exists) {
@@ -372,7 +383,6 @@ export default function ContentAnalysisPanel({
                 } else {
                     updated.topics = [...updated.topics, suggestion.name];
                 }
-                onTopicsSelected?.(updated.topics);
             }
             
             return updated;
@@ -380,6 +390,7 @@ export default function ContentAnalysisPanel({
     };
 
     const handleFAQToggle = (faq: {question: string; answer: string}) => {
+        userInteractionRef.current = true;
         setSelectedSuggestions(prev => {
             const updated = { ...prev };
             const exists = updated.faqs.find(f => f.question === faq.question);
@@ -390,7 +401,6 @@ export default function ContentAnalysisPanel({
                 updated.faqs = [...updated.faqs, faq];
             }
             
-            onFAQsSelected?.(updated.faqs);
             return updated;
         });
     };
