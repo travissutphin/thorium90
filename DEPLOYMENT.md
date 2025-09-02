@@ -8,7 +8,7 @@
 
 | Environment | Database | Setup Command | Primary Use |
 |------------|----------|---------------|-------------|
-| **Local** | SQLite | `composer create-project thorium90/boilerplate myproject` | Development |
+| **Local** | SQLite | `git clone` + `composer install` | Development |
 | **Staging** | MySQL | Manual setup + `.env.staging.example` | Testing |
 | **Production** | MySQL | Manual setup + `.env.production.example` | Live site |
 
@@ -19,165 +19,53 @@
 **Perfect for:** Development, testing, quick prototyping
 
 ### Prerequisites
-- PHP 8.0+ with extensions: mbstring, xml, ctype, json, bcmath, fileinfo, tokenizer, sqlite3, openssl, pdo
+- PHP 8.0+ (with extensions: mbstring, xml, ctype, json, bcmath, fileinfo, tokenizer, sqlite3)
 - Composer 2.0+
 - Node.js 16+ with NPM
-- Git (recommended)
-
-#### 🔍 Prerequisites Verification
-**Before starting, validate your environment:**
-
-**Windows:**
-```bash
-# Quick check
-scripts\check-prerequisites.bat
-
-# Manual verification
-php --version && composer --version && node --version
-php -m | findstr /C:"mbstring" /C:"sqlite"
-```
-
-**macOS/Linux:**
-```bash
-# Quick check
-./scripts/check-prerequisites.sh
-
-# Manual verification
-php --version && composer --version && node --version
-php -m | grep -E "(mbstring|xml|sqlite)"
-```
-
-**⚠️ Common Issues:**
-- **Missing PHP extensions**: Enable in `php.ini` by uncommenting `extension=` lines
-- **Composer not found**: Download from [getcomposer.org](https://getcomposer.org/)
-- **Node.js outdated**: Install LTS version from [nodejs.org](https://nodejs.org/)
-- **Port 8000 in use**: Change `APP_URL` in `.env` to use different port (e.g., `:8080`)
+- Git
 
 ### Quick Start (Recommended)
-
-#### Step 1: Verify Prerequisites
 ```bash
-# Windows
-scripts\check-prerequisites.bat
-
-# macOS/Linux  
-./scripts/check-prerequisites.sh
-```
-
-#### Step 2: Create New Project
-```bash
-# Create new project
-composer create-project thorium90/boilerplate myproject
+# Clone project
+git clone https://github.com/[your-repo]/thorium90.git myproject
 cd myproject
 
-# Verify installation
-php scripts/check-prerequisites.php
-```
-
-#### Step 3: Automatic Setup
-```bash
-# Interactive setup (recommended for first-time users)
-php artisan thorium90:setup --interactive
-
-# Silent setup (for experienced users)
-php artisan thorium90:setup --silent
-```
-
-#### Step 4: Start Development
-```bash
-# Start development servers
-npm run dev        # Vite dev server (frontend assets)
-php artisan serve  # Laravel server (http://localhost:8000)
-
-# Alternative: All-in-one development command
-composer run dev   # Starts server, queue, logs, and vite concurrently
-```
-
-#### Step 5: Verify Installation
-```bash
-# Test basic functionality
-php artisan test tests/Unit/ExampleTest.php
-
-# Visit in browser
-# http://localhost:8000 (public site)
-# http://localhost:8000/admin (admin login)
-```
-
-### Manual Setup (Alternative Approach)
-
-#### Step 1: Get Project Files
-```bash
-# Clone repository
-git clone https://github.com/yourrepo/thorium90.git
-cd thorium90
-
-# OR download and extract ZIP file
-```
-
-#### Step 2: Validate Prerequisites
-```bash
-# Check system requirements
-php scripts/check-prerequisites.php
-```
-
-#### Step 3: Install Dependencies
-```bash
-# Install PHP dependencies
+# Install dependencies
 composer install
-
-# Install Node.js dependencies  
 npm install
 
-# If npm fails, try clearing cache:
-# npm cache clean --force && npm install
-```
-
-#### Step 4: Environment Setup
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Generate application key
-php artisan key:generate
-
-# Edit .env if needed (change APP_URL, etc.)
-```
-
-#### Step 5: Database Setup
-```bash
-# Create SQLite database (cross-platform)
-# Windows (automatic)
-php artisan migrate --seed
-
-# macOS/Linux (manual creation)
-mkdir -p database
-touch database/database.sqlite
-chmod 664 database/database.sqlite
-php artisan migrate --seed
-```
-
-#### Step 6: Build Assets & Start
-```bash
-# Build frontend assets
-npm run build
+# Automatic setup (creates SQLite database, runs migrations)
+php artisan thorium90:setup --interactive
 
 # Start development servers
-npm run dev        # Terminal 1: Vite dev server
-php artisan serve  # Terminal 2: Laravel server
-
-# OR use all-in-one command
-composer run dev   # Single terminal with all services
+npm run dev        # Vite dev server
+php artisan serve  # Laravel server (http://localhost:8000)
 ```
 
-#### Step 7: Final Verification
+### Manual Setup
 ```bash
-# Run basic tests
-php artisan test tests/Unit/ExampleTest.php
+# Clone project
+git clone https://github.com/[your-repo]/thorium90.git myproject
+cd myproject
 
-# Check application status
-php artisan about
+# Install dependencies
+composer install
+npm install
 
-# Visit: http://localhost:8000
+# Environment configuration
+cp .env.example .env
+php artisan key:generate
+
+# Database setup (SQLite - no MySQL required)
+touch database/database.sqlite
+php artisan migrate --seed
+
+# Build assets
+npm run build
+
+# Start servers
+npm run dev
+php artisan serve
 ```
 
 ### Local Environment Details
@@ -615,187 +503,18 @@ php artisan model:cache
 
 ## 🆘 Troubleshooting
 
-### Local Development Issues
-
-#### Prerequisites & Installation
-
-**❌ PHP Extensions Missing**
-```bash
-# Check what's missing
-php scripts/check-prerequisites.php
-
-# Windows (XAMPP/WAMP)
-# Enable in C:\xampp\php\php.ini:
-# extension=mbstring
-# extension=sqlite3
-# extension=pdo_sqlite
-
-# macOS (Homebrew)
-brew install php
-# Edit /opt/homebrew/etc/php/8.x/php.ini
-
-# Ubuntu/Debian
-sudo apt install php8.2-mbstring php8.2-sqlite3 php8.2-xml php8.2-curl
-
-# CentOS/RHEL
-sudo dnf install php-mbstring php-sqlite3 php-xml
-```
-
-**❌ Composer Install Fails**
-```bash
-# Clear composer cache
-composer clear-cache
-
-# Update composer
-composer self-update
-
-# Install with more memory
-php -d memory_limit=512M /usr/local/bin/composer install
-
-# Skip platform requirements (last resort)
-composer install --ignore-platform-reqs
-```
-
-**❌ NPM Install Fails**
-```bash
-# Clear npm cache
-npm cache clean --force
-
-# Delete node_modules and retry
-rm -rf node_modules package-lock.json
-npm install
-
-# Use different registry
-npm install --registry https://registry.npmjs.org/
-
-# Check Node.js version
-node --version  # Should be 16+
-```
-
-#### Database Issues
-
-**❌ SQLite Database Errors**
-```bash
-# Windows: Usually auto-created, but check permissions
-# macOS/Linux: Manual creation required
-mkdir -p database
-touch database/database.sqlite
-chmod 664 database/database.sqlite
-
-# If migrations fail
-php artisan migrate:fresh --seed
-
-# Check SQLite is working
-php artisan tinker
->>> DB::connection()->getPdo();
-```
-
-**❌ Migration Errors**
-```bash
-# Clear and retry
-php artisan migrate:fresh --seed
-
-# Check database connection
-php artisan config:show database.default
-php artisan config:show database.connections.sqlite
-
-# Manual SQLite fix
-rm database/database.sqlite
-touch database/database.sqlite
-php artisan migrate --seed
-```
-
-#### Server & Asset Issues
-
-**❌ Port 8000 Already in Use**
-```bash
-# Find what's using port 8000
-# Windows
-netstat -ano | findstr :8000
-
-# macOS/Linux  
-lsof -i :8000
-
-# Use different port
-php artisan serve --port=8080
-# Update APP_URL in .env: http://localhost:8080
-```
-
-**❌ Vite/Asset Building Fails**
-```bash
-# Clear Vite cache
-rm -rf node_modules/.vite
-
-# Rebuild from scratch
-npm run build
-
-# Check for TypeScript errors
-npm run types
-
-# Development mode issues
-npm run dev
-# If fails, check package.json scripts
-```
-
-**❌ Permission Errors (macOS/Linux)**
-```bash
-# Fix storage permissions
-chmod -R 755 storage bootstrap/cache
-sudo chown -R $USER:$USER storage bootstrap/cache
-
-# Fix database permissions
-chmod 664 database/database.sqlite
-chmod 755 database
-
-# SELinux issues (CentOS/RHEL)
-sudo setsebool -P httpd_can_network_connect 1
-```
-
-#### Application Errors
-
-**❌ Key Not Generated**
-```bash
-# Generate application key
-php artisan key:generate
-
-# Force generation
-php artisan key:generate --force
-
-# Verify key exists
-php artisan config:show app.key
-```
-
-**❌ Cache Issues**
-```bash
-# Clear all caches
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-
-# If still issues, clear compiled files
-php artisan clear-compiled
-composer dump-autoload
-```
-
-**❌ Route Errors**
-```bash
-# Thorium90-specific route validation
-php scripts/check-ziggy-routes.php
-
-# Clear route cache
-php artisan route:clear
-
-# List all routes
-php artisan route:list | grep -i admin
-```
-
-### Production/Staging Issues
+### Common Issues
 
 **Database Connection Errors**
 - Verify database credentials in `.env`
 - Ensure database server is running
 - Check firewall/security group settings
+
+**Permission Errors**
+```bash
+chmod -R 755 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+```
 
 **Asset Not Loading**
 ```bash
@@ -803,117 +522,11 @@ npm run build
 php artisan view:cache
 ```
 
-**General Server Errors**
+**Route Not Found Errors**
 ```bash
-# Check logs
-tail -f storage/logs/laravel.log
-
-# Enable debug temporarily (staging only)
-APP_DEBUG=true in .env
-
-# Check server status
-php artisan about
-```
-
-### Getting Help
-
-**Thorium90 Specific:**
-- Check documentation: `/docs/` directory
-- Run regression tests: `scripts\test-regression.bat`
-- Validate setup: `php artisan thorium90:setup --interactive`
-- Test database: `php artisan thorium90:validate-database`
-
-**Laravel General:**
-- [Laravel Documentation](https://laravel.com/docs)
-- [Laravel Community](https://laravel.io)
-
-## 🔄 Installation Rollback & Recovery
-
-### Automated Rollback (Recommended)
-
-**If installation fails or becomes corrupted:**
-
-```bash
-# Safe, guided rollback
-php scripts/rollback-installation.php
-
-# Follow the prompts, then restart installation:
-php scripts/check-prerequisites.php
-cp .env.example .env
-php artisan key:generate
-composer install
-npm install
-php artisan thorium90:setup --interactive
-```
-
-### Manual Emergency Reset (Advanced)
-
-**Complete nuclear option for severely broken installations:**
-
-```bash
-# ⚠️  WARNING: This removes EVERYTHING including uncommitted changes
-git clean -fd
-git reset --hard HEAD
-
-# Rebuild from scratch
-composer install
-npm install
-cp .env.example .env
-php artisan key:generate
-
-# Recreate database
-rm -f database/database.sqlite
-mkdir -p database
-touch database/database.sqlite
-chmod 664 database/database.sqlite
-
-# Complete setup
-php artisan migrate --seed
-npm run build
-php artisan serve
-```
-
-### Partial Recovery Options
-
-**Fix Specific Issues Without Full Reset:**
-
-```bash
-# Reset only database
-php artisan migrate:fresh --seed
-
-# Reset only caches
-php artisan cache:clear && php artisan config:clear && php artisan route:clear
-
-# Reset only Node.js dependencies
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-
-# Reset only Composer dependencies
-rm -rf vendor composer.lock
-composer clear-cache
-composer install
-
-# Reset only environment
-cp .env.example .env
-php artisan key:generate
-```
-
-### Backup & Recovery Best Practices
-
-**Before making major changes:**
-
-```bash
-# Backup current working state
-cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
-cp database/database.sqlite database/database.backup.$(date +%Y%m%d_%H%M%S)
-
-# Create git stash
-git add -A
-git stash push -m "Backup before changes"
-
-# Later restore if needed
-git stash pop
+php artisan route:clear
+php artisan config:clear
+php scripts/check-ziggy-routes.php  # Thorium90 specific
 ```
 
 ### Getting Help
