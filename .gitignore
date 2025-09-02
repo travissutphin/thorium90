@@ -13,6 +13,9 @@
 /storage/*.key
 /storage/pail
 
+# Prevent auto-generated vite config (we use vite.config.ts)
+vite.config.js
+
 # Environment files
 .env
 .env.backup
