@@ -41,7 +41,7 @@ class SanctumApiTest extends TestCase
             ])
             ->assertJson([
                 'status' => 'ok',
-                'version' => '1.0.0'
+                'version' => '2.0.1'
             ]);
     }
 

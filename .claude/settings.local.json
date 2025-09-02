@@ -46,7 +46,11 @@
       "Read(C:\\xampp\\htdocs\\thorium90\\app\\Http\\Controllers\\Auth/**)",
       "Read(C:\\xampp\\htdocs\\thorium90\\config/**)",
       "Read(C:\\xampp\\htdocs\\thorium90/**)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git for-each-ref:*)",
+      "Bash(git show-ref:*)",
+      "Bash(git checkout:*)",
+      "Bash(timeout 60 php artisan thorium90:setup:*)"
     ],
     "deny": [],
     "ask": []

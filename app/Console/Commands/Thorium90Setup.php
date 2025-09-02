@@ -18,7 +18,8 @@ class Thorium90Setup extends Command
                             {--name= : Project name}
                             {--domain= : Primary domain}
                             {--admin-email= : Admin user email}
-                            {--admin-password= : Admin user password}';
+                            {--admin-password= : Admin user password}
+                            {--resolve-conflicts-only : Only resolve migration conflicts, skip full setup}';
 
     protected $description = 'Setup Thorium90 boilerplate for a new project';
 
@@ -49,6 +50,15 @@ class Thorium90Setup extends Command
     {
         $this->info('🚀 Welcome to Thorium90 Boilerplate Setup!');
         $this->newLine();
+
+        // Handle conflicts-only mode
+        if ($this->option('resolve-conflicts-only')) {
+            $this->info('🔧 Running migration conflict resolution only...');
+            $this->resolveMigrationConflicts();
+            $this->info('✅ Migration conflicts resolved!');
+            $this->line('You can now run: php artisan migrate --force');
+            return;
+        }
 
         if ($this->option('silent')) {
             $this->runSilentSetup();
@@ -467,6 +477,9 @@ class Thorium90Setup extends Command
             $driver = config('database.default');
             $this->info("📊 Using database driver: {$driver}");
             
+            // Check for and resolve migration conflicts
+            $this->resolveMigrationConflicts();
+            
             // For SQLite, ensure database file exists and is writable
             if ($driver === 'sqlite') {
                 $dbPath = config('database.connections.sqlite.database');
@@ -516,6 +529,91 @@ class Thorium90Setup extends Command
             $this->line('Please check your database configuration and try again.');
             throw $e;
         }
+    }
+
+    /**
+     * Detect and resolve migration conflicts that occur during deployment.
+     * This prevents the common issue where old Laravel base migrations
+     * conflict with enhanced Thorium90 migrations.
+     */
+    protected function resolveMigrationConflicts()
+    {
+        $this->line('🔍 Checking for migration conflicts...');
+        
+        $conflictingMigrations = [
+            // Old Laravel base migrations that conflict with Thorium90 enhanced versions
+            '2014_10_12_000000_create_users_table.php' => '0001_01_01_000000_create_users_table.php',
+            '2014_10_12_100000_create_password_reset_tokens_table.php' => '0001_01_01_000001_create_cache_table.php',
+            '2019_08_19_000000_create_failed_jobs_table.php' => '0001_01_01_000002_create_jobs_table.php',
+            '2019_12_14_000001_create_personal_access_tokens_table.php' => '2025_08_03_200836_create_personal_access_tokens_table.php'
+        ];
+        
+        $conflictsFound = [];
+        $migrationsPath = database_path('migrations');
+        
+        foreach ($conflictingMigrations as $oldMigration => $newMigration) {
+            $oldPath = $migrationsPath . '/' . $oldMigration;
+            $newPath = $migrationsPath . '/' . $newMigration;
+            
+            // Check if both old and new migration exist
+            if (File::exists($oldPath) && File::exists($newPath)) {
+                $conflictsFound[] = [
+                    'old' => $oldMigration,
+                    'new' => $newMigration,
+                    'old_path' => $oldPath
+                ];
+            }
+        }
+        
+        if (empty($conflictsFound)) {
+            $this->info('✅ No migration conflicts detected');
+            return;
+        }
+        
+        $this->warn('⚠️  Found ' . count($conflictsFound) . ' migration conflict(s)');
+        
+        // Create conflicts directory if it doesn't exist
+        $conflictsDir = $migrationsPath . '/conflicts';
+        if (!File::exists($conflictsDir)) {
+            File::makeDirectory($conflictsDir, 0755, true);
+        }
+        
+        foreach ($conflictsFound as $conflict) {
+            $this->line("  • Moving {$conflict['old']} → conflicts/");
+            
+            try {
+                // Move conflicting migration to conflicts directory
+                $conflictPath = $conflictsDir . '/' . $conflict['old'];
+                File::move($conflict['old_path'], $conflictPath);
+                
+                $this->info("    ✅ Resolved: Using enhanced {$conflict['new']} instead");
+                
+            } catch (Exception $e) {
+                $this->error("    ❌ Failed to move {$conflict['old']}: " . $e->getMessage());
+            }
+        }
+        
+        // Create README in conflicts directory explaining the situation
+        $readmeContent = "# Migration Conflicts - Resolved Automatically\n\n";
+        $readmeContent .= "These migrations were moved here to resolve conflicts during deployment.\n\n";
+        $readmeContent .= "## What Happened\n\n";
+        $readmeContent .= "Thorium90 uses enhanced migrations that replace the standard Laravel base migrations.\n";
+        $readmeContent .= "These old migrations were conflicting with the enhanced versions and have been moved here.\n\n";
+        $readmeContent .= "## Conflicts Resolved\n\n";
+        
+        foreach ($conflictsFound as $conflict) {
+            $readmeContent .= "- `{$conflict['old']}` → Now using enhanced `{$conflict['new']}`\n";
+        }
+        
+        $readmeContent .= "\n## Safe to Delete\n\n";
+        $readmeContent .= "These files are safe to delete as their functionality is included in the enhanced migrations.\n";
+        $readmeContent .= "They are kept here temporarily for reference during the deployment process.\n\n";
+        $readmeContent .= "*Generated by Thorium90 Setup on " . now()->format('Y-m-d H:i:s') . "*\n";
+        
+        File::put($conflictsDir . '/README.md', $readmeContent);
+        
+        $this->info('✅ Migration conflicts resolved successfully');
+        $this->line('   Old migrations moved to database/migrations/conflicts/');
     }
 
     protected function createAdminUser($email, $password)

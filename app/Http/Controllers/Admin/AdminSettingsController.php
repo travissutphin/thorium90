@@ -336,7 +336,7 @@ class AdminSettingsController extends Controller
         $export = [
             'exported_at' => now()->toISOString(),
             'exported_by' => auth()->user()->email,
-            'version' => Setting::get('app.version', '1.0.0'),
+            'version' => Setting::get('app.version', '2.0.1'),
             'settings' => $settings,
         ];
         
