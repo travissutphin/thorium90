@@ -99,7 +99,7 @@ class SettingsSeeder extends Seeder
 
         Setting::set(
             'app.version',
-            '1.0.0',
+            '2.0.1',
             'string',
             'application',
             'Current application version',
