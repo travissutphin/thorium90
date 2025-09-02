@@ -71,7 +71,10 @@ class Thorium90Setup extends Command
         $this->info('✅ Thorium90 setup completed successfully!');
         $this->newLine();
         $this->info('Next steps:');
-        $this->info('• Run: php artisan serve');
+        $this->info('• Run: npm run build');
+		$this->info('• Run: npm run dev');
+		$this->info('• Note: Open another terminal');
+		$this->info('• Run: php artisan serve');
         $this->info('• Visit: http://localhost:8000');
         $this->info('• Login with your admin credentials');
         $this->newLine();
@@ -520,6 +523,7 @@ class Thorium90Setup extends Command
             $this->call('db:seed', ['--class' => 'PermissionSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'RoleSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'RolePermissionSeeder', '--force' => true]);
+            $this->call('db:seed', ['--class' => 'BlogPermissionSeeder', '--force' => true]);
             $this->call('db:seed', ['--class' => 'Thorium90DefaultPagesSeeder', '--force' => true]);
             
             $this->info('✅ Database setup completed successfully');
