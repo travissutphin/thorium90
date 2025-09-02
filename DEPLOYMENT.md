@@ -34,11 +34,14 @@ cd myproject
 composer install
 npm install
 
-# Automatic setup (creates SQLite database, runs migrations)
+# Automatic setup (creates SQLite database, runs migrations, builds assets)
 php artisan thorium90:setup --interactive
 
+# Build frontend assets (required for admin panel)
+npm run build
+
 # Start development servers
-npm run dev        # Vite dev server
+npm run dev        # Vite dev server (for live reloading during development)
 php artisan serve  # Laravel server (http://localhost:8000)
 ```
 
@@ -60,12 +63,12 @@ php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
 
-# Build assets
+# Build frontend assets (required for admin panel)
 npm run build
 
-# Start servers
-npm run dev
-php artisan serve
+# Start development servers
+npm run dev        # Vite dev server (for live reloading during development)
+php artisan serve  # Laravel server (http://localhost:8000)
 ```
 
 ### Local Environment Details

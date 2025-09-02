@@ -67,7 +67,9 @@
             "@php artisan thorium90:setup --interactive"
         ],
         "post-install-cmd": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate --ansi --force",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan thorium90:setup --silent",
             "@npm run build"
         ],
