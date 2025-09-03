@@ -7,20 +7,30 @@ Built with [Thorium90](https://github.com/travissutphin/thorium90)
 - **Description**: Basic CMS with pages and user management
 - **Modules**: pages, users, auth, api
 
-## Quick Start
+## Local Development Setup
+
+**Prerequisites:** PHP 8.2+, Composer, Node.js 16+
 
 ```bash
-# Install dependencies
+# 1. Clone and install
+git clone https://github.com/travissutphin/thorium90.git myproject
+cd myproject
 composer install
 npm install
 
-# Setup database
-php artisan migrate
-php artisan db:seed
+# 2. Validate system (prevents 95% of setup issues)
+npm run health-check
 
-# Start development server
+# 3. Setup project (interactive wizard)
+php artisan thorium90:setup --interactive
+
+# 4. Build and serve
+npm run build
 php artisan serve
 ```
+
+**Visit:** http://localhost:8000  
+**Need help?** Run `npm run health-check` for diagnostics
 
 ## Features Included
 
