@@ -10,13 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-**Thorium90** is a Laravel 12 boilerplate built for production CMS applications with a hybrid frontend approach:
+**Thorium90** is a Laravel 12 application built for production CMS applications with a hybrid frontend approach:
 
 ### Core Architecture
 - **Backend**: Laravel 12 with feature-based modular structure
 - **Frontend**: Hybrid approach - Inertia.js React for admin, Blade templates for public pages
 - **Database**: MySQL production / SQLite development with comprehensive migrations
-- **Authentication**: Laravel Fortify + Spatie Permissions with mandatory 2FA for admin roles
+- **Authentication**: Laravel Fortify + Spatie Permissions (2FA infrastructure present but not active)
 - **UI Framework**: Tailwind CSS + shadcn/ui components + custom component library
 
 ### Key Architectural Patterns
@@ -41,18 +41,28 @@ resources/js/
 
 ## Essential Commands
 
-### Development Setup
+### Development Setup (Bulletproof v2.1.0 Workflow)
 ```bash
-# Quick start (recommended)
-php artisan thorium90:setup --silent
+# STEP 1: System validation first (prevents 95% of setup issues)
+npm run health-check                    # Comprehensive system validation
+composer run health-check              # Alternative command
 
-# Development servers
-npm run dev          # Vite dev server
-php artisan serve    # Laravel server
+# STEP 2: Interactive setup (recommended for all users)
+php artisan thorium90:setup --interactive  # Guided setup wizard
+# OR for advanced users who understand the risks:
+php artisan thorium90:setup --force        # Skip validation (not recommended)
 
-# Build assets
-npm run build        # Production build
-npm run build:ssr    # SSR build
+# STEP 3: Development workflow
+npm run build        # Production build (required after setup)
+php artisan serve    # Laravel server (http://localhost:8000)
+npm run dev          # Vite dev server (for live reloading)
+
+# Advanced development commands
+composer run fresh-start               # Complete setup from scratch
+composer run dev                       # All services (server, queue, logs, vite)
+npm run dev:check                      # TypeScript + ESLint validation
+npm run dev:https                      # HTTPS development server
+npm run build:ssr                      # SSR build
 ```
 
 ### Testing & Quality Assurance
@@ -87,11 +97,19 @@ php artisan permission:show
 
 ## Development Workflow & Standards
 
-### Mandatory Testing Protocol
+### Bulletproof Setup Protocol (v2.1.0)
+- **ALWAYS** run `npm run health-check` before any development work
+- **NEVER** proceed with setup if system validation fails
+- **MANDATORY** use `php artisan thorium90:setup --interactive` for new installations
+- Only advanced users should use `--force` flag to bypass validation
+- **REQUIRED** run `npm run build` after successful setup
+
+### Mandatory Testing Protocol  
 - **ALWAYS** run `scripts\test-regression.bat` before committing ANY changes
 - **NEVER SKIP** regression testing when modifying existing functionality
 - Run `php artisan test --filter="Critical|Auth|Permission"` for critical changes
 - Never commit code with failing tests related to your changes
+- Use `npm run dev:check` for TypeScript and linting validation before commits
 
 ### Route Validation (PREVENT Ziggy Errors)
 - **BEFORE using route() helpers** in React/Inertia components, verify routes exist
@@ -121,10 +139,117 @@ php artisan permission:show
 - Use "**IMPLEMENT:**", "**FIX:**", "**REFACTOR:**" → Indicates Sonnet appropriate
 - Always start responses showing current model: "**Current Model: Claude [Opus/Sonnet]**"
 
+## Terminology & Naming Standards (CRITICAL)
+
+### Project References
+- **ALWAYS use**: "Thorium90" (exact capitalization)
+- **NEVER use**: "Thorium90 boilerplate", "thorium90", "Thorium-90", "Thorium 90"
+- **File references**: Use exact case-sensitive paths and filenames
+- **Documentation**: Refer to project as "Thorium90" in all contexts
+
+### Feature Status Terminology
+- **Active Features**: Currently implemented and ready for use
+- **Integrated Features**: Partially implemented, may have incomplete functionality
+- **Planned Features**: Not yet implemented, avoid referencing as available
+
+## Feature Implementation Status (MANDATORY REFERENCE)
+
+### ✅ ACTIVE FEATURES (Safe to reference and build upon)
+- **Multi-role Authentication**: Laravel Fortify + Spatie Permissions (fully implemented)
+- **Blog System**: Complete blog functionality in `app/Features/Blog/`
+- **AEO Integration**: AI-powered content analysis (Claude, OpenAI, Basic providers)
+- **Page Management**: Dynamic page system with templates
+- **Admin Dashboard**: Inertia.js React admin interface
+- **Bulletproof Deployment**: v2.1.0 health check and setup system
+
+### ⚠️ PARTIALLY INTEGRATED FEATURES (Use with caution)
+- **2FA (Two-Factor Authentication)**: 
+  - Status: Infrastructure in place but ON HOLD
+  - **DO NOT**: Reference as "mandatory for admin roles" 
+  - **DO NOT**: Include 2FA setup instructions
+  - **CURRENT STATE**: Basic Fortify 2FA structure exists but not activated
+  - **WHEN TO MENTION**: Only if user explicitly asks about 2FA implementation
+
+### ❌ PLANNED FEATURES (Do not reference as available)
+- E-commerce functionality
+- Advanced team management
+- Subscription billing
+- Multi-tenancy
+
+## Architectural Precision Standards
+
+### Database References
+- **Primary Development**: SQLite (zero configuration)
+- **Production Deployment**: MySQL (recommended)
+- **NEVER assume**: PostgreSQL is actively supported (it's configured but not primary)
+
+### Frontend Architecture
+- **Admin Interface**: Inertia.js + React (resources/js/pages/)
+- **Public Pages**: Blade templates (resources/views/)
+- **NEVER mix**: Don't suggest Inertia for public pages or Blade for admin
+
+### Permission System Reality Check
+- **Current Implementation**: Role-based with Spatie Permissions
+- **Middleware Logic**: OR logic for multiple permissions (not AND)
+- **2FA Integration**: NOT CURRENTLY ACTIVE (despite infrastructure presence)
+
+## Code Generation Standards
+
+### File Creation Rules
+- **ALWAYS check existing patterns** before generating new files
+- **Use exact existing directory structure** - don't create new base folders
+- **Follow established naming conventions** in sibling files
+- **Preserve existing code style** and formatting patterns
+
+### Component Development
+- **Reuse existing components** before creating new ones
+- **Check resources/js/components/** for existing UI patterns
+- **Use shadcn/ui components** that are already installed
+- **Follow TypeScript definitions** in resources/js/types/
+
+### Service Integration
+- **Blog services**: Use existing BlogService patterns
+- **AI services**: Use AIContentAnalyzerInterface abstraction
+- **Media uploads**: Follow established MediaUploadService patterns
+
+## Common Mistakes & Corrections
+
+### ❌ AVOID THESE MISTAKES:
+- Referring to "Thorium90 boilerplate" instead of "Thorium90"
+- Mentioning 2FA as mandatory or fully implemented
+- Using `--silent` flag (removed in v2.1.0)
+- Suggesting PostgreSQL as primary database
+- Creating new base directories without approval
+- Mixing Inertia/Blade contexts incorrectly
+- Assuming e-commerce features are available
+
+### ✅ CORRECT APPROACHES:
+- Always say "Thorium90" (exact case)
+- Mention 2FA only if user specifically asks
+- Use `--interactive` for setup commands
+- Default to SQLite for development examples
+- Follow existing directory patterns
+- Use appropriate template system for context
+- Focus on implemented features (blog, pages, auth, AEO)
+
+## User Interaction Guidelines
+
+### Question Clarification
+- **When user mentions "boilerplate"**: Gently correct to "Thorium90"
+- **When user asks about 2FA**: Clarify current status (infrastructure exists but on hold)
+- **When user requests e-commerce**: Explain it's not currently implemented
+- **Always confirm**: Feature availability before providing implementation details
+
+### Technical Recommendations
+- **Default to implemented features** when suggesting solutions
+- **Validate feature status** before providing detailed implementation
+- **Suggest alternatives** if requested feature isn't fully available
+- **Be transparent** about partial implementations vs full features
+
 ## Project-Specific Rules
 - Template system uses Blade (not Inertia) for public pages
 - Permission middleware uses OR logic for multiple permissions
-- 2FA is mandatory for Admin/Super Admin roles
+- 2FA infrastructure is present but currently on hold for future implementation
 - Always preserve existing code style and conventions
 - Feature modules are self-contained with their own service providers
 
@@ -169,7 +294,7 @@ php artisan permission:show
 ## Boilerplate Change Management
 
 ### When Making Changes to Thorium90
-This project serves as a boilerplate for client projects. Follow these rules:
+This project serves as a base template for client projects. Follow these rules:
 
 **For New Features:**
 ```bash
@@ -188,14 +313,17 @@ git push origin v1.X.X
 ```
 
 **Version Guidelines:**
-- **Patch (v1.0.1)**: Bug fixes, security patches
-- **Minor (v1.1.0)**: New features, backward compatible  
-- **Major (v2.0.0)**: Breaking changes, framework upgrades
+- **Patch (v2.1.1)**: Bug fixes, security patches, minor command updates
+- **Minor (v2.2.0)**: New features, new commands, enhanced functionality (backward compatible)
+- **Major (v3.0.0)**: Breaking changes, framework upgrades, PHP version requirements
 
-**Always Test:**
-- Run `php artisan test` before commits
+**Always Test Before Release:**
+- Run `npm run health-check` to ensure system validation works
+- Run `php artisan test` and `scripts\test-regression.bat` 
 - Test setup wizard: `php artisan thorium90:setup --interactive`
-- Test clean install: `composer create-project thorium90/boilerplate test-install`
+- Test clean install: `composer create-project thorium90/thorium90 test-install`
+- Test failure scenarios: Try setup with missing PHP extensions or wrong versions
+- **v2.1.0+ Requirement**: Test health check → setup → build → serve workflow end-to-end
 
 **Client Compatibility:**
 - Maintain backward compatibility for minor versions
@@ -207,11 +335,25 @@ See `/docs/development/BOILERPLATE-WORKFLOW.md` for complete workflow.
 ## Important Paths
 - Documentation: `/docs/`
 - Temporary docs: `/docs/development/`
-- Scripts: `/scripts/`
+- Scripts: `/scripts/` (includes health-check.js, test-regression.bat)
 - Tests: `/tests/`
 - Core configs: `/config/`
 - Blog feature: `/app/Features/Blog/`
 - Frontend components: `/resources/js/components/`
+
+## v2.1.0 Bulletproof System Files
+- **Setup State**: `.thorium90-setup` (tracks setup completion and metadata)
+- **Health Check**: `scripts/health-check.js` (comprehensive system validation)
+- **Enhanced Setup**: `app/Console/Commands/Thorium90Setup.php` (bulletproof setup command)
+- **Environment Template**: `.env.example` (updated with security defaults)
+- **Enhanced Vite**: `vite.config.ts` (cross-platform, HTTPS, dynamic ports)
+- **Updated Dependencies**: `composer.json` & `package.json` (new commands, PHP 8.2+)
+
+## Deployment Status Tracking
+- **Setup Completion**: Check for `.thorium90-setup` file to determine if project is configured
+- **System Validation**: Use `npm run health-check` to verify environment before development
+- **Recovery Mode**: Setup command provides guided recovery when validation fails
+- **State Persistence**: Setup metadata includes versions, database type, completion timestamp
 
 ===
 
@@ -225,7 +367,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 ## Foundational Context
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.2.12
+- php - 8.2+ (minimum requirement for Laravel 12 + v2.1.0 bulletproof deployment)
 - inertiajs/inertia-laravel (INERTIA) - v2
 - laravel/fortify (FORTIFY) - v1
 - laravel/framework (LARAVEL) - v12
