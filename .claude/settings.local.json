@@ -10,9 +10,38 @@
       "Bash(composer --version)",
       "Bash(git add:*)",
       "Bash(git tag:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\resources\\js\\layouts/**)",
+      "Bash(composer show:*)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Bash(rm:*)",
+      "Bash(composer install:*)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Bash(git config:*)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\app\\Console\\Commands/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\scripts/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\scripts/**)",
+      "Bash(composer:*)",
+      "Bash(scriptstest-regression.bat)",
+      "mcp__laravel-boost__application-info",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90\\scripts/**)",
+      "Read(C:\\xampp\\htdocs\\thorium90/**)",
+      "mcp__laravel-boost__list-available-config-keys",
+      "Bash(npm run health-check:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

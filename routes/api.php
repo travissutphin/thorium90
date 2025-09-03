@@ -147,22 +147,25 @@ Route::middleware('auth:sanctum')->group(function () {
     |
     */
 
-    // Admin-only routes
-    Route::middleware(['role:Super Admin,Admin'])->prefix('admin')->group(function () {
+    // Admin routes with proper permission-based authorization
+    Route::prefix('admin')->group(function () {
         
-        Route::get('/users', function (Request $request) {
+        // User management endpoint - requires 'manage users' permission
+        Route::middleware(['permission:manage users'])->get('/users', function (Request $request) {
             return response()->json([
                 'users' => \App\Models\User::with('roles', 'permissions')->get()
             ]);
         });
 
-        Route::get('/roles', function (Request $request) {
+        // Role management endpoint - requires 'manage roles' permission  
+        Route::middleware(['permission:manage roles'])->get('/roles', function (Request $request) {
             return response()->json([
                 'roles' => \Spatie\Permission\Models\Role::with('permissions')->get()
             ]);
         });
 
-        Route::get('/permissions', function (Request $request) {
+        // Permission management endpoint - requires 'manage permissions' permission (Super Admin only)
+        Route::middleware(['permission:manage permissions'])->get('/permissions', function (Request $request) {
             return response()->json([
                 'permissions' => \Spatie\Permission\Models\Permission::all()
             ]);

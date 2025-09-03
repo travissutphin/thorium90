@@ -13,13 +13,13 @@ class Thorium90Setup extends Command
 {
     protected $signature = 'thorium90:setup 
                             {--interactive : Run interactive setup wizard}
-                            {--silent : Skip all questions, use smart defaults}
                             {--preset=default : Setup preset (default|ecommerce|blog|saas)}
                             {--name= : Project name}
                             {--domain= : Primary domain}
                             {--admin-email= : Admin user email}
                             {--admin-password= : Admin user password}
-                            {--resolve-conflicts-only : Only resolve migration conflicts, skip full setup}';
+                            {--resolve-conflicts-only : Only resolve migration conflicts, skip full setup}
+                            {--force : Skip system validation (advanced users only)}';
 
     protected $description = 'Setup Thorium90 boilerplate for a new project';
 
@@ -48,7 +48,7 @@ class Thorium90Setup extends Command
 
     public function handle()
     {
-        $this->info('🚀 Welcome to Thorium90 Boilerplate Setup!');
+        $this->info('🚀 Welcome to Thorium90 Setup!');
         $this->newLine();
 
         // Handle conflicts-only mode
@@ -60,23 +60,36 @@ class Thorium90Setup extends Command
             return;
         }
 
-        if ($this->option('silent')) {
-            $this->runSilentSetup();
-        } elseif ($this->option('interactive')) {
+        // Validate system requirements first (unless forced or conflicts-only)
+        if (!$this->option('force') && !$this->validateSystemRequirements()) {
+            $this->displayRecoveryInstructions();
+            return Command::FAILURE;
+        }
+
+        if ($this->option('interactive')) {
             $this->runInteractiveSetup();
         } else {
             $this->runQuickSetup();
         }
 
-        $this->info('✅ Thorium90 setup completed successfully!');
+        $this->info('🎉 Thorium90 setup completed successfully!');
         $this->newLine();
-        $this->info('Next steps:');
-        $this->info('• Run: npm run build');
-		$this->info('• Run: npm run dev');
-		$this->info('• Note: Open another terminal');
-		$this->info('• Run: php artisan serve');
-        $this->info('• Visit: http://localhost:8000');
-        $this->info('• Login with your admin credentials');
+        
+        // Show setup summary
+        $this->displaySetupSummary();
+        
+        $this->info('📋 NEXT STEPS:');
+        $this->line('1. Run: npm run build (build frontend assets)');
+        $this->line('2. Run: php artisan serve (start Laravel server)');
+        $this->line('3. Open another terminal and run: npm run dev (for live reloading)');
+        $this->line('4. Visit: http://localhost:8000');
+        $this->line('5. Login with your admin credentials');
+        $this->newLine();
+        
+        $this->info('🚀 DEVELOPMENT COMMANDS:');
+        $this->line('• composer run dev (all services at once)');
+        $this->line('• npm run health-check (system diagnostics)');
+        $this->line('• php artisan test (run tests)');
         $this->newLine();
     }
 
@@ -106,9 +119,9 @@ class Thorium90Setup extends Command
         $this->setupProject($projectName, $domain, $adminEmail, $adminPassword, $preset, $databaseConfig);
     }
 
-    protected function runSilentSetup()
+    protected function runDefaultSetup()
     {
-        $this->info('⚡ Running silent setup with smart defaults...');
+        $this->info('⚡ Running default setup with smart defaults...');
         $this->newLine();
         
         // Force SQLite for rapid local development
@@ -120,7 +133,7 @@ class Thorium90Setup extends Command
         $projectName = $this->option('name') ?: basename(getcwd());
         $domain = $this->option('domain') ?: '';
         $adminEmail = $this->option('admin-email') ?: 'admin@example.com';
-        $adminPassword = $this->option('admin-password') ?: 'password';
+        $adminPassword = $this->option('admin-password') ?: 'password123';
         $preset = $this->option('preset') ?: 'default';
         
         $this->info("📝 Project: {$projectName}");
@@ -130,20 +143,25 @@ class Thorium90Setup extends Command
         
         $this->setupProject($projectName, $domain, $adminEmail, $adminPassword, $preset, $databaseConfig);
         
-        $this->info('🎉 Silent setup completed! Perfect for rapid development.');
-        $this->warn('💡 Tip: Use this for local dev, deploy to Laravel Cloud for production MySQL.');
+        $this->info('🎉 Default setup completed! Perfect for rapid development.');
+        $this->warn('💡 Tip: Use this for local dev, deploy to production for MySQL.');
     }
 
     protected function runQuickSetup()
     {
+        $this->info('🚀 Running quick setup...');
+        $this->newLine();
+        
+        // Force SQLite for rapid local development  
+        $this->line('📊 Using SQLite for local development (zero configuration)');
+        $this->ensureSQLiteDatabase();
+        $databaseConfig = ['type' => 'sqlite'];
+        
         $projectName = $this->option('name') ?: 'Thorium90 Site';
         $domain = $this->option('domain') ?: '';
         $adminEmail = $this->option('admin-email') ?: 'admin@example.com';
         $adminPassword = $this->option('admin-password') ?: 'password123';
         $preset = $this->option('preset') ?: 'default';
-
-        // Use default database configuration (from current .env or fallback)
-        $databaseConfig = null;
 
         $this->setupProject($projectName, $domain, $adminEmail, $adminPassword, $preset, $databaseConfig);
     }
@@ -299,6 +317,9 @@ class Thorium90Setup extends Command
 
         // Generate documentation
         $this->generateDocs($projectName, $preset);
+        
+        // Mark setup as complete
+        $this->markSetupComplete($projectName, $preset, $adminEmail);
 
         $this->info("✅ Project '{$projectName}' configured with '{$preset}' preset");
     }
@@ -664,7 +685,7 @@ class Thorium90Setup extends Command
         
         return "# {$projectName}
 
-Built with [Thorium90 Boilerplate](https://github.com/thorium90/boilerplate)
+Built with [Thorium90](https://github.com/travissutphin/thorium90)
 
 ## Project Configuration
 - **Preset**: {$presetInfo['name']}
@@ -768,6 +789,369 @@ php artisan thorium90:rebrand     # Update branding
 ---
 *Need help? Check the [Thorium90 Documentation](https://thorium90.com/docs)*
 ";
+    }
+
+    /**
+     * Display guided recovery instructions when setup fails
+     */
+    protected function displayRecoveryInstructions(): void
+    {
+        $this->newLine();
+        $this->error('🚨 SETUP BLOCKED - System validation failed');
+        $this->newLine();
+        
+        $this->info('🔧 RECOVERY STEPS:');
+        $this->line('1. Fix the issues listed above');
+        $this->line('2. Run: npm run health-check (to verify fixes)');
+        $this->line('3. When all green, run: php artisan thorium90:setup --interactive');
+        $this->newLine();
+        
+        $this->info('💡 COMMON FIXES:');
+        $this->line('• Update PHP: https://www.php.net/downloads');
+        $this->line('• Install missing extensions with your package manager');
+        $this->line('• Fix file permissions: chmod -R 755 storage bootstrap/cache');
+        $this->line('• Install Node.js: https://nodejs.org');
+        $this->line('• Install Composer: https://getcomposer.org');
+        $this->newLine();
+        
+        $this->info('🆘 NEED HELP?');
+        $this->line('• Run: composer run health-check (detailed diagnostics)');
+        $this->line('• Check DEPLOYMENT.md for troubleshooting');
+        $this->line('• Advanced users can bypass with --force flag');
+        $this->newLine();
+    }
+
+    /**
+     * Validate system requirements before setup
+     */
+    protected function validateSystemRequirements(): bool
+    {
+        $this->info('🔍 Validating system requirements...');
+        $this->newLine();
+        
+        $allValid = true;
+        $warnings = [];
+        
+        // 1. Check PHP Version
+        $phpVersion = PHP_VERSION;
+        $minPhpVersion = '8.2.0';
+        
+        if (version_compare($phpVersion, $minPhpVersion, '>=')) {
+            $this->info("✅ PHP Version: {$phpVersion} (>= {$minPhpVersion})");
+        } else {
+            $this->error("❌ PHP Version: {$phpVersion} (requires >= {$minPhpVersion})");
+            $this->line('   Please upgrade PHP to version 8.2 or higher');
+            $allValid = false;
+        }
+        
+        // 2. Check Required PHP Extensions
+        $requiredExtensions = [
+            'mbstring' => 'String handling',
+            'xml' => 'XML processing',
+            'ctype' => 'Character type checking',
+            'json' => 'JSON processing',
+            'bcmath' => 'Arbitrary precision mathematics',
+            'fileinfo' => 'File information',
+            'tokenizer' => 'PHP tokenizer',
+            'sqlite3' => 'SQLite database support',
+            'pdo' => 'Database abstraction layer',
+            'openssl' => 'SSL/TLS support',
+            'curl' => 'HTTP client support'
+        ];
+        
+        $this->line('📦 Checking PHP Extensions:');
+        foreach ($requiredExtensions as $extension => $description) {
+            if (extension_loaded($extension)) {
+                $this->info("  ✅ {$extension} ({$description})");
+            } else {
+                $this->error("  ❌ {$extension} - {$description}");
+                $this->line("     Install with: php extension or enable in php.ini");
+                $allValid = false;
+            }
+        }
+        
+        // 3. Check Composer
+        $composerVersion = $this->getComposerVersion();
+        if ($composerVersion) {
+            $this->info("✅ Composer: {$composerVersion}");
+        } else {
+            $this->error('❌ Composer not found or not accessible');
+            $this->line('   Please install Composer: https://getcomposer.org');
+            $allValid = false;
+        }
+        
+        // 4. Check Node.js and npm
+        $nodeVersion = $this->getNodeVersion();
+        $npmVersion = $this->getNpmVersion();
+        
+        if ($nodeVersion) {
+            $minNodeVersion = '16.0.0';
+            if (version_compare($nodeVersion, $minNodeVersion, '>=')) {
+                $this->info("✅ Node.js: {$nodeVersion} (>= {$minNodeVersion})");
+            } else {
+                $this->error("❌ Node.js: {$nodeVersion} (requires >= {$minNodeVersion})");
+                $this->line('   Please upgrade Node.js to version 16 or higher');
+                $allValid = false;
+            }
+        } else {
+            $this->error('❌ Node.js not found');
+            $this->line('   Please install Node.js: https://nodejs.org');
+            $allValid = false;
+        }
+        
+        if ($npmVersion) {
+            $this->info("✅ npm: {$npmVersion}");
+        } else {
+            $this->error('❌ npm not found');
+            $this->line('   npm should be installed with Node.js');
+            $allValid = false;
+        }
+        
+        // 5. Check Directory Permissions
+        $this->line('📁 Checking directory permissions:');
+        $directories = [
+            'storage' => storage_path(),
+            'bootstrap/cache' => base_path('bootstrap/cache'),
+            'database' => database_path(),
+            '.env' => base_path('.env')
+        ];
+        
+        foreach ($directories as $name => $path) {
+            if ($name === '.env') {
+                // Check if .env exists or if we can create it
+                if (File::exists($path)) {
+                    if (is_writable($path)) {
+                        $this->info("  ✅ {$name} (writable)");
+                    } else {
+                        $this->error("  ❌ {$name} (not writable)");
+                        $allValid = false;
+                    }
+                } else {
+                    // Check if we can create .env in the parent directory
+                    $parentDir = dirname($path);
+                    if (is_writable($parentDir)) {
+                        $this->info("  ✅ {$name} (can be created)");
+                    } else {
+                        $this->error("  ❌ {$name} (cannot be created - parent dir not writable)");
+                        $allValid = false;
+                    }
+                }
+            } else {
+                if (File::exists($path) && is_writable($path)) {
+                    $this->info("  ✅ {$name} (writable)");
+                } else {
+                    if (!File::exists($path)) {
+                        // Try to create the directory
+                        try {
+                            File::makeDirectory($path, 0755, true);
+                            $this->info("  ✅ {$name} (created)");
+                        } catch (Exception $e) {
+                            $this->error("  ❌ {$name} (cannot create: {$e->getMessage()})");
+                            $allValid = false;
+                        }
+                    } else {
+                        $this->error("  ❌ {$name} (not writable)");
+                        $this->line("     Run: chmod -R 755 " . basename($path));
+                        $allValid = false;
+                    }
+                }
+            }
+        }
+        
+        // 6. Check Memory Limit
+        $memoryLimit = ini_get('memory_limit');
+        $memoryLimitBytes = $this->convertToBytes($memoryLimit);
+        $recommendedMemory = $this->convertToBytes('256M');
+        
+        if ($memoryLimitBytes === -1) {
+            $this->info('✅ Memory Limit: Unlimited');
+        } elseif ($memoryLimitBytes >= $recommendedMemory) {
+            $this->info("✅ Memory Limit: {$memoryLimit} (>= 256M)");
+        } else {
+            $warnings[] = "Memory Limit: {$memoryLimit} (recommended: >= 256M)";
+            $this->warn("⚠️  Memory Limit: {$memoryLimit} - Recommended: >= 256M");
+        }
+        
+        // 7. Check Max Execution Time
+        $maxExecutionTime = ini_get('max_execution_time');
+        if ($maxExecutionTime == 0) {
+            $this->info('✅ Max Execution Time: Unlimited');
+        } elseif ($maxExecutionTime >= 120) {
+            $this->info("✅ Max Execution Time: {$maxExecutionTime}s (>= 120s)");
+        } else {
+            $warnings[] = "Max Execution Time: {$maxExecutionTime}s (recommended: >= 120s)";
+            $this->warn("⚠️  Max Execution Time: {$maxExecutionTime}s - Recommended: >= 120s");
+        }
+        
+        // 8. Check if SQLite database can be created
+        $this->line('🗄️  Testing SQLite database creation:');
+        try {
+            $testDbPath = database_path('test_' . time() . '.sqlite');
+            File::put($testDbPath, '');
+            
+            // Try to open with PDO
+            $pdo = new \PDO("sqlite:{$testDbPath}");
+            $pdo->exec('CREATE TABLE test (id INTEGER PRIMARY KEY)');
+            $pdo->exec('DROP TABLE test');
+            $pdo = null;
+            
+            // Clean up
+            File::delete($testDbPath);
+            
+            $this->info('  ✅ SQLite database creation successful');
+        } catch (Exception $e) {
+            $this->error("  ❌ SQLite database test failed: " . $e->getMessage());
+            $allValid = false;
+        }
+        
+        $this->newLine();
+        
+        // Display warnings if any
+        if (!empty($warnings)) {
+            $this->warn('⚠️  Warnings (non-critical):');
+            foreach ($warnings as $warning) {
+                $this->line("   • {$warning}");
+            }
+            $this->newLine();
+        }
+        
+        // Final result
+        if ($allValid) {
+            $this->info('✅ All system requirements validated successfully!');
+            $this->newLine();
+        } else {
+            $this->newLine();
+            $this->error('❌ System validation failed. Please resolve the issues above.');
+            $this->line('');
+            $this->line('💡 Quick fixes:');
+            $this->line('   • Update PHP: https://www.php.net/downloads');
+            $this->line('   • Install missing extensions with your package manager');
+            $this->line('   • Fix file permissions: chmod -R 755 storage bootstrap/cache');
+            $this->line('   • Install Node.js: https://nodejs.org');
+            $this->newLine();
+        }
+        
+        return $allValid;
+    }
+    
+    /**
+     * Get Composer version
+     */
+    protected function getComposerVersion(): ?string
+    {
+        try {
+            $output = shell_exec('composer --version 2>/dev/null');
+            if ($output && preg_match('/Composer version ([\d\.]+)/', $output, $matches)) {
+                return $matches[1];
+            }
+        } catch (Exception $e) {
+            // Ignore
+        }
+        return null;
+    }
+    
+    /**
+     * Get Node.js version
+     */
+    protected function getNodeVersion(): ?string
+    {
+        try {
+            $output = shell_exec('node --version 2>/dev/null');
+            if ($output) {
+                return trim(str_replace('v', '', $output));
+            }
+        } catch (Exception $e) {
+            // Ignore
+        }
+        return null;
+    }
+    
+    /**
+     * Get npm version
+     */
+    protected function getNpmVersion(): ?string
+    {
+        try {
+            $output = shell_exec('npm --version 2>/dev/null');
+            if ($output) {
+                return trim($output);
+            }
+        } catch (Exception $e) {
+            // Ignore
+        }
+        return null;
+    }
+    
+    /**
+     * Convert memory limit string to bytes
+     */
+    protected function convertToBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '-1') {
+            return -1;
+        }
+        
+        $last = strtolower($value[strlen($value) - 1]);
+        $value = (int) $value;
+        
+        switch ($last) {
+            case 'g':
+                $value *= 1024;
+                // no break
+            case 'm':
+                $value *= 1024;
+                // no break
+            case 'k':
+                $value *= 1024;
+        }
+        
+        return $value;
+    }
+
+    /**
+     * Mark setup as complete and store metadata
+     */
+    protected function markSetupComplete(string $projectName, string $preset, string $adminEmail): void
+    {
+        $setupData = [
+            'project_name' => $projectName,
+            'preset' => $preset,
+            'admin_email' => $adminEmail,
+            'completed_at' => now()->toISOString(),
+            'version' => '2.0.1',
+            'php_version' => PHP_VERSION,
+            'laravel_version' => app()->version(),
+            'database_type' => config('database.default'),
+        ];
+        
+        File::put(base_path('.thorium90-setup'), json_encode($setupData, JSON_PRETTY_PRINT));
+        $this->line('📋 Setup metadata saved to .thorium90-setup');
+    }
+    
+    /**
+     * Display setup completion summary
+     */
+    protected function displaySetupSummary(): void
+    {
+        if (!File::exists(base_path('.thorium90-setup'))) {
+            return;
+        }
+        
+        try {
+            $setupData = json_decode(File::get(base_path('.thorium90-setup')), true);
+            
+            $this->info('📊 SETUP SUMMARY:');
+            $this->line("• Project: {$setupData['project_name']}");
+            $this->line("• Preset: {$setupData['preset']}");
+            $this->line("• Admin Email: {$setupData['admin_email']}");
+            $this->line("• Database: {$setupData['database_type']}");
+            $this->line("• Laravel: {$setupData['laravel_version']}");
+            $this->line("• Completed: {$setupData['completed_at']}");
+            $this->newLine();
+        } catch (Exception $e) {
+            // Silently continue if summary can't be displayed
+        }
     }
 
     /**

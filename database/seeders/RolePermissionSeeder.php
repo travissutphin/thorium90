@@ -90,6 +90,7 @@ class RolePermissionSeeder extends Seeder
             'edit users',
             'delete users',
             'restore users',
+            'manage users',
             'manage user roles',
             'view pages',
             'create pages',

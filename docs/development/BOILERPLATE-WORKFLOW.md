@@ -1,4 +1,4 @@
-# Thorium90 Boilerplate - Change Management Workflow
+# Thorium90 - Change Management Workflow
 
 ## Overview
 

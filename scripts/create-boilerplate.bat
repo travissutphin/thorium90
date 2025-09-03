@@ -1,6 +1,6 @@
 @echo off
 echo ===========================================
-echo    Thorium90 Boilerplate Creator
+echo    Thorium90 Creator
 echo ===========================================
 echo.
 

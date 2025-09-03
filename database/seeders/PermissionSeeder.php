@@ -62,6 +62,7 @@ class PermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'delete users']);
         Permission::firstOrCreate(['name' => 'restore users']);      // Restore soft-deleted users
         Permission::firstOrCreate(['name' => 'force delete users']); // Permanently delete users
+        Permission::firstOrCreate(['name' => 'manage users']);       // General user management permission
         Permission::firstOrCreate(['name' => 'manage user roles']);
 
         // Content Management Permissions

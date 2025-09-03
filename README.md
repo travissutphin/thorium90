@@ -1,6 +1,6 @@
 # thorium90
 
-Built with [Thorium90 Boilerplate](https://github.com/thorium90/boilerplate)
+Built with [Thorium90](https://github.com/travissutphin/thorium90)
 
 ## Project Configuration
 - **Preset**: Default Website

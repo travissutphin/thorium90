@@ -15,7 +15,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.0",
+        "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/fortify": "^1.27",
         "laravel/framework": "^12.0",
@@ -28,6 +28,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "*",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.18",
         "laravel/sail": "^1.41",
@@ -70,8 +71,13 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate --ansi --force",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan thorium90:setup --silent",
-            "@npm run build"
+            "@php -r \"echo '\\n🎉 Thorium90 Dependencies Installed Successfully!\\n';\"",
+            "@php -r \"echo '\\n📋 NEXT STEPS:\\n';\"",
+            "@php -r \"echo '1. Run: npm run health-check (validate system)\\n';\"",
+            "@php -r \"echo '2. Run: php artisan thorium90:setup --interactive\\n';\"",
+            "@php -r \"echo '3. Run: npm run build\\n';\"",
+            "@php -r \"echo '4. Run: php artisan serve\\n';\"",
+            "@php -r \"echo '\\n💡 Need help? Run: composer run health-check\\n\\n';\""
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -92,6 +98,21 @@
         "fresh-install": [
             "@php artisan migrate:fresh --seed",
             "@npm run build"
+        ],
+        "fresh-start": [
+            "@composer install",
+            "@npm install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate --ansi --force",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate:fresh --seed",
+            "@npm run build"
+        ],
+        "health-check": [
+            "@php --version",
+            "@composer --version",
+            "@node --version",
+            "@php artisan about --only=environment,cache,database"
         ],
         "rebrand": [
             "@php artisan thorium90:rebrand"
