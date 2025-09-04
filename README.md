@@ -1,6 +1,4 @@
-# thorium90
-
-Built with [Thorium90](https://github.com/travissutphin/thorium90)
+![Thorium90 CMS](public/images/logos/header.png)
 
 ## Project Configuration
 - **Preset**: Default Website
