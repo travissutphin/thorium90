@@ -1094,14 +1094,30 @@ php artisan thorium90:rebrand     # Update branding
      */
     protected function getNodeVersion(): ?string
     {
+        // Try Process first for better Windows compatibility
         try {
-            $output = shell_exec('node --version 2>/dev/null');
+            $process = new \Symfony\Component\Process\Process(['node', '--version']);
+            $process->run();
+            
+            if ($process->isSuccessful()) {
+                $output = trim($process->getOutput());
+                return str_replace('v', '', $output);
+            }
+        } catch (Exception $e) {
+            // Try fallback
+        }
+        
+        // Fallback to shell_exec with Windows-compatible error handling
+        try {
+            $nullDevice = PHP_OS_FAMILY === 'Windows' ? '2>NUL' : '2>/dev/null';
+            $output = shell_exec("node --version {$nullDevice}");
             if ($output) {
                 return trim(str_replace('v', '', $output));
             }
         } catch (Exception $e) {
             // Ignore
         }
+        
         return null;
     }
     
@@ -1110,14 +1126,29 @@ php artisan thorium90:rebrand     # Update branding
      */
     protected function getNpmVersion(): ?string
     {
+        // Try Process first for better Windows compatibility
         try {
-            $output = shell_exec('npm --version 2>/dev/null');
+            $process = new \Symfony\Component\Process\Process(['npm', '--version']);
+            $process->run();
+            
+            if ($process->isSuccessful()) {
+                return trim($process->getOutput());
+            }
+        } catch (Exception $e) {
+            // Try fallback
+        }
+        
+        // Fallback to shell_exec with Windows-compatible error handling
+        try {
+            $nullDevice = PHP_OS_FAMILY === 'Windows' ? '2>NUL' : '2>/dev/null';
+            $output = shell_exec("npm --version {$nullDevice}");
             if ($output) {
                 return trim($output);
             }
         } catch (Exception $e) {
             // Ignore
         }
+        
         return null;
     }
     
