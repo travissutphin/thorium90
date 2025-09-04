@@ -101,6 +101,7 @@ class RolePermissionSeeder extends Seeder
             'view system stats',
             'view audit logs',
             'view dashboard',
+            'view media',
             'upload media',
             'manage media',
             'delete media',
@@ -120,6 +121,7 @@ class RolePermissionSeeder extends Seeder
             'delete pages',
             'publish pages',
             'view dashboard',
+            'view media',
             'upload media',
             'manage media',
             'view comments',
@@ -136,6 +138,7 @@ class RolePermissionSeeder extends Seeder
             'edit own pages',    // Limited to their own content
             'delete own pages',  // Limited to their own content
             'view dashboard',
+            'view media',
             'upload media',
             'view comments',
         ]);
@@ -146,6 +149,7 @@ class RolePermissionSeeder extends Seeder
         $subscriber->givePermissionTo([
             'view pages',
             'view dashboard',
+            'view media',
             'view comments',
         ]);
     }

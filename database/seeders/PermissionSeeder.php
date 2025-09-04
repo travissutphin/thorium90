@@ -87,6 +87,7 @@ class PermissionSeeder extends Seeder
 
         // Media Management Permissions
         // These permissions control access to media upload and management
+        Permission::firstOrCreate(['name' => 'view media']);
         Permission::firstOrCreate(['name' => 'upload media']);
         Permission::firstOrCreate(['name' => 'manage media']);
         Permission::firstOrCreate(['name' => 'delete media']);
