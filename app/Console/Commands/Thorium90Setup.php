@@ -861,8 +861,20 @@ php artisan thorium90:rebrand     # Update branding
         
         $this->line('📦 Checking PHP Extensions:');
         foreach ($requiredExtensions as $extension => $description) {
-            if (extension_loaded($extension)) {
-                $this->info("  ✅ {$extension} ({$description})");
+            $hasExtension = extension_loaded($extension);
+            
+            // Special case: For SQLite, accept either sqlite3 OR pdo_sqlite
+            if ($extension === 'sqlite3' && !$hasExtension) {
+                $hasExtension = extension_loaded('pdo_sqlite');
+                if ($hasExtension) {
+                    $this->info("  ✅ {$extension} ({$description}) - using pdo_sqlite");
+                }
+            }
+            
+            if ($hasExtension) {
+                if ($extension !== 'sqlite3' || !extension_loaded('pdo_sqlite')) {
+                    $this->info("  ✅ {$extension} ({$description})");
+                }
             } else {
                 $this->error("  ❌ {$extension} - {$description}");
                 $this->line("     Install with: php extension or enable in php.ini");
