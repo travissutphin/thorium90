@@ -1051,14 +1051,41 @@ php artisan thorium90:rebrand     # Update branding
      */
     protected function getComposerVersion(): ?string
     {
+        // Try multiple Composer detection methods for cross-platform compatibility
+        $commands = [
+            'composer --version',
+            'php composer.phar --version'
+        ];
+        
+        foreach ($commands as $command) {
+            try {
+                // Use Process for better Windows compatibility
+                $process = new \Symfony\Component\Process\Process(explode(' ', $command));
+                $process->run();
+                
+                if ($process->isSuccessful()) {
+                    $output = $process->getOutput();
+                    if ($output && preg_match('/Composer version ([\d\.]+)/', $output, $matches)) {
+                        return $matches[1];
+                    }
+                }
+            } catch (Exception $e) {
+                // Try next method
+                continue;
+            }
+        }
+        
+        // Fallback to shell_exec with Windows-compatible error handling
         try {
-            $output = shell_exec('composer --version 2>/dev/null');
+            $nullDevice = PHP_OS_FAMILY === 'Windows' ? '2>NUL' : '2>/dev/null';
+            $output = shell_exec("composer --version {$nullDevice}");
             if ($output && preg_match('/Composer version ([\d\.]+)/', $output, $matches)) {
                 return $matches[1];
             }
         } catch (Exception $e) {
             // Ignore
         }
+        
         return null;
     }
     
