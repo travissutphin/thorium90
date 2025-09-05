@@ -75,6 +75,11 @@ class Thorium90Setup extends Command
         $this->info('🎉 Thorium90 setup completed successfully!');
         $this->newLine();
         
+        // Simple URL guidance
+        $this->info('💡 IMPORTANT: If media files don\'t load, check APP_URL in your .env file');
+        $this->line('Common fix: Change https://localhost to http://localhost for local development');
+        $this->newLine();
+        
         // Show setup summary
         $this->displaySetupSummary();
         
@@ -101,7 +106,7 @@ class Thorium90Setup extends Command
 
         // Project Information
         $projectName = $this->ask('Project Name', 'My Thorium90 Site');
-        $domain = $this->ask('Primary Domain (optional)', '');
+        $domain = $this->ask('Primary Domain - if local leave blank', '');
 
         // Database Configuration
         $databaseConfig = $this->setupDatabase();
@@ -131,7 +136,7 @@ class Thorium90Setup extends Command
         
         // Smart defaults - no questions asked
         $projectName = $this->option('name') ?: basename(getcwd());
-        $domain = $this->option('domain') ?: '';
+        $domain = $this->option('domain') ?: 'http://127.0.0.1:8000';
         $adminEmail = $this->option('admin-email') ?: 'admin@example.com';
         $adminPassword = $this->option('admin-password') ?: 'password123';
         $preset = $this->option('preset') ?: 'default';
@@ -158,7 +163,7 @@ class Thorium90Setup extends Command
         $databaseConfig = ['type' => 'sqlite'];
         
         $projectName = $this->option('name') ?: 'Thorium90 Site';
-        $domain = $this->option('domain') ?: '';
+        $domain = $this->option('domain') ?: 'http://127.0.0.1:8000';
         $adminEmail = $this->option('admin-email') ?: 'admin@example.com';
         $adminPassword = $this->option('admin-password') ?: 'password123';
         $preset = $this->option('preset') ?: 'default';

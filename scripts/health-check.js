@@ -374,6 +374,38 @@ class HealthChecker {
     }
 
     /**
+     * Simple APP_URL validation for common issues
+     */
+    validateAppUrl() {
+        this.header('APP_URL Configuration');
+        
+        const envPath = join(projectRoot, '.env');
+        if (!existsSync(envPath)) {
+            this.warning('.env file not found - run thorium90:setup first');
+            return;
+        }
+        
+        const envContent = readFileSync(envPath, 'utf8');
+        const appUrlMatch = envContent.match(/^APP_URL=(.+)$/m);
+        
+        if (appUrlMatch) {
+            const appUrl = appUrlMatch[1].trim();
+            this.info(`Current APP_URL: ${appUrl}`);
+            
+            // Simple HTTPS warning for local development
+            if (appUrl.includes('https://localhost') || appUrl.includes('https://127.0.0.1')) {
+                this.warning('HTTPS detected for local development - this may cause media loading issues');
+                const httpUrl = appUrl.replace('https://', 'http://');
+                this.info(`Quick fix: Change APP_URL to ${httpUrl} then run: php artisan config:clear`);
+            } else {
+                this.success('APP_URL looks good');
+            }
+        } else {
+            this.warning('APP_URL not found in .env file');
+        }
+    }
+
+    /**
      * Run all health checks
      */
     async run() {
@@ -388,6 +420,7 @@ class HealthChecker {
         this.checkDatabase();
         this.checkBuildTools();
         this.checkCommands();
+        this.validateAppUrl();
 
         // Summary
         this.header('Health Check Summary');
